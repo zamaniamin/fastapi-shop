@@ -1,6 +1,6 @@
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant
 from itertools import product as options_combination
-from config.database import SessionLocal
+from config.database import DatabaseManager
 
 
 class ProductService:
@@ -127,7 +127,7 @@ class ProductService:
     def get_item_ids_by_product_id(cls, product_id):
         item_ids_by_option = []
         item_ids_dict = {}
-        with SessionLocal() as session:
+        with DatabaseManager.session as session:
             # Query the ProductOptionItem table to retrieve item_ids
             items = (
                 session.query(ProductOptionItem.option_id, ProductOptionItem.id)
