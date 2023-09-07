@@ -1,7 +1,3 @@
-Certainly! Here's a README template for your eCommerce project using FastAPI, SQLAlchemy, and Pydantic. Feel free to customize it to match your project's specifics:
-
----
-
 # FastAPI eCommerce Project
 
 ![Project Logo](logo.png)
