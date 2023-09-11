@@ -2,12 +2,17 @@ import importlib
 import os
 from operator import and_
 from pathlib import Path
-from sqlalchemy import create_engine, URL
-from sqlalchemy.orm import sessionmaker, Session
+
+from sqlalchemy import create_engine, URL, MetaData
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import sessionmaker, Session, Query
+
 from . import settings
 
+testing = False
 
+
+# TODO need to test by postgres too
 class DatabaseManager:
     """
     A utility class for managing database operations using SQLAlchemy.
@@ -55,19 +60,80 @@ class DatabaseManager:
         Returns:
             None
         """
+        global testing  # Access the global testing flag
+        db_config = settings.DATABASES.copy()
+        if testing:
+            db_config["database"] = "test_" + db_config["database"]
 
-        url = URL.create(**settings.DATABASES)
+        if db_config["drivername"] == "sqlite":
+            project_root = Path(__file__).parent.parent  # Assuming this is where your models are located
+            db_config["database"] = os.path.join(project_root, db_config["database"])
 
-        # Configure the engine with or without multi-threaded support
-        if settings.DATABASES["drivername"] == "sqlite":
-
+            url = URL.create(**db_config)
             cls.engine = create_engine(url, connect_args={"check_same_thread": False})
         else:
-            cls.engine = create_engine(url)
+            # for postgres
+            cls.engine = create_engine(URL.create(**db_config))
 
-        # Create an SQLAlchemy session
         session = sessionmaker(autocommit=False, autoflush=False, bind=cls.engine)
         cls.session = session()
+
+        # global testing  # Access the global testing flag
+        # if not testing:
+        #
+        #     # Configure the engine with or without multi-threaded support
+        #     if settings.DATABASES["drivername"] == "sqlite":
+        #         url = settings.DATABASES.copy()
+        #         project_root = Path(__file__).parent.parent  # Assuming this is where your models are located
+        #         url["database"] = os.path.join(project_root, url["database"])
+        #         url = URL.create(**url)
+        #         cls.engine = create_engine(url, connect_args={"check_same_thread": False})
+        #     else:
+        #         url = URL.create(**settings.DATABASES)
+        #         cls.engine = create_engine(url)
+        #
+        #
+        # else:
+        #     if settings.DATABASES["drivername"] == "sqlite":
+        #         test_db_url = settings.DATABASES.copy()
+        #         project_root = Path(__file__).parent.parent  # Assuming this is where your models are located
+        #         test_db_url["database"] = os.path.join(project_root, "test_" + test_db_url["database"])
+        #
+        #         url = URL.create(**test_db_url)
+        #         cls.engine = create_engine(url, connect_args={"check_same_thread": False})
+        #
+        #     else:
+        #         # TODO make postgres test db
+        #         url = URL.create(**settings.DATABASES)
+        #         cls.engine = create_engine(url)
+        #
+        # session = sessionmaker(autocommit=False, autoflush=False, bind=cls.engine)
+        # cls.session = session()
+
+    @classmethod
+    def create_test_database(cls):
+        """
+        Create and configure a test database for use in tests.
+        """
+
+        # Set the testing flag to True
+        global testing
+        testing = True
+
+        # Reinitialize the DatabaseManager for testing
+        cls.__init__()
+        DatabaseManager.create_database_tables()
+
+    @classmethod
+    def drop_all_tables(cls):
+        """
+        Drop all tables in the current database.
+        """
+        if cls.engine:
+            metadata = MetaData()
+            metadata.reflect(bind=cls.engine)
+            for table_name, table in metadata.tables.items():
+                table.drop(cls.engine)
 
     @classmethod
     def create_database_tables(cls):
@@ -141,21 +207,6 @@ class FastModel(DeclarativeBase):
         filter_conditions = [getattr(cls, key) == value for key, value in kwargs.items()]
         return and_(*filter_conditions) if filter_conditions else True
 
-    # @classmethod
-    # def __eq__(cls, column, value):
-    #     """
-    #     Override the equality operator to create filter conditions for querying records.
-    #
-    #     Args:
-    #         column: The SQLAlchemy column to compare.
-    #         value: The value to compare against.
-    #
-    #     Returns:
-    #         SQLAlchemy filter condition.
-    #     """
-    #
-    #     return column == value
-
     @classmethod
     def create(cls, **kwargs):
         """
@@ -194,6 +245,5 @@ class FastModel(DeclarativeBase):
         """
 
         with DatabaseManager.session as session:
-            query = session.query(cls).filter(condition)
-            result = query.all()
-        return result
+            query: Query = session.query(cls).filter(condition)
+        return query
