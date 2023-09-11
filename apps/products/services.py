@@ -1,5 +1,6 @@
-from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant
 from itertools import product as options_combination
+
+from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant
 from config.database import DatabaseManager
 
 
@@ -38,7 +39,11 @@ class ProductService:
 
         if cls.options_data:
             for option in cls.options_data:
+
+                # Creates a new instance of the ProductOption model, adds it to the database,
+                # and commits the transaction. Returns the newly created model instance
                 new_option = ProductOption.create(product_id=cls.product.id, option_name=option['option_name'])
+
                 for item in option['items']:
                     ProductOptionItem.create(option_id=new_option.id, item_name=item)
             return cls.retrieve_options(cls.product.id)
@@ -48,12 +53,16 @@ class ProductService:
     @classmethod
     def retrieve_options(cls, product_id):
         """
-                Get all options of a product
-                """
+        Get all options of a product
+        """
+
         product_options = []
-        options = ProductOption.filter(ProductOption.product_id == product_id)
+        options = ProductOption.filter(ProductOption.product_id == product_id).all()
         for option in options:
-            items = ProductOptionItem.filter(ProductOptionItem.option_id == option.id)
+            # Retrieves records from the database based on a given filter condition.
+            # Returns a list of model instances matching the filter condition.
+            items = ProductOptionItem.filter(ProductOptionItem.option_id == option.id).all()
+
             product_options.append({
                 'options_id': option.id,
                 'option_name': option.option_name,
@@ -106,7 +115,7 @@ class ProductService:
         """
 
         product_variants = []
-        variants: list[ProductVariant] = ProductVariant.filter(ProductVariant.product_id == product_id)
+        variants: list[ProductVariant] = ProductVariant.filter(ProductVariant.product_id == product_id).all()
         for variant in variants:
             updated_at = variant.updated_at.strftime('%Y-%m-%d %H:%M:%S') if variant.updated_at else None
             product_variants.append(
