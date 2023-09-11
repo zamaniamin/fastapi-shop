@@ -8,5 +8,5 @@
 # }
 DATABASES = {
     "drivername": "sqlite",
-    "database": "./fast_store.db"
+    "database": "fast_store.db"
 }
