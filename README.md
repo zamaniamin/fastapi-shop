@@ -1,7 +1,5 @@
 # FastAPI eCommerce Project
 
-![Project Logo](logo.png)
-
 ## Overview
 
 This is an eCommerce project built using **FastAPI**, **SQLAlchemy** and **Pydantic**. The project is designed to serve as a starting point for building a modern, efficient, and highly customizable eCommerce web application.
