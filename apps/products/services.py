@@ -1,5 +1,6 @@
 from itertools import product as options_combination
 
+from apps.core.date_time import DateTime
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant
 from config.database import DatabaseManager
 
@@ -28,7 +29,20 @@ class ProductService:
         # create product variants
         cls.variants = cls.__create_variants()
 
-        return cls.product, cls.options, cls.variants
+        response_body = {
+            'product_id': cls.product.id,
+            'product_name': cls.product.product_name,
+            'description': cls.product.description,
+            'status': cls.product.status,
+            'options': cls.options,
+            'variants': cls.variants,
+            'created_at': DateTime.string(cls.product.created_at),
+            'updated_at': DateTime.string(cls.product.updated_at),
+            'published_at': DateTime.string(cls.product.published_at),
+        }
+        return response_body
+
+        # return cls.product, cls.options, cls.variants
 
     @classmethod
     def __create_product_options(cls):
@@ -117,7 +131,6 @@ class ProductService:
         product_variants = []
         variants: list[ProductVariant] = ProductVariant.filter(ProductVariant.product_id == product_id).all()
         for variant in variants:
-            updated_at = variant.updated_at.strftime('%Y-%m-%d %H:%M:%S') if variant.updated_at else None
             product_variants.append(
                 {
                     "variant_id": variant.id,
@@ -127,8 +140,8 @@ class ProductService:
                     "option1": variant.option1,
                     "option2": variant.option2,
                     "option3": variant.option3,
-                    "created_at": variant.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    "updated_at": updated_at
+                    "created_at": DateTime.string(variant.created_at),
+                    "updated_at": DateTime.string(variant.updated_at)
                 })
         return product_variants
 
@@ -137,6 +150,7 @@ class ProductService:
         item_ids_by_option = []
         item_ids_dict = {}
         with DatabaseManager.session as session:
+
             # Query the ProductOptionItem table to retrieve item_ids
             items = (
                 session.query(ProductOptionItem.option_id, ProductOptionItem.id)
