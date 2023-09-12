@@ -1,4 +1,5 @@
 from typing import Annotated
+
 from fastapi import Query
 from pydantic import BaseModel
 
@@ -31,6 +32,11 @@ class OptionResponse(BaseModel):
     items: list[ItemResponse]
 
 
+class OptionRequest(BaseModel):
+    option_name: str
+    items: list[str]
+
+
 class ProductResponse(BaseModel):
     """
     Output validation:
@@ -56,7 +62,7 @@ class ProductResponse(BaseModel):
         from_attributes = True
 
 
-class ProductValidate(BaseModel):
+class ProductRequest(BaseModel):
     """
     Input validation:
     This parameter is used to indicate that the `create_product` function expects an input object of
@@ -68,7 +74,7 @@ class ProductValidate(BaseModel):
     description: str | None = None
     status: str | None = None
 
-    options: list[dict] | None = None
+    options: list[OptionRequest] | None = None
 
     class Config:
         from_attributes = True
