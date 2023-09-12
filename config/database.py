@@ -12,7 +12,6 @@ from . import settings
 testing = False
 
 
-# TODO need to test by postgres too
 class DatabaseManager:
     """
     A utility class for managing database operations using SQLAlchemy.
@@ -52,13 +51,6 @@ class DatabaseManager:
 
         This method creates an SQLAlchemy engine and a session based on the specified database configuration
         from the 'settings' module.
-        For SQLite databases, it configures the engine for "multi-threaded" access.
-
-        Args:
-            None
-
-        Returns:
-            None
         """
         global testing  # Access the global testing flag
         db_config = settings.DATABASES.copy()
@@ -77,38 +69,6 @@ class DatabaseManager:
 
         session = sessionmaker(autocommit=False, autoflush=False, bind=cls.engine)
         cls.session = session()
-
-        # global testing  # Access the global testing flag
-        # if not testing:
-        #
-        #     # Configure the engine with or without multi-threaded support
-        #     if settings.DATABASES["drivername"] == "sqlite":
-        #         url = settings.DATABASES.copy()
-        #         project_root = Path(__file__).parent.parent  # Assuming this is where your models are located
-        #         url["database"] = os.path.join(project_root, url["database"])
-        #         url = URL.create(**url)
-        #         cls.engine = create_engine(url, connect_args={"check_same_thread": False})
-        #     else:
-        #         url = URL.create(**settings.DATABASES)
-        #         cls.engine = create_engine(url)
-        #
-        #
-        # else:
-        #     if settings.DATABASES["drivername"] == "sqlite":
-        #         test_db_url = settings.DATABASES.copy()
-        #         project_root = Path(__file__).parent.parent  # Assuming this is where your models are located
-        #         test_db_url["database"] = os.path.join(project_root, "test_" + test_db_url["database"])
-        #
-        #         url = URL.create(**test_db_url)
-        #         cls.engine = create_engine(url, connect_args={"check_same_thread": False})
-        #
-        #     else:
-        #         # TODO make postgres test db
-        #         url = URL.create(**settings.DATABASES)
-        #         cls.engine = create_engine(url)
-        #
-        # session = sessionmaker(autocommit=False, autoflush=False, bind=cls.engine)
-        # cls.session = session()
 
     @classmethod
     def create_test_database(cls):
@@ -129,6 +89,7 @@ class DatabaseManager:
         """
         Drop all tables in the current database.
         """
+        # TODO drop tables for sqlalchemy too
         if cls.engine:
             metadata = MetaData()
             metadata.reflect(bind=cls.engine)
@@ -143,9 +104,6 @@ class DatabaseManager:
         This method detects 'models.py' files in subdirectories of the 'apps'
         directory and creates corresponding database tables based on SQLAlchemy
         models defined within those files.
-
-        Args:
-            None
 
         Returns:
             None
@@ -175,8 +133,7 @@ class FastModel(DeclarativeBase):
     database operations like creating, updating, and querying records. It simplifies
     database interactions while ensuring proper session management.
 
-    Attributes:
-        None
+    DeclarativeBase: The SQLAlchemy declarative base class from which this model inherits.
 
     Class Methods:
         __eq__(column, value):
@@ -197,9 +154,6 @@ class FastModel(DeclarativeBase):
 
         # Filter products based on a condition
         active_products = Product.filter(Product.status == "active")
-
-    Args:
-        DeclarativeBase: The SQLAlchemy declarative base class from which this model inherits.
     """
 
     @classmethod
@@ -225,7 +179,7 @@ class FastModel(DeclarativeBase):
             session.add(instance)
             session.commit()
             session.refresh(instance)
-        except Exception as e:
+        except Exception:
             session.rollback()
             raise
         finally:
