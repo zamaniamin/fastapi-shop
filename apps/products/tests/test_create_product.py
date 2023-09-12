@@ -4,30 +4,6 @@ from fastapi.testclient import TestClient
 from apps.main import app
 from config.database import DatabaseManager
 
-"""
-class TestBlog:
-    def setup_class(self):
-        Base.metadata.create_all(engine)
-        self.session = Session()
-        self.valid_author = Author(
-            firstname="Ezzeddin",
-            lastname="Aybak",
-            email="aybak_email@gmail.com"
-        )
-
-    def teardown_class(self):
-        self.session.rollback()
-        self.session.close()
-
-    def test_author_valid(self):
-        self.session.add(self.valid_author)
-        self.session.commit()
-        aybak = self.session.query(Author).filter_by(lastname="Aybak").first()
-        assert aybak.firstname == "Ezzeddin"
-        assert aybak.lastname != "Abdullah"
-        assert aybak.email == "aybak_email@gmail.com"
-"""
-
 
 class TestProduct:
     product_endpoint = '/products/'
