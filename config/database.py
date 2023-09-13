@@ -3,6 +3,7 @@ import os
 from operator import and_
 from pathlib import Path
 
+from fastapi import HTTPException
 from sqlalchemy import create_engine, URL, MetaData
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker, Session, Query
@@ -201,3 +202,58 @@ class FastModel(DeclarativeBase):
         with DatabaseManager.session as session:
             query: Query = session.query(cls).filter(condition)
         return query
+
+    @classmethod
+    def get_or_404(cls, pk):
+        """
+        Retrieve a record by its primary key or raise a 404 HTTPException if not found.
+
+        Args:
+            pk: The primary key value of the record to retrieve.
+
+        Returns:
+            The model instance with the specified primary key.
+
+        Raises:
+            HTTPException(404): If the record is not found.
+        """
+        with DatabaseManager.session as session:
+            instance = session.query(cls).get(pk)
+            if not instance:
+                raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
+        return instance
+
+    @classmethod
+    def update(cls, pk, **kwargs):
+        """
+        Update a record by its primary key.
+
+        Args:
+            pk: The primary key value of the record to update.
+            **kwargs: Keyword arguments representing model attributes to update.
+
+        Returns:
+            The updated model instance.
+
+        Raises:
+            HTTPException(404): If the record is not found.
+        """
+        with DatabaseManager.session as session:
+
+            # Retrieve the object by its primary key or raise a 404 exception
+            instance = session.query(cls).get(pk)
+            if not instance:
+                raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
+
+            # Update the instance attributes based on the provided kwargs
+            for key, value in kwargs.items():
+                setattr(instance, key, value)
+
+            try:
+                # Commit the transaction and refresh the instance
+                session.commit()
+                session.refresh(instance)
+            except Exception:
+                session.rollback()
+                raise
+        return instance
