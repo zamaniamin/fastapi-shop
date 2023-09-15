@@ -29,20 +29,7 @@ class ProductService:
         # create product variants
         cls.variants = cls.__create_variants()
 
-        response_body = {
-            'product_id': cls.product.id,
-            'product_name': cls.product.product_name,
-            'description': cls.product.description,
-            'status': cls.product.status,
-            'options': cls.options,
-            'variants': cls.variants,
-            'created_at': DateTime.string(cls.product.created_at),
-            'updated_at': DateTime.string(cls.product.updated_at),
-            'published_at': DateTime.string(cls.product.published_at),
-        }
-        return response_body
-
-        # return cls.product, cls.options, cls.variants
+        return cls.retrieve_product(cls.product.id)
 
     @classmethod
     def __create_product_options(cls):
@@ -169,3 +156,48 @@ class ProductService:
             item_ids_by_option.extend(item_ids_dict.values())
 
         return item_ids_by_option
+
+    @classmethod
+    def retrieve_product(cls, product_id):
+        if not cls.product:
+            cls.product = Product.get_or_404(product_id)
+            cls.options = cls.retrieve_options(product_id)
+            cls.variants = cls.retrieve_variants(product_id)
+
+        return {
+            'product_id': cls.product.id,
+            'product_name': cls.product.product_name,
+            'description': cls.product.description,
+            'status': cls.product.status,
+            'created_at': DateTime.string(cls.product.created_at),
+            'updated_at': DateTime.string(cls.product.updated_at),
+            'published_at': DateTime.string(cls.product.published_at),
+            'options': cls.options,
+            'variants': cls.variants
+        }
+
+    @classmethod
+    def update_product(cls, product_id, **kwargs):
+
+        # Update the 'updated_at' field in the kwargs dictionary
+        kwargs['updated_at'] = DateTime.now()
+
+        # Update the product with the modified data, including 'updated_at'
+        return Product.update(product_id, **kwargs)
+
+    @classmethod
+    def list_products(cls):
+        # - if "default variant" is not set, first variant will be
+        # - on list of products, for price, get it from "default variant"
+        # - if price or stock of default variant is 0 then select first variant that is not 0
+        # - or for price, get it from "less price"
+        # TODO do all of them with graphql and let the front to decide witch query should be run.
+
+        with DatabaseManager.session as session:
+            products = session.query(Product.id).limit(12).all()
+
+        product_list = []
+        for product_id in products:
+            product_list.append(cls.retrieve_product(product_id))
+
+        return product_list
