@@ -90,7 +90,7 @@ class DatabaseManager:
         """
         Drop all tables in the current database.
         """
-        # TODO drop tables for sqlalchemy too
+        # TODO drop tables for postgres too
         if cls.engine:
             metadata = MetaData()
             metadata.reflect(bind=cls.engine)
@@ -156,6 +156,8 @@ class FastModel(DeclarativeBase):
         # Filter products based on a condition
         active_products = Product.filter(Product.status == "active")
     """
+
+    # TODO update FastModel methods
 
     @classmethod
     def __eq__(cls, **kwargs):
