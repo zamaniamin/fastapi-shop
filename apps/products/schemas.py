@@ -9,7 +9,7 @@ provides automatic validation, and generates accurate documentation.
 """
 
 
-class VariantResponse(BaseModel):
+class VariantOut(BaseModel):
     variant_id: int
     product_id: int
     price: int | float
@@ -21,28 +21,28 @@ class VariantResponse(BaseModel):
     updated_at: str | None
 
 
-class ItemResponse(BaseModel):
+class ItemOut(BaseModel):
     item_id: int
     item_name: str
 
 
-class OptionResponse(BaseModel):
+class OptionOut(BaseModel):
     options_id: int
     option_name: str
-    items: list[ItemResponse]
+    items: list[ItemOut]
 
 
-class OptionRequest(BaseModel):
+class OptionIn(BaseModel):
     option_name: str
     items: list[str]
 
 
-class ProductResponse(BaseModel):
+class CreateProductOut(BaseModel):
     """
     Output validation:
-    Will be used to validate and serialize the `response data` of the route.
-    It indicates that the response data returned by the `create_product` function should adhere to
-    the structure defined by the `ProductResponse` model.
+    Will be used to validate and serialize the `Out data` of the route.
+    It indicates that the Out data returned by the `create_product` function should adhere to
+    the structure defined by the `ProductOut` model.
 
     FastAPI will automatically validate the `response data` against this schema and generate the appropriate
     documentation for the API endpoint.
@@ -52,8 +52,8 @@ class ProductResponse(BaseModel):
     description: str | None
     status: str | None
 
-    options: list[OptionResponse] | None
-    variants: list[VariantResponse] | None
+    options: list[OptionOut] | None
+    variants: list[VariantOut] | None
     created_at: str
     updated_at: str | None
     published_at: str | None
@@ -62,7 +62,7 @@ class ProductResponse(BaseModel):
         from_attributes = True
 
 
-class ProductRequest(BaseModel):
+class CreateProductIn(BaseModel):
     """
     Input validation:
     This parameter is used to indicate that the `create_product` function expects an input object of
@@ -74,7 +74,47 @@ class ProductRequest(BaseModel):
     description: str | None = None
     status: str | None = None
 
-    options: list[OptionRequest] | None = None
+    options: list[OptionIn] | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class RetrieveProductOut(BaseModel):
+    product: CreateProductOut
+
+
+class ListProductIn(BaseModel):
+    ...
+
+
+class ListProduct(BaseModel):
+    product_id: int
+    product_name: Annotated[str, Query(max_length=255)]
+    price: int | float
+    stock: int
+    # discount
+    # image
+
+
+class ListProductOut(BaseModel):
+    products: list[ListProduct]
+
+
+class UpdateProductIn(BaseModel):
+    """
+    Input validation:
+    This parameter is used to indicate that the `create_product` function expects an input object of
+    type `ProductValidate`.
+    It serves as the `input validation` mechanism. When a request is made to this route, FastAPI will automatically
+    parse and validate the request data using the schema defined by `ProductValidate`.
+    """
+    product_name: Annotated[str, Query(max_length=255)]
+
+    # description: str | None = None
+    # status: str | None = None
+    #
+    # options: list[OptionIn] | None = None
 
     class Config:
         from_attributes = True
