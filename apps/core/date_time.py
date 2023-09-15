@@ -1,7 +1,10 @@
+from datetime import datetime
+
+
 class DateTime:
 
     @classmethod
-    def string(cls, obj):
+    def string(cls, obj: datetime):
         """
         Convert a datetime object to a formatted string.
 
@@ -17,4 +20,9 @@ class DateTime:
         str or None: A formatted string representation of the datetime object,
                      or None if the input is None or evaluates to False.
         """
+
         return obj.strftime('%Y-%m-%d %H:%M:%S') if obj else None
+
+    @classmethod
+    def now(cls):
+        return datetime.strptime(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
