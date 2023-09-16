@@ -7,29 +7,36 @@ from config.database import DatabaseManager
 
 class ProductService:
     product = None
-    options = []
-    options_data = []
-    variants = []
+    price: int | float
+    stock: int
+    options: list = []
+    options_data: list = []
+    variants: list = []
 
     @classmethod
-    def create_product(cls, data):
-
-        try:
-            # pop options, because the Product model doesn't have `options` field
-            cls.options_data = data.pop('options')
-        except KeyError:
-            ...
+    def create_product(cls, data: dict):
 
         # create a product
-        cls.product = Product.create(**data)
+        cls._create_product(data)
 
         # create product options
+        # TODO dont need to return options
         cls.options = cls.__create_product_options()
 
         # create product variants
+        # TODO dont need to return variants
         cls.variants = cls.__create_variants()
 
         return cls.retrieve_product(cls.product.id)
+
+    @classmethod
+    def _create_product(cls, data):
+        cls.price = data.pop('price', 0)
+        cls.stock = data.pop('stock', 0)
+        cls.options_data = data.pop('options', [])
+
+        # create a product
+        cls.product = Product.create(**data)
 
     @classmethod
     def __create_product_options(cls):
@@ -98,14 +105,20 @@ class ProductService:
                     product_id=cls.product.id,
                     option1=option1,
                     option2=option2,
-                    option3=option3
+                    option3=option3,
+                    price=cls.price,
+                    stock=cls.stock
                 )
                 # (109, 102, 100)
                 # set each value to an option and set none if it dosnt exist
                 # ProductVariant.create(product_id=cls.product.id, )
         else:
             # set a default variant (simple product)
-            ProductVariant.create(product_id=cls.product.id)
+            ProductVariant.create(
+                product_id=cls.product.id,
+                price=cls.price,
+                stock=cls.stock
+            )
 
         return cls.retrieve_variants(cls.product.id)
 

@@ -73,6 +73,8 @@ class CreateProductIn(BaseModel):
     product_name: Annotated[str, Query(max_length=255)]
     description: str | None = None
     status: str | None = None
+    price: int | float = 0
+    stock: int = 0
 
     options: list[OptionIn] | None = None
 

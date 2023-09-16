@@ -15,7 +15,6 @@ router = APIRouter(
     response_model=schemas.CreateProductOut
 )
 async def create_product(product: schemas.CreateProductIn):
-    # TODO add price and stock to products
     # TODO add media to products
     return ProductService.create_product(product.model_dump())
 

@@ -1,5 +1,6 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, Text, Enum, DateTime, func, Numeric
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, Text, DateTime, func, Numeric
 from sqlalchemy.orm import relationship
+
 from config.database import FastModel
 
 
@@ -28,6 +29,8 @@ class ProductOption(FastModel):
     __tablename__ = "product_options"
 
     id = Column(Integer, primary_key=True)
+
+    # The foreign key referencing the parent product.
     product_id = Column(Integer, ForeignKey("products.id"))
     option_name = Column(String(255), nullable=False)
 
