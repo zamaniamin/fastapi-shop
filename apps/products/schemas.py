@@ -4,8 +4,9 @@ from fastapi import Query
 from pydantic import BaseModel
 
 """
-Together, these two aspects ensure that your API endpoint follows a clear structure for both input and output,
-provides automatic validation, and generates accurate documentation.
+---------------------------------------
+--------------- Variant ---------------
+---------------------------------------
 """
 
 
@@ -21,7 +22,14 @@ class VariantOut(BaseModel):
     updated_at: str | None
 
 
-class ItemOut(BaseModel):
+"""
+---------------------------------------
+--------------- Options ---------------
+---------------------------------------
+"""
+
+
+class OptionItemOut(BaseModel):
     item_id: int
     item_name: str
 
@@ -29,12 +37,19 @@ class ItemOut(BaseModel):
 class OptionOut(BaseModel):
     options_id: int
     option_name: str
-    items: list[ItemOut]
+    items: list[OptionItemOut]
 
 
 class OptionIn(BaseModel):
     option_name: str
     items: list[str]
+
+
+"""
+---------------------------------------
+---------------- Media ----------------
+---------------------------------------
+"""
 
 
 class ProductMediaSchema(BaseModel):
@@ -55,16 +70,14 @@ class RetrieveProductMediaOut(BaseModel):
     media: list[ProductMediaSchema] | None = None
 
 
-class CreateProductOut(BaseModel):
-    """
-    Output validation:
-    Will be used to validate and serialize the `Out data` of the route.
-    It indicates that the Out data returned by the `create_product` function should adhere to
-    the structure defined by the `ProductOut` model.
+"""
+---------------------------------------
+--------------- Product ---------------
+---------------------------------------
+"""
 
-    FastAPI will automatically validate the `response data` against this schema and generate the appropriate
-    documentation for the API endpoint.
-    """
+
+class CreateProductOut(BaseModel):
     product_id: int
     product_name: Annotated[str, Query(max_length=255)]
     description: str | None
@@ -83,14 +96,6 @@ class CreateProductOut(BaseModel):
 
 
 class CreateProductIn(BaseModel):
-    """
-    Input validation:
-    This parameter is used to indicate that the `create_product` function expects an input object of
-    type `ProductValidate`.
-    It serves as the `input validation` mechanism. When a request is made to this route, FastAPI will automatically
-    parse and validate the request data using the schema defined by `ProductValidate`.
-    """
-
     # TODO validate media
     product_name: Annotated[str, Query(max_length=255)]
     description: str | None = None
