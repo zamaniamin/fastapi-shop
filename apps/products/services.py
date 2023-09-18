@@ -1,7 +1,8 @@
 from itertools import product as options_combination
 
 from apps.core.date_time import DateTime
-from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant
+from apps.core.services.media import MediaService
+from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
 from config.database import DatabaseManager
 
 
@@ -176,6 +177,7 @@ class ProductService:
             cls.product = Product.get_or_404(product_id)
             cls.options = cls.retrieve_options(product_id)
             cls.variants = cls.retrieve_variants(product_id)
+            # TODO retrieve media
 
         return {
             'product_id': cls.product.id,
@@ -214,3 +216,42 @@ class ProductService:
             product_list.append(cls.retrieve_product(product_id))
 
         return product_list
+
+    @classmethod
+    def create_media(cls, product_id, alt, files):
+
+        # first check product exist
+        Product.get_or_404(product_id)
+
+        media_service = MediaService(parent_directory="media/products", sub_directory=product_id)
+
+        for file in files:
+            file_name, file_extension = media_service.save_file(file)
+            ProductMedia.create(
+                product_id=product_id,
+                alt=alt,
+                src=file_name,
+                type=file_extension
+            )
+        return cls.retrieve_media(product_id)
+
+    @classmethod
+    def retrieve_media(cls, product_id):
+        """
+        Get all media of a product
+        """
+
+        media_list = []
+        product_media: list[ProductMedia] = ProductMedia.filter(ProductMedia.product_id == product_id).all()
+        for media in product_media:
+            media_list.append(
+                {
+                    "media_id": media.id,
+                    "product_id": media.product_id,
+                    "alt": media.alt,
+                    "src": media.src,
+                    "type": media.type,
+                    "created_at": DateTime.string(media.created_at),
+                    "updated_at": DateTime.string(media.updated_at)
+                })
+        return media_list

@@ -70,6 +70,8 @@ class CreateProductIn(BaseModel):
     It serves as the `input validation` mechanism. When a request is made to this route, FastAPI will automatically
     parse and validate the request data using the schema defined by `ProductValidate`.
     """
+
+    # TODO validate media
     product_name: Annotated[str, Query(max_length=255)]
     description: str | None = None
     status: str | None = None
@@ -104,13 +106,6 @@ class ListProductOut(BaseModel):
 
 
 class UpdateProductIn(BaseModel):
-    """
-    Input validation:
-    This parameter is used to indicate that the `create_product` function expects an input object of
-    type `ProductValidate`.
-    It serves as the `input validation` mechanism. When a request is made to this route, FastAPI will automatically
-    parse and validate the request data using the schema defined by `ProductValidate`.
-    """
     product_name: Annotated[str, Query(max_length=255)]
 
     # description: str | None = None
@@ -120,3 +115,17 @@ class UpdateProductIn(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ProductMediaSchema(BaseModel):
+    media_id: int
+    product_id: int
+    alt: str
+    src: str
+    type: str
+    updated_at: str | None
+    created_at: str
+
+
+class CreateProductMediaOut(BaseModel):
+    media: list[ProductMediaSchema]
