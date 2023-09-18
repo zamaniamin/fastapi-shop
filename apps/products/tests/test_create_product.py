@@ -47,11 +47,11 @@ class TestCreateProduct(BaseTestCase):
         """
 
         payload = {
-            "product_name": "Test Product",
-            "description": "<p>test description</p>",
-            "status": "active",
-            "price": 25,
-            "stock": 3
+            'product_name': 'Test Product',
+            'description': '<p>test description</p>',
+            'status': 'active',
+            'price': 25,
+            'stock': 3
         }
 
         response = self.client.post(self.product_endpoint, json=payload)
@@ -62,10 +62,12 @@ class TestCreateProduct(BaseTestCase):
         assert expected['product_name'] == 'Test Product'
         assert expected['description'] == '<p>test description</p>'
         assert expected['status'] == 'active'
-        assert expected['options'] is None
         self.assert_datetime_format(expected['created_at'])
         assert expected['updated_at'] is None
         assert expected['published_at'] is None
+
+        assert expected['options'] is None
+        assert expected['media'] is None
 
         # Check if "variants" is a list
         assert isinstance(expected['variants'], list)
@@ -74,17 +76,15 @@ class TestCreateProduct(BaseTestCase):
         assert len(expected['variants']) == 1
 
         variant = expected['variants'][0]
-        assert variant["variant_id"] > 0
-        assert variant["product_id"] > 0
-        assert variant["price"] == 25
-        assert variant["stock"] == 3
-        assert variant["option1"] is None
-        assert variant["option2"] is None
-        assert variant["option3"] is None
+        assert variant['variant_id'] > 0
+        assert variant['product_id'] > 0
+        assert variant['price'] == 25
+        assert variant['stock'] == 3
+        assert variant['option1'] is None
+        assert variant['option2'] is None
+        assert variant['option3'] is None
         self.assert_datetime_format(expected['created_at'])
-        assert variant["updated_at"] is None
-
-        # TODO expect media
+        assert variant['updated_at'] is None
 
     def test_create_variable_product(self):
         payload = {

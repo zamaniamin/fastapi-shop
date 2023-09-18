@@ -37,6 +37,24 @@ class OptionIn(BaseModel):
     items: list[str]
 
 
+class ProductMediaSchema(BaseModel):
+    media_id: int
+    product_id: int
+    alt: str
+    src: str
+    type: str
+    updated_at: str | None
+    created_at: str
+
+
+class CreateProductMediaOut(BaseModel):
+    media: list[ProductMediaSchema]
+
+
+class RetrieveProductMediaOut(BaseModel):
+    media: list[ProductMediaSchema] | None = None
+
+
 class CreateProductOut(BaseModel):
     """
     Output validation:
@@ -52,11 +70,13 @@ class CreateProductOut(BaseModel):
     description: str | None
     status: str | None
 
-    options: list[OptionOut] | None
-    variants: list[VariantOut] | None
     created_at: str
     updated_at: str | None
     published_at: str | None
+
+    options: list[OptionOut] | None
+    variants: list[VariantOut] | None
+    media: list[ProductMediaSchema] | None = None
 
     class Config:
         from_attributes = True
@@ -115,17 +135,3 @@ class UpdateProductIn(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class ProductMediaSchema(BaseModel):
-    media_id: int
-    product_id: int
-    alt: str
-    src: str
-    type: str
-    updated_at: str | None
-    created_at: str
-
-
-class CreateProductMediaOut(BaseModel):
-    media: list[ProductMediaSchema]

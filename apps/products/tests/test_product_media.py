@@ -18,7 +18,7 @@ class TestProductMedia(BaseTestCase):
     product_endpoint = '/products/'
 
     @classmethod
-    def setup_method(cls):
+    def setup_class(cls):
         cls.client = TestClient(app)
         # Initialize the test database and session before the test class starts
         DatabaseManager.create_test_database()
@@ -31,12 +31,20 @@ class TestProductMedia(BaseTestCase):
 
         ProductService.create_product(payload)
 
+        payload = {
+            "product_name": "Test Product",
+            "description": "<p>test description</p>",
+            "status": "active"
+        }
+
+        ProductService.create_product(payload)
+
     @classmethod
-    def teardown_method(cls):
+    def teardown_class(cls):
         # Drop the test database after all tests in the class have finished
         DatabaseManager.drop_all_tables()
 
-    def test_create_product_media_(self):
+    def test_create_product_media(self):
         # TODO should upload to the `media` directory in the root of project, not in current directory
 
         # Generate sample image data
@@ -79,3 +87,14 @@ class TestProductMedia(BaseTestCase):
             assert media["type"] == 'jpg'
             self.assert_datetime_format(media['created_at'])
             assert media["updated_at"] is None
+
+    def test_retrieve_product_media(self):
+        """
+        Test retrieve media for a product
+        """
+
+        response = self.client.get(f"{self.product_endpoint}{1}/{'media'}")
+        assert response.status_code == status.HTTP_200_OK
+
+        response = self.client.get(f"{self.product_endpoint}{2}/{'media'}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT

@@ -13,6 +13,7 @@ class ProductService:
     options: list = []
     options_data: list = []
     variants: list = []
+    media: list | None = None
 
     @classmethod
     def create_product(cls, data: dict):
@@ -177,7 +178,7 @@ class ProductService:
             cls.product = Product.get_or_404(product_id)
             cls.options = cls.retrieve_options(product_id)
             cls.variants = cls.retrieve_variants(product_id)
-            # TODO retrieve media
+            cls.media = cls.retrieve_media(product_id)
 
         return {
             'product_id': cls.product.id,
@@ -188,7 +189,8 @@ class ProductService:
             'updated_at': DateTime.string(cls.product.updated_at),
             'published_at': DateTime.string(cls.product.published_at),
             'options': cls.options,
-            'variants': cls.variants
+            'variants': cls.variants,
+            'media': cls.media
         }
 
     @classmethod
@@ -215,6 +217,7 @@ class ProductService:
         for product_id in products:
             product_list.append(cls.retrieve_product(product_id))
 
+        # TODO return a message if product list is empty
         return product_list
 
     @classmethod
@@ -254,4 +257,7 @@ class ProductService:
                     "created_at": DateTime.string(media.created_at),
                     "updated_at": DateTime.string(media.updated_at)
                 })
-        return media_list
+        if media_list:
+            return media_list
+        else:
+            return None
