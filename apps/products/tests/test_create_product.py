@@ -84,6 +84,8 @@ class TestCreateProduct(BaseTestCase):
         self.assert_datetime_format(expected['created_at'])
         assert variant["updated_at"] is None
 
+        # TODO expect media
+
     def test_create_variable_product(self):
         payload = {
             "product_name": "Test Product",
