@@ -70,3 +70,21 @@ class ProductVariant(FastModel):
     # option3 = relationship("ProductOptionItem", foreign_keys=[option3_id])
 
     product = relationship("Product", back_populates="variants")
+
+
+class ProductMedia(FastModel):
+    __tablename__ = "product_media"
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
+
+    # TODO attach image to product variants (optional)
+    # variant_ids = Column(ARRAY(Integer))
+
+    # TODO if set the position to `1` it means this is the main image
+    # position = Column(Integer)
+    alt = Column(String, nullable=True)
+    src = Column(String)
+    type = Column(String)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
