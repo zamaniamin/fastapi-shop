@@ -16,12 +16,16 @@ router = APIRouter(
 """
 
 
+# TODO update price and stock for each variant
+
+
 @router.post(
     '/',
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.CreateProductOut
 )
 async def create_product(product: schemas.CreateProductIn):
+    # TODO set product `status` to `draft` by default if it not set or it is not one of (active,draft,archive)
     return {'product': ProductService.create_product(product.model_dump())}
 
 

@@ -60,6 +60,7 @@ class TestCreateProduct(BaseTestCase):
         expected = response.json()
         assert isinstance(expected['product'], dict)
         expected = expected['product']
+
         assert expected['product_id'] > 0
         assert expected['product_name'] == 'Test Product'
         assert expected['description'] == '<p>test description</p>'
@@ -93,6 +94,8 @@ class TestCreateProduct(BaseTestCase):
             "product_name": "Test Product",
             "description": "test description",
             "status": "active",
+            'price': 25,
+            'stock': 3,
             "options": [
                 {
                     "option_name": "color",
