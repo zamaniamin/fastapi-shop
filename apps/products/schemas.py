@@ -13,7 +13,7 @@ from pydantic import BaseModel
 class VariantOut(BaseModel):
     variant_id: int
     product_id: int
-    price: int | float
+    price: float
     stock: int
     option1: int | None
     option2: int | None
@@ -104,7 +104,7 @@ class CreateProductIn(BaseModel):
     product_name: Annotated[str, Query(max_length=255)]
     description: str | None = None
     status: str | None = None
-    price: int | float = 0
+    price: float = 0
     stock: int = 0
 
     options: list[OptionIn] | None = None
