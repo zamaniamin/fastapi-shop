@@ -77,7 +77,7 @@ class RetrieveProductMediaOut(BaseModel):
 """
 
 
-class CreateProductOut(BaseModel):
+class ProductSchema(BaseModel):
     product_id: int
     product_name: Annotated[str, Query(max_length=255)]
     description: str | None
@@ -90,6 +90,10 @@ class CreateProductOut(BaseModel):
     options: list[OptionOut] | None
     variants: list[VariantOut] | None
     media: list[ProductMediaSchema] | None = None
+
+
+class CreateProductOut(BaseModel):
+    product: ProductSchema
 
     class Config:
         from_attributes = True
@@ -110,7 +114,7 @@ class CreateProductIn(BaseModel):
 
 
 class RetrieveProductOut(BaseModel):
-    product: CreateProductOut
+    product: ProductSchema
 
 
 class ListProductIn(BaseModel):
