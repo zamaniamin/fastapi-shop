@@ -32,10 +32,16 @@ class ProductService:
         return cls.retrieve_product(cls.product.id)
 
     @classmethod
-    def _create_product(cls, data):
+    def _create_product(cls, data: dict):
         cls.price = data.pop('price', 0)
         cls.stock = data.pop('stock', 0)
         cls.options_data = data.pop('options', [])
+
+        if 'status' in data:
+            # Check if the value is one of the specified values, if not, set it to 'draft'
+            valid_statuses = ['active', 'archived', 'draft']
+            if data['status'] not in valid_statuses:
+                data['status'] = 'draft'
 
         # create a product
         cls.product = Product.create(**data)
