@@ -88,13 +88,13 @@ class TestProductMedia(BaseTestCase):
             self.assert_datetime_format(media['created_at'])
             assert media["updated_at"] is None
 
+        response = self.client.get(f"{self.product_endpoint}{1}/{'media'}")
+        assert response.status_code == status.HTTP_200_OK
+
     def test_retrieve_product_media(self):
         """
         Test retrieve media for a product
         """
-
-        response = self.client.get(f"{self.product_endpoint}{1}/{'media'}")
-        assert response.status_code == status.HTTP_200_OK
 
         response = self.client.get(f"{self.product_endpoint}{2}/{'media'}")
         assert response.status_code == status.HTTP_204_NO_CONTENT
