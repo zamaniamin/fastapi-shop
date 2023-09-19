@@ -174,13 +174,13 @@ class ProductService:
 
     @classmethod
     def retrieve_product(cls, product_id):
-        if not cls.product:
-            cls.product = Product.get_or_404(product_id)
-            cls.options = cls.retrieve_options(product_id)
-            cls.variants = cls.retrieve_variants(product_id)
-            cls.media = cls.retrieve_media(product_id)
+        # if not cls.product:
+        cls.product = Product.get_or_404(product_id)
+        cls.options = cls.retrieve_options(product_id)
+        cls.variants = cls.retrieve_variants(product_id)
+        cls.media = cls.retrieve_media(product_id)
 
-        return {
+        product = {
             'product_id': cls.product.id,
             'product_name': cls.product.product_name,
             'description': cls.product.description,
@@ -192,6 +192,7 @@ class ProductService:
             'variants': cls.variants,
             'media': cls.media
         }
+        return product
 
     @classmethod
     def update_product(cls, product_id, **kwargs):
@@ -243,7 +244,7 @@ class ProductService:
         """
         Get all media of a product
         """
-
+        # TODO show the link to media in response format
         media_list = []
         product_media: list[ProductMedia] = ProductMedia.filter(ProductMedia.product_id == product_id).all()
         for media in product_media:
