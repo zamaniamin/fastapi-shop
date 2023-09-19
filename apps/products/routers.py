@@ -22,7 +22,7 @@ router = APIRouter(
     response_model=schemas.CreateProductOut
 )
 async def create_product(product: schemas.CreateProductIn):
-    return ProductService.create_product(product.model_dump())
+    return {'product': ProductService.create_product(product.model_dump())}
 
 
 @router.get(
