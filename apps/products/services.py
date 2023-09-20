@@ -16,7 +16,7 @@ class ProductService:
     media: list | None = None
 
     @classmethod
-    def create_product(cls, data: dict):
+    def create_product(cls, data: dict, get_obj: bool = False):
 
         # create a product
         cls._create_product(data)
@@ -29,6 +29,8 @@ class ProductService:
         # TODO dont need to return variants
         cls.variants = cls.__create_variants()
 
+        if get_obj:
+            return cls.product
         return cls.retrieve_product(cls.product.id)
 
     @classmethod
