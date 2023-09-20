@@ -79,6 +79,7 @@ async def create_product_media(
         alt: str = Form(),
         files: list[UploadFile] = File()
 ):
+    # TODO make `alt` optional
     media = ProductService.create_media(product_id=product_id, alt=alt, files=files)
     return {'media': media}
 
