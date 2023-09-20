@@ -84,6 +84,23 @@ class FakeProduct:
         if media:
             return payload, product
 
+    @classmethod
+    def populate_variable_product_with_media(cls):
+        payload: dict
+        product: Product
+
+        # --- create a product ---
+        payload, product = cls.populate_variable_product()
+        payload['alt'] = 'Test Alt Text'
+
+        # --- create two image file ---
+        files = FakeMedia.populate_media_files(upload_file=True)
+
+        # --- attach media to product ---
+        media = ProductService.create_media(product.id, payload['alt'], files)
+        if media:
+            return payload, product
+
 
 class FakeMedia:
     @classmethod

@@ -8,6 +8,7 @@ from config.database import DatabaseManager
 
 
 class ProductMediaTestBase(BaseTestCase):
+    product_endpoint = '/products/'
     product_media_endpoint = '/products/media/'
 
     @classmethod
@@ -35,10 +36,8 @@ class TestCreateProductMedia(ProductMediaTestBase):
         # --- create a product ---
         product_payload, product = FakeProduct.populate_simple_product()
 
-        # --- create two image file ---
-        files = FakeMedia.populate_media_files()
-
         # --- upload files ----
+        files = FakeMedia.populate_media_files()
         media_payload = {
             'product_id': product.id,
             'alt': 'Test Alt Text'
@@ -46,34 +45,67 @@ class TestCreateProductMedia(ProductMediaTestBase):
         response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
         assert response.status_code == status.HTTP_201_CREATED
 
+        # --- response data ---
         expected = response.json()
+
+        # --- media ---
         assert "media" in expected
         media_list = expected["media"]
         assert isinstance(media_list, list)
-
         for media in media_list:
             assert media["media_id"] > 0
             assert media["product_id"] == product.id
-            assert media["alt"] == 'Test Alt Text'
+            assert media["alt"] == media_payload['alt']
             assert "src" in media
             assert media["type"] == 'jpg'
-            self.assert_datetime_format(media['created_at'])
             assert media["updated_at"] is None
-
-        # response = self.client.get(f"{self.product_media_endpoint}{1}/{'media'}")
-        # assert response.status_code == status.HTTP_200_OK
-
-    def test_retrieve_product_media(self):
-        """
-        Test retrieve media for a product
-        """
-
-        # response = self.client.get(f"{self.product_media_endpoint}{2}/{'media'}")
-        # assert response.status_code == status.HTTP_204_NO_CONTENT
+            self.assert_datetime_format(media['created_at'])
 
 
 class TestRetrieveProductMedia(ProductMediaTestBase):
-    ...
+    """
+    Test retrieve product-media on the multi scenario
+    """
+
+    def test_list_product_media(self):
+        """
+        Test retrieve a list of all media of a product.
+        """
+
+        # --- create a product ---
+        payload, product = FakeProduct.populate_simple_product_with_media()
+
+        # --- request ---
+        response = self.client.get(f"{self.product_endpoint}{product.id}/{'media'}")
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- response data ---
+        expected = response.json()
+
+        # --- media ---
+        assert "media" in expected
+        media_list = expected["media"]
+        assert isinstance(media_list, list)
+        for media in media_list:
+            assert media["media_id"] > 0
+            assert media["product_id"] == product.id
+            assert media["alt"] == payload['alt']
+            assert "src" in media
+            assert media["type"] == 'jpg'
+            assert media["updated_at"] is None
+            self.assert_datetime_format(media['created_at'])
+
+    def test_list_product_media_when_empty(self):
+        """
+        Test retrieving media for a product when the product has no media.
+        """
+
+        # --- create a product ---
+        payload, product = FakeProduct.populate_simple_product()
+
+        # --- request ---
+        response = self.client.get(f"{self.product_endpoint}{product.id}/{'media'}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 class TestUpdateProductMedia(ProductMediaTestBase):

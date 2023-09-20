@@ -5,7 +5,6 @@ from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
 from apps.products.models import Product
-from apps.products.services import ProductService
 from config.database import DatabaseManager
 
 
@@ -275,10 +274,12 @@ class TestRetrieveProduct(ProductTestBase):
         response = self.client.get(f'{self.product_endpoint}{product.id}')
         assert response.status_code == status.HTTP_200_OK
 
+        # --- response data ---
         expected = response.json()
         assert isinstance(expected['product'], dict)
         expected = expected['product']
 
+        # --- product ---
         assert expected['product_id'] == product.id
         assert expected['product_name'] == payload['product_name']
         assert expected['description'] == payload['description']
@@ -287,16 +288,18 @@ class TestRetrieveProduct(ProductTestBase):
         assert expected['published_at'] is None
         self.assert_datetime_format(expected['created_at'])
 
+        # --- options & media ---
         assert expected['options'] is None
         assert expected['media'] is None
 
+        # --- variant ---
         assert isinstance(expected['variants'], list)
         assert len(expected['variants']) == 1
         variant = expected['variants'][0]
         assert variant['variant_id'] > 0
         assert variant['product_id'] == product.id
-        assert variant['price'] == 25
-        assert variant['stock'] == 3
+        assert variant['price'] == payload['price']
+        assert variant['stock'] == payload['stock']
         assert variant['option1'] is None
         assert variant['option2'] is None
         assert variant['option3'] is None
@@ -313,43 +316,22 @@ class TestRetrieveProduct(ProductTestBase):
         """
 
         # --- create a product ---
-        product_data = {
-            "product_name": "test variable product",
-            "description": "<p>test description</p>",
-            "status": "active",
-            "price": 25,
-            "stock": 3,
-            "options": [
-                {
-                    "option_name": "color",
-                    "items": ["red", "green"]
-                },
-                {
-                    "option_name": "material",
-                    "items": ["Cotton", "Nylon"]
-                },
-                {
-                    "option_name": "size",
-                    "items": ["M", "S"]
-                }
-            ]
-        }
-        product = ProductService.create_product(product_data, get_obj=True)
+        payload, product = FakeProduct.populate_variable_product()
 
         # --- retrieve product ---
         response = self.client.get(f"{self.product_endpoint}{product.id}")
         assert response.status_code == status.HTTP_200_OK
 
-        # --- get response data ---
+        # --- response data ---
         expected = response.json()
         assert isinstance(expected['product'], dict)
         expected = expected['product']
 
         # --- product ---
         assert expected['product_id'] == product.id
-        assert expected['product_name'] == product_data['product_name']
-        assert expected['description'] == product_data['description']
-        assert expected['status'] == product_data['status']
+        assert expected['product_name'] == payload['product_name']
+        assert expected['description'] == payload['description']
+        assert expected['status'] == payload['status']
         assert expected['updated_at'] is None
         assert expected['published_at'] is None
         self.assert_datetime_format(expected['created_at'])
@@ -390,19 +372,26 @@ class TestRetrieveProduct(ProductTestBase):
         # --- create a product ---
         payload, product = FakeProduct.populate_simple_product_with_media()
 
-        # --- retrieve media ---
+        # --- retrieve product ---
         response = self.client.get(f"{self.product_endpoint}{product.id}")
         assert response.status_code == status.HTTP_200_OK
 
-        expected = response.json().get('product')
+        # --- response data ---
+        expected = response.json()
+        assert isinstance(expected['product'], dict)
+        expected = expected['product']
+
+        # --- product ---
         assert expected['product_id'] == product.id
         assert expected['product_name'] == payload['product_name']
         assert expected['description'] == payload['description']
         assert expected['status'] == payload['status']
         assert expected['updated_at'] is None
         assert expected['published_at'] is None
-        assert expected['options'] is None
         self.assert_datetime_format(expected['created_at'])
+
+        # --- options ---
+        assert expected['options'] is None
 
         # --- variant ---
         assert isinstance(expected['variants'], list)
@@ -417,6 +406,71 @@ class TestRetrieveProduct(ProductTestBase):
         assert variant['option3'] is None
         assert variant['updated_at'] is None
         self.assert_datetime_format(expected['created_at'])
+
+        # --- media ---
+        assert isinstance(expected['media'], list)
+        assert len(expected['media']) == 2
+        media = expected['media']
+        for media_item in media:
+            assert media_item["media_id"] > 0
+            assert media_item["product_id"] > 0
+            assert media_item["alt"] == payload['alt']
+            assert media_item["src"] is not None
+            assert media_item["type"] is not None
+            assert media_item["updated_at"] is None
+            self.assert_datetime_format(media_item['created_at'])
+
+    def test_retrieve_variable_product_with_media(self):
+        """
+        Test retrieve a variable-product with media files
+        """
+
+        # --- create a product ---
+        payload, product = FakeProduct.populate_variable_product_with_media()
+
+        # --- retrieve product ---
+        response = self.client.get(f"{self.product_endpoint}{product.id}")
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- response data ---
+        expected = response.json()
+        assert isinstance(expected['product'], dict)
+        expected = expected['product']
+
+        # --- product ---
+        assert expected['product_id'] == product.id
+        assert expected['product_name'] == payload['product_name']
+        assert expected['description'] == payload['description']
+        assert expected['status'] == payload['status']
+        assert expected['updated_at'] is None
+        assert expected['published_at'] is None
+        self.assert_datetime_format(expected['created_at'])
+
+        # --- options ---
+        assert isinstance(expected['options'], list)
+        assert len(expected['options']) == 3
+        for option in expected['options']:
+            assert isinstance(option["options_id"], int)
+            assert isinstance(option["option_name"], str)
+            assert isinstance(option['items'], list)
+            assert len(option['items']) == 2
+            for item in option['items']:
+                assert isinstance(item["item_id"], int)
+                assert isinstance(item["item_name"], str)
+
+        # --- variants ---
+        assert isinstance(expected['variants'], list)
+        assert len(expected['variants']) == 8
+        for variant in expected['variants']:
+            assert isinstance(variant["variant_id"], int)
+            assert variant["product_id"] == product.id
+            assert isinstance(variant['price'], float)
+            assert isinstance(variant['stock'], int)
+            assert isinstance(variant['option1'], int)
+            assert isinstance(variant['option2'], int)
+            assert isinstance(variant['option3'], int)
+            assert variant['updated_at'] is None
+            self.assert_datetime_format(variant['created_at'])
 
         # --- media ---
         assert isinstance(expected['media'], list)

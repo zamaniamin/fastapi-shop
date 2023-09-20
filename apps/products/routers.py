@@ -89,7 +89,7 @@ async def create_product_media(
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductMediaOut,
     summary="Retrieve product's media",
-    description="Retrieve a list of all Product's Media."
+    description="Retrieve a list of all media of a product."
 )
 async def list_product_media(product_id: int):
     media = ProductService.retrieve_media(product_id=product_id)
