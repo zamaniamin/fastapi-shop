@@ -1,34 +1,144 @@
 import importlib
 import os
+from operator import and_
 from pathlib import Path
 
-from sqlalchemy import create_engine, select, and_, URL
-from sqlalchemy.orm import sessionmaker, declarative_base
-from . import settings
+from fastapi import HTTPException
+from sqlalchemy import create_engine, URL, MetaData
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import sessionmaker, Session, Query
 
-# init database
-url = URL.create(**settings.DATABASES)
-engine = create_engine(url)
+from . import settings
 
-# When working with the ORM, the session object is our main access point to the database
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+testing = False
+
+
+class DatabaseManager:
+    """
+    A utility class for managing database operations using SQLAlchemy.
+
+    The DatabaseManager simplifies the process of initializing and managing database connections, creating database
+    tables based on SQLAlchemy models, and providing a session for performing database operations.
+
+    Attributes:
+        engine (Engine): The SQLAlchemy engine for the configured database.
+        session (Session): The SQLAlchemy session for database interactions.
+
+    Methods:
+        __init__():
+            Initializes the DatabaseManager by creating an SQLAlchemy engine and a session based on the
+            specified database configuration from the 'settings' module.
+
+        create_database_tables():
+            Detects 'models.py' files in subdirectories of the 'apps' directory and creates corresponding
+            database tables based on SQLAlchemy models.
+
+    Example Usage:
+        db_manager = DatabaseManager()
+
+        # Create database tables for all detected models
+        db_manager.create_database_tables()
+
+    Example Usage2:
+        DatabaseManager().create_database_tables()
+    """
+    engine: create_engine = None
+    session: Session = None
+
+    @classmethod
+    def __init__(cls):
+        """
+        Initializes the DatabaseManager.
+
+        This method creates an SQLAlchemy engine and a session based on the specified database configuration
+        from the 'settings' module.
+        """
+        global testing  # Access the global testing flag
+        db_config = settings.DATABASES.copy()
+        if testing:
+            db_config["database"] = "test_" + db_config["database"]
+
+        if db_config["drivername"] == "sqlite":
+            project_root = Path(__file__).parent.parent  # Assuming this is where your models are located
+            db_config["database"] = os.path.join(project_root, db_config["database"])
+
+            url = URL.create(**db_config)
+            cls.engine = create_engine(url, connect_args={"check_same_thread": False})
+        else:
+            # for postgres
+            cls.engine = create_engine(URL.create(**db_config))
+
+        session = sessionmaker(autocommit=False, autoflush=False, bind=cls.engine)
+        cls.session = session()
+
+    @classmethod
+    def create_test_database(cls):
+        """
+        Create and configure a test database for use in tests.
+        """
+
+        # Set the testing flag to True
+        global testing
+        testing = True
+
+        # Reinitialize the DatabaseManager for testing
+        cls.__init__()
+        DatabaseManager.create_database_tables()
+
+    @classmethod
+    def drop_all_tables(cls):
+        """
+        Drop all tables in the current database.
+        """
+        # TODO drop tables for postgres too
+        if cls.engine:
+            metadata = MetaData()
+            metadata.reflect(bind=cls.engine)
+            for table_name, table in metadata.tables.items():
+                table.drop(cls.engine)
+
+    @classmethod
+    def create_database_tables(cls):
+        """
+        Create database tables based on SQLAlchemy models.
+
+        This method detects 'models.py' files in subdirectories of the 'apps'
+        directory and creates corresponding database tables based on SQLAlchemy
+        models defined within those files.
+
+        Returns:
+            None
+        """
+        script_directory = os.path.dirname(os.path.abspath(__file__))
+        project_root = Path(script_directory).parent
+        apps_directory = project_root / "apps"
+
+        for app_dir in apps_directory.iterdir():
+            if app_dir.is_dir():
+                models_file = app_dir / "models.py"
+                if models_file.exists():
+                    module_name = f"apps.{app_dir.name}.models"
+                    try:
+                        module = importlib.import_module(module_name)
+                        if hasattr(module, "FastModel") and hasattr(module.FastModel, "metadata"):
+                            module.FastModel.metadata.create_all(bind=cls.engine)
+                    except ImportError:
+                        pass
 
 
 class FastModel(DeclarativeBase):
     """
-    A base class for creating ORM models with built-in CRUD operations.
+    A base class for creating SQLAlchemy ORM models with built-in CRUD operations.
 
-    This class provides a foundation for creating SQLAlchemy models with common
-    database operations like create and filter. It allows for convenient
-    interaction with the database while maintaining the session lifecycle.
+    This class provides a foundation for defining SQLAlchemy models with common
+    database operations like creating, updating, and querying records. It simplifies
+    database interactions while ensuring proper session management.
 
-    Attributes:
-        None
+    DeclarativeBase: The SQLAlchemy declarative base class from which this model inherits.
 
     Class Methods:
         __eq__(column, value):
-            Override the equality operator to create filter conditions.
+            Override the equality operator to create filter conditions for querying.
 
         create(**kwargs):
             Create a new instance of the model, add it to the database, and commit the transaction.
@@ -47,21 +157,32 @@ class FastModel(DeclarativeBase):
         active_products = Product.filter(Product.status == "active")
     """
 
+    # TODO update FastModel methods
+
     @classmethod
-    def __eq__(cls, column, value):
-        # Override the equality operator to create filter conditions
-        return column == value
+    def __eq__(cls, **kwargs):
+        filter_conditions = [getattr(cls, key) == value for key, value in kwargs.items()]
+        return and_(*filter_conditions) if filter_conditions else True
 
     @classmethod
     def create(cls, **kwargs):
+        """
+        Create a new instance of the model, add it to the database, and commit the transaction.
+
+        Args:
+            **kwargs: Keyword arguments representing model attributes.
+
+        Returns:
+            The newly created model instance.
+        """
+
         instance = cls(**kwargs)
-        session = SessionLocal()
+        session = DatabaseManager.session
         try:
-            # instance = cls(**kwargs)
             session.add(instance)
             session.commit()
             session.refresh(instance)
-        except:
+        except Exception:
             session.rollback()
             raise
         finally:
@@ -70,54 +191,71 @@ class FastModel(DeclarativeBase):
 
     @classmethod
     def filter(cls, condition):
-        Session = sessionmaker(bind=engine)
+        """
+        Retrieve records from the database based on a given filter condition.
 
-        result = None
-        with Session() as session:
-            query = session.query(cls).filter(condition)
-            result = query.all()
-        return result
+        Args:
+            condition: SQLAlchemy filter condition.
 
+        Returns:
+            List of model instances matching the filter condition.
+        """
 
-class DatabaseManager:
-    """
-    A utility class for managing database operations.
+        with DatabaseManager.session as session:
+            query: Query = session.query(cls).filter(condition)
+        return query
 
-    This class simplifies the process of creating database tables by automatically
-    detecting and creating tables based on the presence of 'models.py' files in
-    the subdirectories of the 'apps' directory. It is designed to be used in
-    conjunction with SQLAlchemy and Alembic for database management.
+    @classmethod
+    def get_or_404(cls, pk):
+        """
+        Retrieve a record by its primary key or raise a 404 HTTPException if not found.
 
-    Attributes:
-        None
+        Args:
+            pk: The primary key value of the record to retrieve.
 
-    Methods:
-        create_database_tables():
-            Detects 'models.py' files in subdirectories of the 'apps' directory
-            and creates corresponding database tables based on SQLAlchemy models.
+        Returns:
+            The model instance with the specified primary key.
 
-    Example Usage:
-        db_manager = DatabaseManager()
+        Raises:
+            HTTPException(404): If the record is not found.
+        """
+        with DatabaseManager.session as session:
+            instance = session.query(cls).get(pk)
+            if not instance:
+                raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
+        return instance
 
-        # Create database tables for all detected models
-        db_manager.create_database_tables()
-    """
+    @classmethod
+    def update(cls, pk, **kwargs):
+        """
+        Update a record by its primary key.
 
-    def __init__(self):
-        self.script_directory = os.path.dirname(os.path.abspath(__file__))
-        self.project_root = Path(self.script_directory).parent
+        Args:
+            pk: The primary key value of the record to update.
+            **kwargs: Keyword arguments representing model attributes to update.
 
-    def create_database_tables(self):
-        apps_directory = self.project_root / "apps"
+        Returns:
+            The updated model instance.
 
-        for app_dir in apps_directory.iterdir():
-            if app_dir.is_dir():
-                models_file = app_dir / "models.py"
-                if models_file.exists():
-                    module_name = f"apps.{app_dir.name}.models"
-                    try:
-                        module = importlib.import_module(module_name)
-                        if hasattr(module, "FastModel") and hasattr(module.FastModel, "metadata"):
-                            module.FastModel.metadata.create_all(bind=engine)
-                    except ImportError:
-                        pass
+        Raises:
+            HTTPException(404): If the record is not found.
+        """
+        with DatabaseManager.session as session:
+
+            # Retrieve the object by its primary key or raise a 404 exception
+            instance = session.query(cls).get(pk)
+            if not instance:
+                raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
+
+            # Update the instance attributes based on the provided kwargs
+            for key, value in kwargs.items():
+                setattr(instance, key, value)
+
+            try:
+                # Commit the transaction and refresh the instance
+                session.commit()
+                session.refresh(instance)
+            except Exception:
+                session.rollback()
+                raise
+        return instance

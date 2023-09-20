@@ -1,5 +1,6 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, Text, Enum, DateTime, func, Numeric
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, Text, DateTime, func, Numeric
 from sqlalchemy.orm import relationship
+
 from config.database import FastModel
 
 
@@ -14,8 +15,8 @@ class Product(FastModel):
     # Archived: The product is no longer being sold and isn't available to customers on sales channels and apps.
     # Draft: The product isn't ready to sell and is unavailable to customers on sales channels and apps.
 
-    status_enum = Enum('active', 'archived', 'draft', name='status_enum')
-    status = Column(status_enum, default='draft')
+    # status_enum = Enum('active', 'archived', 'draft', name='status_enum')
+    status = Column(String, default='draft')
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True)
     published_at = Column(DateTime, nullable=True)
@@ -28,6 +29,8 @@ class ProductOption(FastModel):
     __tablename__ = "product_options"
 
     id = Column(Integer, primary_key=True)
+
+    # The foreign key referencing the parent product.
     product_id = Column(Integer, ForeignKey("products.id"))
     option_name = Column(String(255), nullable=False)
 
@@ -67,3 +70,21 @@ class ProductVariant(FastModel):
     # option3 = relationship("ProductOptionItem", foreign_keys=[option3_id])
 
     product = relationship("Product", back_populates="variants")
+
+
+class ProductMedia(FastModel):
+    __tablename__ = "product_media"
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
+
+    # TODO attach image to product variants (optional)
+    # variant_ids = Column(ARRAY(Integer))
+
+    # TODO if set the position to `1` it means this is the main image
+    # position = Column(Integer)
+    alt = Column(String, nullable=True)
+    src = Column(String)
+    type = Column(String)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())

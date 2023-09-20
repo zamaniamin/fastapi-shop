@@ -1,33 +1,52 @@
-from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant
 from itertools import product as options_combination
-from config.database import SessionLocal
+
+from apps.core.date_time import DateTime
+from apps.core.services.media import MediaService
+from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
+from config.database import DatabaseManager
 
 
 class ProductService:
     product = None
-    options = []
-    options_data = []
-    variants = []
+    price: int | float
+    stock: int
+    options: list = []
+    options_data: list = []
+    variants: list = []
+    media: list | None = None
 
     @classmethod
-    def create_product(cls, data):
-
-        try:
-            # pop options, because the Product model doesn't have `options` field
-            cls.options_data = data.pop('options')
-        except KeyError:
-            ...
+    def create_product(cls, data: dict, get_obj: bool = False):
 
         # create a product
-        cls.product = Product.create(**data)
+        cls._create_product(data)
 
         # create product options
+        # TODO dont need to return options
         cls.options = cls.__create_product_options()
 
         # create product variants
+        # TODO dont need to return variants
         cls.variants = cls.__create_variants()
 
-        return cls.product, cls.options, cls.variants
+        if get_obj:
+            return cls.product
+        return cls.retrieve_product(cls.product.id)
+
+    @classmethod
+    def _create_product(cls, data: dict):
+        cls.price = data.pop('price', 0)
+        cls.stock = data.pop('stock', 0)
+        cls.options_data = data.pop('options', [])
+
+        if 'status' in data:
+            # Check if the value is one of the specified values, if not, set it to 'draft'
+            valid_statuses = ['active', 'archived', 'draft']
+            if data['status'] not in valid_statuses:
+                data['status'] = 'draft'
+
+        # create a product
+        cls.product = Product.create(**data)
 
     @classmethod
     def __create_product_options(cls):
@@ -38,7 +57,11 @@ class ProductService:
 
         if cls.options_data:
             for option in cls.options_data:
+
+                # Creates a new instance of the ProductOption model, adds it to the database,
+                # and commits the transaction. Returns the newly created model instance
                 new_option = ProductOption.create(product_id=cls.product.id, option_name=option['option_name'])
+
                 for item in option['items']:
                     ProductOptionItem.create(option_id=new_option.id, item_name=item)
             return cls.retrieve_options(cls.product.id)
@@ -48,12 +71,16 @@ class ProductService:
     @classmethod
     def retrieve_options(cls, product_id):
         """
-                Get all options of a product
-                """
+        Get all options of a product
+        """
+
         product_options = []
-        options = ProductOption.filter(ProductOption.product_id == product_id)
+        options = ProductOption.filter(ProductOption.product_id == product_id).all()
         for option in options:
-            items = ProductOptionItem.filter(ProductOptionItem.option_id == option.id)
+            # Retrieves records from the database based on a given filter condition.
+            # Returns a list of model instances matching the filter condition.
+            items = ProductOptionItem.filter(ProductOptionItem.option_id == option.id).all()
+
             product_options.append({
                 'options_id': option.id,
                 'option_name': option.option_name,
@@ -88,14 +115,20 @@ class ProductService:
                     product_id=cls.product.id,
                     option1=option1,
                     option2=option2,
-                    option3=option3
+                    option3=option3,
+                    price=cls.price,
+                    stock=cls.stock
                 )
                 # (109, 102, 100)
                 # set each value to an option and set none if it dosnt exist
                 # ProductVariant.create(product_id=cls.product.id, )
         else:
             # set a default variant (simple product)
-            ProductVariant.create(product_id=cls.product.id)
+            ProductVariant.create(
+                product_id=cls.product.id,
+                price=cls.price,
+                stock=cls.stock
+            )
 
         return cls.retrieve_variants(cls.product.id)
 
@@ -106,9 +139,8 @@ class ProductService:
         """
 
         product_variants = []
-        variants: list[ProductVariant] = ProductVariant.filter(ProductVariant.product_id == product_id)
+        variants: list[ProductVariant] = ProductVariant.filter(ProductVariant.product_id == product_id).all()
         for variant in variants:
-            updated_at = variant.updated_at.strftime('%Y-%m-%d %H:%M:%S') if variant.updated_at else None
             product_variants.append(
                 {
                     "variant_id": variant.id,
@@ -118,8 +150,8 @@ class ProductService:
                     "option1": variant.option1,
                     "option2": variant.option2,
                     "option3": variant.option3,
-                    "created_at": variant.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    "updated_at": updated_at
+                    "created_at": DateTime.string(variant.created_at),
+                    "updated_at": DateTime.string(variant.updated_at)
                 })
         return product_variants
 
@@ -127,7 +159,8 @@ class ProductService:
     def get_item_ids_by_product_id(cls, product_id):
         item_ids_by_option = []
         item_ids_dict = {}
-        with SessionLocal() as session:
+        with DatabaseManager.session as session:
+
             # Query the ProductOptionItem table to retrieve item_ids
             items = (
                 session.query(ProductOptionItem.option_id, ProductOptionItem.id)
@@ -146,3 +179,94 @@ class ProductService:
             item_ids_by_option.extend(item_ids_dict.values())
 
         return item_ids_by_option
+
+    @classmethod
+    def retrieve_product(cls, product_id):
+        # if not cls.product:
+        cls.product = Product.get_or_404(product_id)
+        cls.options = cls.retrieve_options(product_id)
+        cls.variants = cls.retrieve_variants(product_id)
+        cls.media = cls.retrieve_media(product_id)
+
+        product = {
+            'product_id': cls.product.id,
+            'product_name': cls.product.product_name,
+            'description': cls.product.description,
+            'status': cls.product.status,
+            'created_at': DateTime.string(cls.product.created_at),
+            'updated_at': DateTime.string(cls.product.updated_at),
+            'published_at': DateTime.string(cls.product.published_at),
+            'options': cls.options,
+            'variants': cls.variants,
+            'media': cls.media
+        }
+        return product
+
+    @classmethod
+    def update_product(cls, product_id, **kwargs):
+
+        # Update the 'updated_at' field in the kwargs dictionary
+        kwargs['updated_at'] = DateTime.now()
+
+        # Update the product with the modified data, including 'updated_at'
+        return Product.update(product_id, **kwargs)
+
+    @classmethod
+    def list_products(cls):
+        # - if "default variant" is not set, first variant will be
+        # - on list of products, for price, get it from "default variant"
+        # - if price or stock of default variant is 0 then select first variant that is not 0
+        # - or for price, get it from "less price"
+        # TODO do all of them with graphql and let the front to decide witch query should be run.
+
+        with DatabaseManager.session as session:
+            products = session.query(Product.id).limit(12).all()
+
+        product_list = []
+        for product_id in products:
+            product_list.append(cls.retrieve_product(product_id))
+
+        # TODO return a message if product list is empty
+        return product_list
+
+    @classmethod
+    def create_media(cls, product_id, alt, files):
+
+        # first check product exist
+        Product.get_or_404(product_id)
+
+        media_service = MediaService(parent_directory="media/products", sub_directory=product_id)
+
+        for file in files:
+            file_name, file_extension = media_service.save_file(file)
+            ProductMedia.create(
+                product_id=product_id,
+                alt=alt,
+                src=file_name,
+                type=file_extension
+            )
+        return cls.retrieve_media(product_id)
+
+    @classmethod
+    def retrieve_media(cls, product_id):
+        """
+        Get all media of a product
+        """
+        # TODO show the link to media in response format
+        media_list = []
+        product_media: list[ProductMedia] = ProductMedia.filter(ProductMedia.product_id == product_id).all()
+        for media in product_media:
+            media_list.append(
+                {
+                    "media_id": media.id,
+                    "product_id": media.product_id,
+                    "alt": media.alt,
+                    "src": media.src,
+                    "type": media.type,
+                    "created_at": DateTime.string(media.created_at),
+                    "updated_at": DateTime.string(media.updated_at)
+                })
+        if media_list:
+            return media_list
+        else:
+            return None
