@@ -3,15 +3,11 @@ from fastapi.testclient import TestClient
 
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
-from apps.products.faker.data import FakeProduct
+from apps.products.faker.data import FakeProduct, FakeMedia
 from config.database import DatabaseManager
 
 
 class ProductMediaTestBase(BaseTestCase):
-    """
-    Test create product-media on the multi scenario
-    """
-
     product_media_endpoint = '/products/media/'
 
     @classmethod
@@ -25,6 +21,9 @@ class ProductMediaTestBase(BaseTestCase):
 
 
 class TestCreateProductMedia(ProductMediaTestBase):
+    """
+    Test create product-media on the multi scenario
+    """
 
     def test_create_product_media(self):
         """
@@ -37,7 +36,7 @@ class TestCreateProductMedia(ProductMediaTestBase):
         product_payload, product = FakeProduct.populate_simple_product()
 
         # --- create two image file ---
-        files = FakeProduct.populate_media_files()
+        files = FakeMedia.populate_media_files()
 
         # --- upload files ----
         media_payload = {
