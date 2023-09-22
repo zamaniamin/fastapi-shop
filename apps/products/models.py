@@ -23,6 +23,7 @@ class Product(FastModel):
 
     options = relationship("ProductOption", back_populates="product", cascade="all, delete-orphan")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
+    media = relationship("ProductMedia", back_populates="product", cascade="all, delete-orphan")
 
 
 class ProductOption(FastModel):
@@ -88,3 +89,5 @@ class ProductMedia(FastModel):
     type = Column(String)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+
+    product = relationship("Product", back_populates="media")
