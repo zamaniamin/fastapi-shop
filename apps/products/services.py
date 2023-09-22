@@ -1,8 +1,11 @@
 from itertools import product as options_combination
 
+from sqlalchemy import select
+
 from apps.core.date_time import DateTime
 from apps.core.services.media import MediaService
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
+from config import settings
 from config.database import DatabaseManager
 
 
@@ -212,22 +215,53 @@ class ProductService:
         return Product.update(product_id, **kwargs)
 
     @classmethod
-    def list_products(cls):
+    def list_products(cls, limit: int = 12):
         # - if "default variant" is not set, first variant will be
         # - on list of products, for price, get it from "default variant"
         # - if price or stock of default variant is 0 then select first variant that is not 0
         # - or for price, get it from "less price"
         # TODO do all of them with graphql and let the front to decide witch query should be run.
 
+        # also can override the list `limit` in settings.py
+        if hasattr(settings, 'products_list_limit'):
+            limit = settings.products_list_limit
+
+        products_list = []
+
         with DatabaseManager.session as session:
-            products = session.query(Product.id).limit(12).all()
+            products = session.execute(
+                select(Product.id).limit(limit)
+            )
 
-        product_list = []
-        for product_id in products:
-            product_list.append(cls.retrieve_product(product_id))
+        for product in products:
+            products_list.append(cls.retrieve_product(product.id))
 
-        # TODO return a message if product list is empty
-        return product_list
+        return products_list
+        # --- list by join ----
+        # products_list = []
+        # with DatabaseManager.session as session:
+        #     products = select(
+        #         Product.id,
+        #         Product.product_name,
+        #         coalesce(ProductMedia.alt, None).label('alt'),
+        #         coalesce(ProductMedia.src, None).label('src'),
+        #         # media.alt,
+        #         ProductVariant.price,
+        #         ProductVariant.stock
+        #     ).outerjoin(ProductMedia).outerjoin(ProductVariant)
+        #     products = session.execute(products)
+        #
+        # for product in products:
+        #     media = {'src': product.src, 'alt': product.alt} if product.src is not None else None
+        #     products_list.append(
+        #         {
+        #             'product_id': product.id,
+        #             'product_name': product.product_name,
+        #             'price': product.price,
+        #             'stock': product.stock,
+        #             'media': media
+        #         }
+        #     )
 
     @classmethod
     def create_media(cls, product_id, alt, files):

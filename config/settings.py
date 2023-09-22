@@ -10,3 +10,5 @@ DATABASES = {
     "drivername": "sqlite",
     "database": "fast_store.db"
 }
+
+products_list_limit = 12
