@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from apps.products import schemas
 from apps.products.services import ProductService
 
+# TODO how to separate the admin-api and user-api
 router = APIRouter(
     prefix="/products",
     tags=["Product"]
@@ -16,16 +17,12 @@ router = APIRouter(
 """
 
 
-# TODO update price and stock for each variant
-
-
 @router.post(
     '/',
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.CreateProductOut
 )
 async def create_product(product: schemas.CreateProductIn):
-    # TODO set product `status` to `draft` by default if it not set or it is not one of (active,draft,archive)
     return {'product': ProductService.create_product(product.model_dump())}
 
 
@@ -35,17 +32,26 @@ async def create_product(product: schemas.CreateProductIn):
     description="Retrieve a single product."
 )
 async def retrieve_product(product_id: int):
+    # TODO user can retrieve products with status of (active , archived)
     return {"product": ProductService.retrieve_product(product_id)}
 
 
 @router.get(
     '/',
-    # TODO add response_model
-    # response_model=schemas.ListProductOut
+    response_model=schemas.ListProductOut
 )
-async def retrieve_list_produces():
-    # TODO return message id no product exist
-    return {"products": ProductService.list_products()}
+async def list_produces():
+    # TODO permission: any user
+    # TODO list products that status id `active`
+    # TODO dont show the product with the status of `archived` and `draft`
+    # TODO status `draft` only admin can see it
+    products = ProductService.list_products()
+    if products:
+        return {'products': products}
+    return JSONResponse(
+        content=None,
+        status_code=status.HTTP_204_NO_CONTENT
+    )
 
 
 @router.put(
@@ -53,7 +59,9 @@ async def retrieve_list_produces():
     status_code=status.HTTP_200_OK
 )
 async def update_product(product_id: int, payload: schemas.UpdateProductIn):
+    # TODO permission: only admin
     # TODO PUT a product (with options and variants)
+    # TODO update price and stock for each variant
     return ProductService.update_product(product_id, **payload.model_dump())
 
 
@@ -80,6 +88,7 @@ async def create_product_media(
         files: list[UploadFile] = File()
 ):
     # TODO make `alt` optional
+    # TODO save product name in alt if alt is not set
     media = ProductService.create_media(product_id=product_id, alt=alt, files=files)
     return {'media': media}
 

@@ -120,17 +120,8 @@ class ListProductIn(BaseModel):
     ...
 
 
-class ListProduct(BaseModel):
-    product_id: int
-    product_name: Annotated[str, Query(max_length=255)]
-    price: int | float
-    stock: int
-    # discount
-    # image
-
-
 class ListProductOut(BaseModel):
-    products: list[ListProduct]
+    products: list[ProductSchema]
 
 
 class UpdateProductIn(BaseModel):
