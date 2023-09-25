@@ -125,6 +125,10 @@ class DatabaseManager:
                     except ImportError:
                         pass
 
+    @classmethod
+    def get_testing_mode(cls):
+        return testing
+
 
 class FastModel(DeclarativeBase):
     """
