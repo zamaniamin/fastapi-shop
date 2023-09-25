@@ -1,16 +1,13 @@
 import os
 import random
-from io import BytesIO
 
-import httpx
-from PIL import Image
 from faker import Faker
 from faker.providers import lorem
 from fastapi import UploadFile
 
+from apps.demo.settings import DEMO_PRODUCTS_MEDIA_DIR
 from apps.products.models import Product
 from apps.products.services import ProductService
-from config.settings import BASE_DIR
 
 
 class FakeProduct:
@@ -122,32 +119,15 @@ class FakeProduct:
         payload['alt'] = 'Test Alt Text'
 
         # --- get demo images ---
-        file_paths = FakeMedia.populate_images_simple_product()
-        files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
+        upload = FakeMedia.populate_images_simple_product(upload_file=True, product_id=product.id)
 
         # --- attach media to product ---
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    cls.multi_upload_url,
-                    files=files,
-                    data={
-                        'product_id': product.id,
-                        'alt': 'Test Alt Text'
-                    }
-                )
-                print(response.status_code)
-        finally:
-            for field, file_obj in files:
-                file_obj.close()
-
-        return payload, product
-        # media = ProductService.create_media(product.id, payload['alt'], files)
-        # if media:
-        #     return payload, product
+        media = ProductService.create_media(product.id, payload['alt'], upload)
+        if media:
+            return payload, product
 
     @classmethod
-    def populate_variable_product_with_media(cls):
+    async def populate_variable_product_with_media(cls):
         payload: dict
         product: Product
 
@@ -155,24 +135,24 @@ class FakeProduct:
         payload, product = cls.populate_variable_product()
         payload['alt'] = 'Test Alt Text'
 
-        # --- create two image file ---
-        files = FakeMedia.populate_media_files(upload_file=True)
+        # --- get demo images ---
+        upload = FakeMedia.populate_images_simple_product(upload_file=True, product_id=product.id)
 
         # --- attach media to product ---
-        media = ProductService.create_media(product.id, payload['alt'], files)
+        media = ProductService.create_media(product.id, payload['alt'], upload)
         if media:
             return payload, product
 
     @classmethod
-    def populate_30_product(cls):
+    async def populate_30_product(cls):
         # --- create 12 variable and simple products with media ---
         # TODO generate random options for variable-products
 
         for i in range(6):
-            cls.populate_variable_product_with_media()
+            await cls.populate_variable_product_with_media()
 
         for i in range(6):
-            cls.populate_simple_product_with_media()
+            await cls.populate_simple_product_with_media()
 
         # --- create 18 products without media ---
         # no media
@@ -185,53 +165,33 @@ class FakeProduct:
 
 
 class FakeMedia:
-    simple_product_demo_dir = f'{BASE_DIR}/media/demo/products/simple/'
+    simple_product_demo_dir = f'{DEMO_PRODUCTS_MEDIA_DIR}'
 
     @classmethod
-    def populate_images_simple_product(cls):
+    def populate_images_simple_product(cls, upload_file=False, product_id: int = 1):
         """
         Attach some media (images) just to a simple product.
 
         Read some image file in `.jpg` format from this directory:
-        `/media/demo/products/simple/1` (you can replace your files in the dir)
+        `/apps/demo/products/simple/{number:1}` (you can replace your files in the dir)
         """
-        file_paths = []
 
-        directory_path = f'{cls.simple_product_demo_dir}{1}'
+        directory_path = f'{DEMO_PRODUCTS_MEDIA_DIR}/{product_id}'
+        file_paths = []
+        upload = []
 
         if os.path.isdir(directory_path):
             for filename in os.listdir(directory_path):
                 if filename.endswith(".jpg"):
-                    file_paths.append(os.path.join(directory_path, filename))
+                    file_path = os.path.join(directory_path, filename)
+                    file_paths.append(file_path)
+
+                    for_upload = UploadFile(filename=filename, file=open(file_path, "rb"))
+                    upload.append(for_upload)
+
         else:
-            raise FileNotFoundError(f"{BASE_DIR}/media/demo/")
-        return file_paths
+            raise FileNotFoundError(f"{DEMO_PRODUCTS_MEDIA_DIR}")
 
-    @classmethod
-    def populate_media_files(cls, upload_file=False):
-        """
-        Create to media and make them ready for upload.
-        """
-
-        # Generate sample image data
-        image1 = Image.new('RGB', (200, 100), color='red')
-        image2 = Image.new('RGB', (100, 200), color='blue')
-
-        # Convert images to bytes
-        image1_bytes = BytesIO()
-        image2_bytes = BytesIO()
-        image1.save(image1_bytes, format='JPEG')
-        image2.save(image2_bytes, format='JPEG')
-
-        # Create a list of UploadFile objects with the image data
         if upload_file:
-            files = [
-                UploadFile(filename='image1.jpg', file=image1_bytes),
-                UploadFile(filename='image2.jpg', file=image2_bytes),
-            ]
-        else:
-            files = [
-                ('files', ('image1.jpg', image1_bytes.getvalue(), 'image/jpeg')),
-                ('files', ('image2.jpg', image2_bytes.getvalue(), 'image/jpeg')),
-            ]
-        return files
+            return upload
+        return file_paths
