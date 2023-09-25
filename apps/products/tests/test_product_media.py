@@ -40,11 +40,14 @@ class TestCreateProductMedia(ProductMediaTestBase):
         product_payload, product = FakeProduct.populate_simple_product()
 
         # --- upload files ----
-        files = FakeMedia.populate_media_files()
+        file_paths = FakeMedia.populate_images_simple_product()
+        files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
             'product_id': product.id,
             'alt': 'Test Alt Text'
         }
+
+        # --- request ---
         response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
         assert response.status_code == status.HTTP_201_CREATED
 

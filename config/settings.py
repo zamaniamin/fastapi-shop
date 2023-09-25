@@ -12,5 +12,5 @@ DATABASES = {
     "drivername": "sqlite",
     "database": "fast_store.db"
 }
-BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
 products_list_limit = 12
