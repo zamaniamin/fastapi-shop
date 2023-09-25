@@ -1,6 +1,6 @@
-from typing import Annotated
+from typing import Annotated, List
 
-from fastapi import Query
+from fastapi import Query, UploadFile
 from pydantic import BaseModel
 
 """
@@ -64,6 +64,23 @@ class ProductMediaSchema(BaseModel):
 
 class CreateProductMediaOut(BaseModel):
     media: list[ProductMediaSchema]
+
+
+class CreateProductMediaIn(BaseModel):
+    product_id: int
+    alt: str
+
+
+class FileUpload(BaseModel):
+    x_file: UploadFile
+
+
+class MultiFileUpload(BaseModel):
+    files: List[FileUpload]
+    data: CreateProductMediaIn
+
+    class Config:
+        from_attributes = True
 
 
 class RetrieveProductMediaOut(BaseModel):

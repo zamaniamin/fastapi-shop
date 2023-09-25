@@ -1,3 +1,6 @@
+import asyncio
+
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -67,13 +70,14 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
     Test retrieve product-media on the multi scenario
     """
 
+    @pytest.mark.asyncio
     def test_list_product_media(self):
         """
         Test retrieve a list of all media of a product.
         """
 
         # --- create a product ---
-        payload, product = FakeProduct.populate_simple_product_with_media()
+        payload, product = asyncio.run(FakeProduct.populate_simple_product_with_media())
 
         # --- request ---
         response = self.client.get(f"{self.product_endpoint}{product.id}/{'media'}")

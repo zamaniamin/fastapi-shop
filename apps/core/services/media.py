@@ -14,10 +14,11 @@ class MediaService:
         self.path.mkdir(parents=True, exist_ok=True)
 
     def save_file(self, file: UploadFile):
+        # TODO separate exceptions to a module in core app
         # Check if the file extension is allowed
         file_extension = self.get_file_extension(file)
-        if not self.is_allowed_extension(file_extension):
-            raise HTTPException(status_code=400, detail="File type not allowed")
+        # if not self.is_allowed_extension(file_extension):
+        #     raise HTTPException(status_code=400, detail="File type not allowed")
 
         # Check if the file size is within the allowed limit in MB
         if self.get_file_size_mb(file) > max_upload_size:

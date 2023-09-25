@@ -75,22 +75,70 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
 """
 
 
+# @router.post(
+#     '/media',
+#     status_code=status.HTTP_201_CREATED
+# )
+# async def create_product_media(file: UploadFile):
+#     # check file type
+#     upload_dir = f'{BASE_DIR}/media/products/'
+#     if not os.path.exists(upload_dir):
+#         os.makedirs(upload_dir, exist_ok=True)
+#
+#     new_file = os.path.join(upload_dir, file.filename)
+#     with open(new_file, 'wb') as f:
+#         f.write(file.file.read())
+#     return {"filename": file.filename}
+
+
 @router.post(
     '/media',
-    status_code=status.HTTP_201_CREATED,
-    response_model=schemas.CreateProductMediaOut,
-    summary="Add new media",
-    description="Add new media to a product."
+    status_code=status.HTTP_201_CREATED
 )
 async def create_product_media(
+        x_files: list[UploadFile] = File(),
         product_id: int = Form(),
-        alt: str = Form(),
-        files: list[UploadFile] = File()
+        alt: str | None = Form(None),
 ):
-    # TODO make `alt` optional
-    # TODO save product name in alt if alt is not set
-    media = ProductService.create_media(product_id=product_id, alt=alt, files=files)
+    # upload_dir = f'{BASE_DIR}/media/products/'
+    # if not os.path.exists(upload_dir):
+    #     os.makedirs(upload_dir, exist_ok=True)
+    #
+    # for file in x_files:
+    #     # check the content type (MIME type)
+    #     content_type = file.content_type
+    #     if content_type not in ["image/jpeg", "image/png", "image/gif"]:
+    #         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
+    #
+    #     new_file = os.path.join(upload_dir, file.filename)
+    #     with open(new_file, 'wb') as f:
+    #         f.write(file.file.read())
+
+    # return {"message": "Files uploaded successfully!"}
+
+    # for file in x_files:
+    #     content_type = file.content_type
+    #     if content_type not in ["image/jpeg", "image/png", "image/gif"]:
+    #         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
+    #
+    media = ProductService.create_media(product_id=product_id, alt=alt, files=x_files)
     return {'media': media}
+
+
+# @router.post(
+#     '/media',
+#     status_code=status.HTTP_201_CREATED,
+#     response_model=schemas.CreateProductMediaOut,
+#     summary="Add new media",
+#     description="Add new media to a product."
+# )
+# async def create_product_media(
+#         product_id: int = Form(),
+#         alt: str = Form(),
+#         files: list[UploadFile] = File()
+# ):
+#     media = ProductService.create_media(product_id=product_id, alt=alt, files=files)
+#     return {'media': media}
 
 
 @router.get(
@@ -112,3 +160,6 @@ async def list_product_media(product_id: int):
 # TODO retrie a media
 # TODO update a media
 # TODO delete a media
+
+# TODO make `alt` optional
+# TODO save product name in alt if alt is not set

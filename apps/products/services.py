@@ -1,12 +1,13 @@
+import os
 from itertools import product as options_combination
 
 from sqlalchemy import select
 
 from apps.core.date_time import DateTime
-from apps.core.services.media import MediaService
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
 from config import settings
 from config.database import DatabaseManager
+from config.settings import BASE_DIR
 
 
 class ProductService:
@@ -269,17 +270,31 @@ class ProductService:
         # first check product exist
         Product.get_or_404(product_id)
 
-        media_service = MediaService(parent_directory="media/products", sub_directory=product_id)
+        upload_dir = f'{BASE_DIR}/media/products/'
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir, exist_ok=True)
 
         for file in files:
-            file_name, file_extension = media_service.save_file(file)
-            ProductMedia.create(
-                product_id=product_id,
-                alt=alt,
-                src=file_name,
-                type=file_extension
-            )
+            # check the content type (MIME type)
+            # content_type = file.content_type
+            # if content_type not in ["image/jpeg", "image/png", "image/gif"]:
+            #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
+
+            new_file = os.path.join(upload_dir, file.filename)
+            with open(new_file, 'wb') as f:
+                f.write(file.file.read())
         return cls.retrieve_media(product_id)
+        # media_service = MediaService(parent_directory="media/products", sub_directory=product_id)
+        #
+        # for file in files:
+        #     file_name, file_extension = media_service.save_file(file)
+        #     ProductMedia.create(
+        #         product_id=product_id,
+        #         alt=alt,
+        #         src=file_name,
+        #         type=file_extension
+        #     )
+        # return cls.retrieve_media(product_id)
 
     @classmethod
     def retrieve_media(cls, product_id):

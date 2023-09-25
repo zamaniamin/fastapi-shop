@@ -1,3 +1,5 @@
+from pathlib import Path
+
 # DATABASES = {
 #     "drivername": "postgresql",
 #     "username": "postgres",
@@ -10,5 +12,5 @@ DATABASES = {
     "drivername": "sqlite",
     "database": "fast_store.db"
 }
-
+BASE_DIR = Path(__file__).resolve().parent.parent
 products_list_limit = 12
