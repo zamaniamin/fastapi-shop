@@ -6,27 +6,19 @@ from fastapi.testclient import TestClient
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
-from apps.products.models import Product
 from config.database import DatabaseManager
 
 
 # TODO refactor tests of product
-# TODO create a faker class (for use in tests and use in fill data)
 # TODO write other tests from django project
 class ProductTestBase(BaseTestCase):
     product_endpoint = '/products/'
-    product1: Product
-    product2: Product
 
     @classmethod
     def setup_class(cls):
         cls.client = TestClient(app)
         # Initialize the test database and session before the test class starts
         DatabaseManager.create_test_database()
-
-        # TODO set admin token for all test, because just admins can CRUD a product
-        # TODO test with non admin users for read a product or read a list of products
-        # self.set_admin_authorization()
 
     @classmethod
     def teardown_class(cls):
@@ -41,10 +33,12 @@ class TestCreateProduct(ProductTestBase):
 
     def test_access_permission(self):
         """
-        Test permissions as non-admin user for CRUD methods of create product
+        Test permissions as admin and non-admin user for CRUD methods of create product.
+
         """
         # TODO admin permission can access to all CRUD of a product also list of products
-        # TODO non admin users only can use read a product or read a list of products
+        # TODO non admin users only can use read a product or read a list of products if it status is
+        #  'active or archive'
         ...
 
     def test_create_simple_product(self):
@@ -308,13 +302,6 @@ class TestRetrieveProduct(ProductTestBase):
         assert variant['updated_at'] is None
         self.assert_datetime_format(expected['created_at'])
 
-    # @pytest.mark.asyncio
-
-    def test_retrieve_product_404(self):
-        """
-        TODO test retrieve a product if admin dont published any product.
-        """
-
     def test_retrieve_variable_product(self):
         """
         Test retrieve a variable product:
@@ -494,11 +481,13 @@ class TestRetrieveProduct(ProductTestBase):
             assert media_item["updated_at"] is None
             self.assert_datetime_format(media_item['created_at'])
 
-    # TODO get id, one image, name, price/discount
-    # TODO status code 200
+    def test_retrieve_product_404(self):
+        """
+        TODO Test retrieve a product if it doesn't exist.
+        """
+
     # TODO pagination
     # TODO in each pagination should load 12 products
-    # TODO dont load variants in the product list
 
 
 class TestListProduct(ProductTestBase):
@@ -515,7 +504,7 @@ class TestListProduct(ProductTestBase):
         """
         Test retrieve a list of products.
         """
-        # --- create 20 products ---
+        # --- create 30 products ---
         asyncio.run(FakeProduct.populate_30_product())
 
         # --- request ---
@@ -532,15 +521,9 @@ class TestListProduct(ProductTestBase):
             assert isinstance(product['product_id'], int)
             assert isinstance(product['product_name'], str)
 
-    def test_list_product_queries(self):
-        """
-        Test
-        """
-        # TODO test limit for product limit query
-
-        # --- request ---
-        # response = self.client.get(self.product_endpoint)
-        # assert response.status_code == status.HTTP_200_OK
+    # TODO dont load variants in the product list
+    # TODO test limit for product limit query
+    # TODO test 204 status code if there are not products to list
 
 
 class TestUpdateProduct(ProductTestBase):
