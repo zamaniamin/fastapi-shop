@@ -32,10 +32,9 @@ class TestCreateProductMedia(ProductMediaTestBase):
     def test_create_product_media(self):
         """
         Test create two product-media (images) for a product and attach them to that product.
-
-        TODO this test should upload to the `media` directory in the root of project, not in current directory
+        Test the File "type, size and url".
         """
-
+        file_name: str
         # --- create a product ---
         product_payload, product = FakeProduct.populate_simple_product()
 
@@ -62,10 +61,18 @@ class TestCreateProductMedia(ProductMediaTestBase):
             assert media["media_id"] > 0
             assert media["product_id"] == product.id
             assert media["alt"] == media_payload['alt']
-            assert "src" in media
+            assert "src" in media and not None
             assert media["type"] == 'jpg'
             assert media["updated_at"] is None
             self.assert_datetime_format(media['created_at'])
+
+        # --- test static file URL ---
+        url = f'/media/test{media_list[0]["src"].split("/media")[-1]}'
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        # test file size is not zero
+        assert len(response.content) > 0
 
 
 class TestRetrieveProductMedia(ProductMediaTestBase):
