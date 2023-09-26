@@ -136,7 +136,6 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
     Test scenarios with different payload fields.
     """
 
-    # TODO Test Test create a media with empty payload.
     @pytest.mark.parametrize("alt_value", ["", None])
     def test_create_media_with_empty_alt(self, alt_value):
         """
@@ -174,6 +173,23 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         response = self.client.post(self.product_media_endpoint, data={}, files=files)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    # TODO Test create with empty `files`
+    def test_create_media_with_no_file(self):
+        """
+        Test create with no-file.
+        """
+
+        # --- create a product ---
+        product_payload, product = FakeProduct.populate_simple_product()
+
+        # --- upload files ----
+        media_payload = {
+            'product_id': product.id,
+            'alt': 'test alt'
+        }
+
+        # --- request ---
+        response = self.client.post(self.product_media_endpoint, data=media_payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     # TODO Test create invalid file type
     # TODO Test create with file size limit
