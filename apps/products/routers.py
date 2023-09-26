@@ -105,6 +105,3 @@ async def list_product_media(product_id: int):
 # TODO retrie a media
 # TODO update a media
 # TODO delete a media
-
-# TODO make `alt` optional
-# TODO save product name in alt if alt is not set

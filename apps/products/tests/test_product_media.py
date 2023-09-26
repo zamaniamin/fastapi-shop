@@ -160,3 +160,20 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
 
         expected = response.json().get('media')[0]
         assert expected['alt'] == product.product_name
+
+    def test_create_media_with_empty_payload(self):
+        """
+        Test crete media with empty payload.
+        """
+
+        # --- upload files ----
+        file_paths = FakeMedia.populate_images_simple_product()
+        files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
+
+        # --- request ---
+        response = self.client.post(self.product_media_endpoint, data={}, files=files)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # TODO Test create with empty `files`
+    # TODO Test create invalid file type
+    # TODO Test create with file size limit
