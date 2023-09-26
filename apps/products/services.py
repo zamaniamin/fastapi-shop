@@ -270,14 +270,14 @@ class ProductService:
         Save uploaded media to `media` directory and attach uploads to a product.
         """
         # first check product exist
-        Product.get_or_404(product_id)
+        product: Product = Product.get_or_404(product_id)
 
         media_service = MediaService(parent_directory="/products", sub_directory=product_id)
         for file in files:
             file_name, file_extension = media_service.save_file(file)
             ProductMedia.create(
                 product_id=product_id,
-                alt=alt,
+                alt=alt if alt is not None else product.product_name,
                 src=file_name,
                 type=file_extension
             )

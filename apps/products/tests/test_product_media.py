@@ -31,10 +31,10 @@ class TestCreateProductMedia(ProductMediaTestBase):
 
     def test_create_product_media(self):
         """
-        Test create two product-media (images) for a product and attach them to that product.
+        Test create a product-media (images) for a product and attach them to that product (assuming valid data).
         Test the File "type, size and url".
         """
-        file_name: str
+
         # --- create a product ---
         product_payload, product = FakeProduct.populate_simple_product()
 
@@ -132,4 +132,31 @@ class TestDestroyProductMedia(ProductMediaTestBase):
 
 
 class TestProductMediaPayloadFields(ProductMediaTestBase):
-    ...
+    """
+    Test scenarios with different payload fields.
+    """
+
+    # TODO Test Test create a media with empty payload.
+    @pytest.mark.parametrize("alt_value", ["", None])
+    def test_create_media_with_empty_alt(self, alt_value):
+        """
+        Test crete media with no `alt` or empty `alt` field.
+        """
+
+        # --- create a product ---
+        product_payload, product = FakeProduct.populate_simple_product()
+
+        # --- upload files ----
+        file_paths = FakeMedia.populate_images_simple_product()
+        files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
+        media_payload = {
+            'product_id': product.id,
+            'alt': alt_value
+        }
+
+        # --- request ---
+        response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
+        assert response.status_code == status.HTTP_201_CREATED
+
+        expected = response.json().get('media')[0]
+        assert expected['alt'] == product.product_name
