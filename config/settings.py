@@ -12,5 +12,8 @@ DATABASES = {
     "drivername": "sqlite",
     "database": "fast_store.db"
 }
-MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
+#  Path.cwd() / "static"
+BASE_URL = "http://127.0.0.1:8000"
+BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_DIR = BASE_DIR / "media"
 products_list_limit = 12

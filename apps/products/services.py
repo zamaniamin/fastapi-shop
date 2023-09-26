@@ -7,6 +7,7 @@ from apps.core.services.media import MediaService
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
 from config import settings
 from config.database import DatabaseManager
+from config.settings import BASE_URL
 
 
 class ProductService:
@@ -265,22 +266,13 @@ class ProductService:
 
     @classmethod
     def create_media(cls, product_id, alt, files):
-
+        """
+        Save uploaded media to `media` directory and attach uploads to a product.
+        """
         # first check product exist
         Product.get_or_404(product_id)
 
-        # upload_dir = f'{BASE_DIR}/media/products/'
-        # if not os.path.exists(upload_dir):
-        #     os.makedirs(upload_dir, exist_ok=True)
-        #
-        # for file in files:
-        #     new_file = os.path.join(upload_dir, file.filename)
-        #     with open(new_file, 'wb') as f:
-        #         f.write(file.file.read())
-        # return cls.retrieve_media(product_id)
-
         media_service = MediaService(parent_directory="/products", sub_directory=product_id)
-        #
         for file in files:
             file_name, file_extension = media_service.save_file(file)
             ProductMedia.create(
@@ -297,7 +289,6 @@ class ProductService:
         """
         Get all media of a product
         """
-        # TODO show the link to media in response format
         media_list = []
         product_media: list[ProductMedia] = ProductMedia.filter(ProductMedia.product_id == product_id).all()
         for media in product_media:
@@ -306,7 +297,7 @@ class ProductService:
                     "media_id": media.id,
                     "product_id": media.product_id,
                     "alt": media.alt,
-                    "src": media.src,
+                    "src": cls.get_media_url(media.product_id, media.src),
                     "type": media.type,
                     "created_at": DateTime.string(media.created_at),
                     "updated_at": DateTime.string(media.updated_at)
@@ -315,3 +306,7 @@ class ProductService:
             return media_list
         else:
             return None
+
+    @staticmethod
+    def get_media_url(product_id, file_name: str):
+        return f"{BASE_URL}/media/products/{product_id}/{file_name}" if file_name is not None else None
