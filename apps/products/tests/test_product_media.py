@@ -100,6 +100,7 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
         assert "media" in expected
         media_list = expected["media"]
         assert isinstance(media_list, list)
+        assert len(media_list) > 1
         for media in media_list:
             assert media["media_id"] > 0
             assert media["product_id"] == product.id

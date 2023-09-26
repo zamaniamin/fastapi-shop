@@ -10,6 +10,8 @@ DatabaseManager().create_database_tables()
 
 # init FastAPI
 app = FastAPI()
+
+# add static-file support, for see images by URL
 app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 # init routers
