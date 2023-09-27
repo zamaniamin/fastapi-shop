@@ -175,7 +175,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
 
     def test_create_media_with_no_file(self):
         """
-        Test create with no-file.
+        Test create media without files
         """
 
         # --- create a product ---
@@ -190,6 +190,25 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         # --- request ---
         response = self.client.post(self.product_media_endpoint, data=media_payload)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_create_media_with_invalid_file_type(self):
+        """
+        Test create media with invalid file type.
+        """
+        # --- create a product ---
+        product_payload, product = FakeProduct.populate_simple_product()
+
+        # --- upload files ----
+        file_paths = FakeMedia.populate_docs_file()
+        files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
+        media_payload = {
+            'product_id': product.id,
+            'alt': 'test alt'
+        }
+
+        # --- request ---
+        response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # TODO Test create invalid file type
     # TODO Test create with file size limit
