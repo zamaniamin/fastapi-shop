@@ -1,6 +1,7 @@
-from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException
+from fastapi import APIRouter, status, Form, UploadFile, File
 from fastapi.responses import JSONResponse
 
+from apps.core.services.media import MediaService
 from apps.products import schemas
 from apps.products.services import ProductService
 
@@ -78,10 +79,10 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     description="Add new media to a product.")
 async def create_product_media(x_files: list[UploadFile] = File(), product_id: int = Form(),
                                alt: str | None = Form(None)):
-    # check the content type (MIME type)
+    # check the file size and type
     for file in x_files:
-        if file.content_type not in ["image/jpeg", "image/png", "image/gif"]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
+        MediaService.is_allowed_extension(file)
+        await MediaService.is_allowed_file_size(file)
 
     media = ProductService.create_media(product_id=product_id, alt=alt, files=x_files)
     return {'media': media}

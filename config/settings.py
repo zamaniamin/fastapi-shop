@@ -1,5 +1,6 @@
 from pathlib import Path
 
+MAX_FILE_SIZE = 5  # int number as MB
 # DATABASES = {
 #     "drivername": "postgresql",
 #     "username": "postgres",

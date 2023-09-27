@@ -5,7 +5,7 @@ from faker import Faker
 from faker.providers import lorem
 from fastapi import UploadFile
 
-from apps.demo.settings import DEMO_PRODUCTS_MEDIA_DIR, DEMO_DOCS_DIR
+from apps.demo.settings import DEMO_PRODUCTS_MEDIA_DIR, DEMO_DOCS_DIR, DEMO_LARGE_DIR
 from apps.products.models import Product
 from apps.products.services import ProductService
 
@@ -21,8 +21,6 @@ class FakeProduct:
     option_size_items = ['S', 'M', 'L', 'XL', 'XXL']
     option_material_items = ['Cotton', 'Nylon', 'Plastic', 'Wool', 'Leather']
     option_style_items = ['Casual', 'Formal']
-
-    multi_upload_url = "http://127.0.0.1:8000/products/media"
 
     def fill_products(self):
         """
@@ -63,10 +61,6 @@ class FakeProduct:
                 "items": cls.option_material_items[:2]
             }
         ]
-
-    """
-    new code
-    """
 
     @classmethod
     def get_payload_variable_product(cls):
@@ -207,6 +201,24 @@ class FakeMedia:
             file_paths.append(file_path)
 
             for_upload = UploadFile(filename='test.txt', file=open(file_path, "rb"))
+            upload.append(for_upload)
+        else:
+            raise FileNotFoundError(f"{DEMO_PRODUCTS_MEDIA_DIR}")
+        if upload_file:
+            return upload
+        return file_paths
+
+    @classmethod
+    def populate_large_file(cls, upload_file=False):
+        docs_path = f'{DEMO_LARGE_DIR}/'
+        file_paths = []
+        upload = []
+
+        if os.path.isdir(docs_path):
+            file_path = os.path.join(docs_path, 'large.png')
+            file_paths.append(file_path)
+
+            for_upload = UploadFile(filename='large.png', file=open(file_path, "rb"))
             upload.append(for_upload)
         else:
             raise FileNotFoundError(f"{DEMO_PRODUCTS_MEDIA_DIR}")
