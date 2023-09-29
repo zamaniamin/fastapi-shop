@@ -274,6 +274,19 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json=payload)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @pytest.mark.parametrize("name", ["", None])
+    def test_payload_product_name_invalid(self, name):
+        """
+        Test with empty product name.
+        """
+
+        payload = {
+            'product_name': name
+        }
+
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
     def test_create_product_invalid_status(self, status_value):
         """
@@ -315,6 +328,7 @@ class TestCreateProduct(ProductTestBase):
         [{'option_name': 'blob', 'items_blob': ["a"]}],
         [{'option_blob': 'blob', 'items': ['a']}],
         [{'items': ['a'], 'option_blob': 'blob'}],
+        [{'option_name': 'blob', 'items': [["a", "b"]]}]
 
     ])
     def test_create_product_invalid_options(self, options_value):
