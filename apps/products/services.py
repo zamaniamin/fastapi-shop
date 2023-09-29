@@ -14,7 +14,7 @@ class ProductService:
     product = None
     price: int | float
     stock: int
-    options: list = []
+    options: list | None = []
     options_data: list = []
     variants: list = []
     media: list | None = None
@@ -22,16 +22,9 @@ class ProductService:
     @classmethod
     def create_product(cls, data: dict, get_obj: bool = False):
 
-        # create a product
         cls._create_product(data)
-
-        # create product options
-        # TODO dont need to return options
-        cls.options = cls.__create_product_options()
-
-        # create product variants
-        # TODO dont need to return variants
-        cls.variants = cls.__create_variants()
+        cls.__create_product_options()
+        cls.__create_variants()
 
         if get_obj:
             return cls.product
@@ -42,6 +35,7 @@ class ProductService:
         cls.price = data.pop('price', 0)
         cls.stock = data.pop('stock', 0)
         cls.options_data = data.pop('options', [])
+        # TODO if price and stock and options are valid, then create product
 
         if 'status' in data:
             # Check if the value is one of the specified values, if not, set it to 'draft'
@@ -68,9 +62,9 @@ class ProductService:
 
                 for item in option['items']:
                     ProductOptionItem.create(option_id=new_option.id, item_name=item)
-            return cls.retrieve_options(cls.product.id)
+            cls.options = cls.retrieve_options(cls.product.id)
         else:
-            return None
+            cls.options = None
 
     @classmethod
     def retrieve_options(cls, product_id):
@@ -134,7 +128,7 @@ class ProductService:
                 stock=cls.stock
             )
 
-        return cls.retrieve_variants(cls.product.id)
+        cls.variants = cls.retrieve_variants(cls.product.id)
 
     @classmethod
     def retrieve_variants(cls, product_id):
