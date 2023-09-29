@@ -137,8 +137,14 @@ class CreateProductIn(BaseModel):
     @field_validator('price')
     def validate_price(cls, price):
         if price < 0:
-            raise ValueError('Price must be a positive number')
+            raise ValueError('Price must be a positive number.')
         return price
+
+    @field_validator('stock')
+    def validate_price(cls, stock):
+        if stock < 0:
+            raise ValueError('Stock must be a positive number.')
+        return stock
 
 
 class RetrieveProductOut(BaseModel):
