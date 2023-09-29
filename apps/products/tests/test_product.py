@@ -254,6 +254,10 @@ class TestCreateProduct(ProductTestBase):
     # --- Test Payloads ---
     # ---------------------
 
+    # TODO test create a product whit invalid price
+    # TODO test create a product whit invalid stock
+    # TODO test create a product whit a name more than `max_length=255` character
+
     def test_create_product_empty_payload(self):
         """
         Test create a product with empty payload.
@@ -262,6 +266,7 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json={})
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    # TODO @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
     @pytest.mark.parametrize("status_value", ["", None, "blob", 'active', 'archived', 'draft'])
     def test_create_product_invalid_status(self, status_value):
         """
@@ -285,16 +290,38 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json=payload)
 
         # --- expected ---
+        # TODO check if `status_value` not None or str, then status code should be 422
         assert response.status_code == status.HTTP_201_CREATED
         expected = response.json().get('product')
         assert expected['status'] == expected_status
 
-    def test_create_product_invalid_option(self):
+    @pytest.mark.parametrize("options_value", [
+        '', [''], ['blob'], [{}],
+        [{'option_name': []}],
+        [{'option_name': ''}],
+        [{'option_name': '', 'items': []}],
+        [{'option_name': '', 'items': ['a']}],
+        [{'option_name': 'blob', 'items': ''}],
+        [{'option_name': 'blob', 'items': [1]}],
+        [{'option_name': 'blob', 'items_blob': ["a"]}],
+        [{'option_blob': 'blob', 'items': ['a']}],
+        [{'items': ['a'], 'option_blob': 'blob'}],
+
+    ])
+    def test_create_product_invalid_options(self, options_value):
         """
-        # TODO Test create a product with:
+        Test create a product with:
         - invalid option in the payload
         - invalid option-item in payload
         """
+
+        payload = {
+            'product_name': 'Test Product',
+            'options': options_value
+        }
+
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 class TestRetrieveProduct(ProductTestBase):
