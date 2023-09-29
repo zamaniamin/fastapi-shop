@@ -254,7 +254,6 @@ class TestCreateProduct(ProductTestBase):
     # --- Test Payloads ---
     # ---------------------
 
-    # TODO test create a product whit invalid price
     # TODO test create a product whit invalid stock
     # TODO test create a product whit a name more than `max_length=255` character
 
@@ -319,6 +318,20 @@ class TestCreateProduct(ProductTestBase):
         payload = {
             'product_name': 'Test Product',
             'options': options_value
+        }
+
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize("price_value", [-10, None, ""])
+    def test_create_product_invalid_price(self, price_value):
+        """
+        Test create a product whit invalid price.
+        """
+
+        payload = {
+            'product_name': 'Test Product',
+            'price': price_value
         }
 
         response = self.client.post(self.product_endpoint, json=payload)
