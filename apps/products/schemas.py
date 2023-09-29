@@ -123,7 +123,7 @@ class CreateProductOut(BaseModel):
 
 
 class CreateProductIn(BaseModel):
-    product_name: Annotated[str, Query(max_length=255)]
+    product_name: Annotated[str, Query(max_length=255, min_length=1)]
     description: str | None = None
     status: str | None = None
     price: float = 0
