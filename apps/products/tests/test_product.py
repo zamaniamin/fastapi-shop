@@ -266,8 +266,7 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json={})
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    # TODO @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
-    @pytest.mark.parametrize("status_value", ["", None, "blob", 'active', 'archived', 'draft'])
+    @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
     def test_create_product_invalid_status(self, status_value):
         """
         Test create a product with invalid status value in the payload.
@@ -290,10 +289,12 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json=payload)
 
         # --- expected ---
-        # TODO check if `status_value` not None or str, then status code should be 422
-        assert response.status_code == status.HTTP_201_CREATED
-        expected = response.json().get('product')
-        assert expected['status'] == expected_status
+        if isinstance(status_value, str | None):
+            assert response.status_code == status.HTTP_201_CREATED
+            expected = response.json().get('product')
+            assert expected['status'] == expected_status
+        else:
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("options_value", [
         '', [''], ['blob'], [{}],
