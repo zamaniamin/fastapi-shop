@@ -1,5 +1,6 @@
 import asyncio
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -190,7 +191,7 @@ class TestCreateProduct(ProductTestBase):
 
     def test_create_variable_product_required(self):
         """
-        Test create a variable-product just with required fields in product payload
+        Test create a variable-product just with required fields in product payload.
         """
 
         # --- request ---
@@ -248,6 +249,52 @@ class TestCreateProduct(ProductTestBase):
 
         # --- media ---
         assert expected['media'] is None
+
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
+
+    def test_create_product_empty_payload(self):
+        """
+        Test create a product with empty payload.
+        """
+
+        response = self.client.post(self.product_endpoint, json={})
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize("status_value", ["", None, "blob", 'active', 'archived', 'draft'])
+    def test_create_product_invalid_status(self, status_value):
+        """
+        Test create a product with invalid status value in the payload.
+        Test set product `status` to 'draft' by default.
+        Test if `status` not set, or it is not one of (active, draft, archive) then set it value to 'draft'.
+        """
+
+        payload = {
+            'product_name': 'Test Product',
+            'status': status_value
+        }
+
+        # Handle different status_value cases
+        if status_value not in ['active', 'archived', 'draft']:
+            expected_status = 'draft'
+        else:
+            expected_status = status_value
+
+        # --- request ---
+        response = self.client.post(self.product_endpoint, json=payload)
+
+        # --- expected ---
+        assert response.status_code == status.HTTP_201_CREATED
+        expected = response.json().get('product')
+        assert expected['status'] == expected_status
+
+    def test_create_product_invalid_option(self):
+        """
+        # TODO Test create a product with:
+        - invalid option in the payload
+        - invalid option-item in payload
+        """
 
 
 class TestRetrieveProduct(ProductTestBase):
@@ -486,6 +533,10 @@ class TestRetrieveProduct(ProductTestBase):
         TODO Test retrieve a product if it doesn't exist.
         """
 
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
+
     # TODO pagination
     # TODO in each pagination should load 12 products
 
@@ -495,6 +546,7 @@ class TestListProduct(ProductTestBase):
     def test_list_products_no_content(self):
         """
         TODO test list the products if admin dont published any product.
+        TODO Test list the products if is user and there are no active products to list them.
         """
 
         response = self.client.get(self.product_endpoint)
@@ -520,6 +572,10 @@ class TestListProduct(ProductTestBase):
             assert len(product) == 10
             assert isinstance(product['product_id'], int)
             assert isinstance(product['product_name'], str)
+
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
 
     # TODO dont load variants in the product list
     # TODO test limit for product limit query
@@ -548,6 +604,9 @@ class TestUpdateProduct(ProductTestBase):
         # response = self.client.put(self.product_endpoint + '1', json=payload)
         # print(response.json())
         # assert response.status_code == status.HTTP_200_OK
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
 
 
 class TestDestroyProduct(ProductTestBase):
@@ -555,27 +614,6 @@ class TestDestroyProduct(ProductTestBase):
     Test delete a product on the multi scenario
     """
     ...
-
-
-class TestProductPayloadFields(ProductTestBase):
-    # -----------------------
-    # --- Create Payloads ---
-    # -----------------------
-    def test_create_product_empty_payload(self):
-        """
-        # TODO Test create a product with empty payload
-        """
-
-    def test_create_product_invalid_status(self):
-        """
-        # TODO Test create a product with invalid status value in the payload
-        - test set product `status` to 'draft' by default.
-        - if `status` not set or it is not one of (active, draft, archive) then set it value to 'draft'
-        """
-
-    def test_create_product_invalid_option(self):
-        """
-        # TODO Test create a product with:
-        - invalid option in the payload
-        - invalid option-item in payload
-        """
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
