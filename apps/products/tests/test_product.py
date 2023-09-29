@@ -287,6 +287,18 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json=payload)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    def test_payload_without_product_name(self):
+        """
+        Test if product-name don't exist in payload.
+        """
+
+        payload = {
+            'description': 'blob'
+        }
+
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
     def test_payload_invalid_status(self, status_value):
         """
