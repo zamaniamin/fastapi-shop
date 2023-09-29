@@ -35,7 +35,6 @@ class ProductService:
         cls.price = data.pop('price', 0)
         cls.stock = data.pop('stock', 0)
         cls.options_data = data.pop('options', [])
-        # TODO if price and stock and options are valid, then create product
 
         if 'status' in data:
             # Check if the value is one of the specified values, if not, set it to 'draft'
