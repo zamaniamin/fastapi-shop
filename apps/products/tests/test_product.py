@@ -254,7 +254,7 @@ class TestCreateProduct(ProductTestBase):
     # --- Test Payloads ---
     # ---------------------
 
-    def test_create_product_empty_payload(self):
+    def test_payload_is_empty(self):
         """
         Test create a product with empty payload.
         """
@@ -262,7 +262,7 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json={})
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_crete_product_name_max_length(self):
+    def test_payload_product_name_max_length(self):
         """
         Test create a product with a name more than `max_length=255` character.
         """
@@ -288,7 +288,7 @@ class TestCreateProduct(ProductTestBase):
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
-    def test_create_product_invalid_status(self, status_value):
+    def test_payload_invalid_status(self, status_value):
         """
         Test create a product with invalid status value in the payload.
         Test set product `status` to 'draft' by default.
@@ -331,7 +331,7 @@ class TestCreateProduct(ProductTestBase):
         [{'option_name': 'blob', 'items': [["a", "b"]]}]
 
     ])
-    def test_create_product_invalid_options(self, options_value):
+    def test_payload_invalid_options(self, options_value):
         """
         Test create a product with:
         - invalid option in the payload
@@ -347,7 +347,7 @@ class TestCreateProduct(ProductTestBase):
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("price_value", [-10, None, ""])
-    def test_create_product_invalid_price(self, price_value):
+    def test_payload_invalid_price(self, price_value):
         """
         Test create a product with invalid price.
         """
@@ -361,7 +361,7 @@ class TestCreateProduct(ProductTestBase):
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("stock_value", [-10, None, "", 1.3])
-    def test_create_product_invalid_stock(self, stock_value):
+    def test_payload_invalid_stock(self, stock_value):
         """
         Test create a product with invalid stock.
         """
