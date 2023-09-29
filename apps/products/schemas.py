@@ -134,6 +134,12 @@ class CreateProductIn(BaseModel):
     class Config:
         from_attributes = True
 
+    @field_validator('price')
+    def validate_price(cls, price):
+        if price < 0:
+            raise ValueError('Price must be a positive number')
+        return price
+
 
 class RetrieveProductOut(BaseModel):
     product: ProductSchema
