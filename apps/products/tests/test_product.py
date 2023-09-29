@@ -262,6 +262,18 @@ class TestCreateProduct(ProductTestBase):
         response = self.client.post(self.product_endpoint, json={})
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    def test_crete_product_name_max_length(self):
+        """
+        Test create a product with a name more than `max_length=255` character.
+        """
+
+        payload = {
+            'product_name': 'T' * 256
+        }
+
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
     def test_create_product_invalid_status(self, status_value):
         """
@@ -343,18 +355,6 @@ class TestCreateProduct(ProductTestBase):
         payload = {
             'product_name': 'Test Product',
             'stock': stock_value
-        }
-
-        response = self.client.post(self.product_endpoint, json=payload)
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    def test_crete_product_name_max_length(self):
-        """
-        Test create a product with a name more than `max_length=255` character.
-        """
-
-        payload = {
-            'product_name': 'T' * 256
         }
 
         response = self.client.post(self.product_endpoint, json=payload)
