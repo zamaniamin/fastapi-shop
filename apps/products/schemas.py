@@ -1,7 +1,7 @@
 from typing import Annotated, List
 
 from fastapi import Query, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, constr, field_validator
 
 """
 ---------------------------------------
@@ -41,8 +41,14 @@ class OptionOut(BaseModel):
 
 
 class OptionIn(BaseModel):
-    option_name: str
+    option_name: constr(min_length=1)
     items: list[str]
+
+    @field_validator('items')
+    def not_empty(cls, value):
+        if value is None or value == []:
+            raise ValueError('items must not be None or empty')
+        return value
 
 
 """
