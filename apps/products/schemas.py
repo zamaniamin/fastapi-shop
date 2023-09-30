@@ -1,7 +1,7 @@
 from typing import Annotated, List
 
 from fastapi import Query, UploadFile
-from pydantic import BaseModel, constr, field_validator
+from pydantic import BaseModel, constr, field_validator, model_validator
 
 """
 ---------------------------------------
@@ -141,10 +141,36 @@ class CreateProductIn(BaseModel):
         return price
 
     @field_validator('stock')
-    def validate_price(cls, stock):
+    def validate_stock(cls, stock):
         if stock < 0:
             raise ValueError('Stock must be a positive number.')
         return stock
+
+    @model_validator(mode='before')
+    def validate_uniqueness(cls, values):
+        options = values.get("options", [])
+        option_name_set = set()
+        items_set = set()
+
+        # each product should have just max 3 options.
+        if len(options) > 3:
+            raise ValueError('The number of options cannot exceed 3.')
+
+        # checking `options-name` and `option-items list` are uniq
+        for option in options:
+            if isinstance(option, dict):
+                option_name = option.get("option_name")
+                items = option.get("items", [])
+                if isinstance(option_name, str):
+                    if option_name in option_name_set:
+                        raise ValueError(f'Duplicate option name found: {option_name}')
+                    option_name_set.add(option_name)
+                    for item in items:
+                        if isinstance(item, str):
+                            if item in items_set:
+                                raise ValueError(f'Duplicate item found in option "{option_name}": {item}')
+                            items_set.add(item)
+        return values
 
 
 class RetrieveProductOut(BaseModel):
