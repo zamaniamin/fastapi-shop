@@ -10,8 +10,6 @@ from apps.products.faker.data import FakeProduct
 from config.database import DatabaseManager
 
 
-# TODO refactor tests of product
-# TODO write other tests from django project
 class ProductTestBase(BaseTestCase):
     product_endpoint = '/products/'
 
@@ -254,8 +252,6 @@ class TestCreateProduct(ProductTestBase):
     # --- Test Payloads ---
     # ---------------------
 
-    # TODO test_with_max3_options
-    # TODO test_remove_empty_options
     # TODO test_with_html_description
 
     def test_payload_is_empty(self):
