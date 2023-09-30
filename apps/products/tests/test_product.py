@@ -254,6 +254,10 @@ class TestCreateProduct(ProductTestBase):
     # --- Test Payloads ---
     # ---------------------
 
+    # TODO test_with_max3_options
+    # TODO test_remove_empty_options
+    # TODO test_with_html_description
+
     def test_payload_is_empty(self):
         """
         Test create a product with empty payload.
@@ -341,7 +345,6 @@ class TestCreateProduct(ProductTestBase):
         [{'option_blob': 'blob', 'items': ['a']}],
         [{'items': ['a'], 'option_blob': 'blob'}],
         [{'option_name': 'blob', 'items': [["a", "b"]]}]
-
     ])
     def test_payload_invalid_options(self, options_value):
         """
@@ -381,6 +384,86 @@ class TestCreateProduct(ProductTestBase):
         payload = {
             'product_name': 'Test Product',
             'stock': stock_value
+        }
+
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_payload_with_duplicate_options(self):
+        """
+        Test create a product with uniq option-names.
+
+        **Duplicate options should not be saved in a product**
+        """
+
+        payload = {
+            "product_name": 'blob',
+            "options": [
+                {
+                    "option_name": "color",
+                    "items": ["red"]
+                },
+                {
+                    "option_name": "size",
+                    "items": ["small"]
+                },
+                {
+                    "option_name": "color",
+                    "items": ["blue"]
+                }
+            ]
+        }
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_payload_with_duplicate_items_in_options(self):
+        """
+        Test create a product with uniq item-names in each option.
+
+        **Duplicate items should not be saved in an option**
+        """
+
+        payload = {
+            "product_name": "blob",
+            "options": [
+                {
+                    "option_name": "color",
+                    "items": ["red", "blue", "red"]
+                },
+                {
+                    "option_name": "size",
+                    "items": ["S", "L"]
+                }
+            ]
+        }
+        response = self.client.post(self.product_endpoint, json=payload)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_payload_with_max_3_options(self):
+        """
+        Test create a product with more than three options.
+        """
+
+        payload = {
+            "product_name": "blob",
+            "options": [
+                {
+                    "option_name": "color",
+                    "items": ["red"]
+                },
+                {
+                    "option_name": "size",
+                    "items": ["small"]
+                },
+                {
+                    "option_name": "material",
+                    "items": ["x1", "x2"]
+                },
+                {
+                    "option_name": "blob",
+                    "items": ["b"]
+                }
+            ]
         }
 
         response = self.client.post(self.product_endpoint, json=payload)
