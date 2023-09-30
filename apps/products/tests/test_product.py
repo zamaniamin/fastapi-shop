@@ -699,8 +699,10 @@ class TestRetrieveProduct(ProductTestBase):
 
     def test_retrieve_product_404(self):
         """
-        TODO Test retrieve a product if it doesn't exist.
+        Test retrieve a product if it doesn't exist.
         """
+        response = self.client.get(f"{self.product_endpoint}{999999999}")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # ---------------------
     # --- Test Payloads ---
