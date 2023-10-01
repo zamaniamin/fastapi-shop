@@ -758,23 +758,68 @@ class TestUpdateProduct(ProductTestBase):
     Test update a product on the multi scenario.
     """
 
-    def test_update_simple_product(self):
+    @pytest.mark.parametrize("update_payload", [
+        {"product_name": "updated name"},
+        {"description": "updated description"},
+        {"status": "archived"},
+        {
+            "product_name": "updated name",
+            "description": "updated description"
+        },
+        {
+            "product_name": "updated name",
+            "status": "draft"
+        },
+    ])
+    def test_update_simple_product(self, update_payload):
         """
-        Test update a product by the all available inputs (assuming valid data).
-        Test response body for simple product.
+        Test update a product, only update fields that are there in request body and leave other fields unchanging.
         """
 
         # --- create product ---
+        payload, product = FakeProduct.populate_simple_product()
 
-        # --- update product ---
-        # payload = {
-        #     "product_name": "Update Test Product",
-        #     "description": "<p>test description 2</p>"
-        # }
-        #
-        # response = self.client.put(self.product_endpoint + '1', json=payload)
-        # print(response.json())
-        # assert response.status_code == status.HTTP_200_OK
+        response = self.client.put(f"{self.product_endpoint}{product.id}", json=update_payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        expected = response.json().get('product')
+        self.assert_datetime_format(expected['updated_at'])
+
+        # `created_at` should be same as before the update
+        assert expected['created_at'] == self.convert_datetime_to_string(product.created_at)
+
+        # --- test fields ---
+        field = tuple(update_payload.keys())
+        match field:
+            case ('product_name', ):
+                assert expected['product_name'] == update_payload['product_name']
+                assert expected['description'] == product.description
+                assert expected['status'] == product.status
+
+            case ('description', ):
+                assert expected['product_name'] == product.product_name
+                assert expected['description'] == update_payload['description']
+                assert expected['status'] == product.status
+
+            case ('status', ):
+                assert expected['product_name'] == product.product_name
+                assert expected['description'] == product.description
+                assert expected['status'] == update_payload['status']
+
+            case ('product_name', 'description'):
+                assert expected['product_name'] == update_payload['product_name']
+                assert expected['description'] == update_payload['description']
+                assert expected['status'] == product.status
+
+            case ('product_name', 'status'):
+                assert expected['product_name'] == update_payload['product_name']
+                assert expected['description'] == product.description
+                assert expected['status'] == update_payload['status']
+
+            case _:
+                # To ensure that all case statements in my code are executed
+                raise ValueError(f"Unknown field(s): {field}")
+
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
