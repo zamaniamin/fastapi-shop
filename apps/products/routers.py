@@ -5,6 +5,15 @@ from apps.core.services.media import MediaService
 from apps.products import schemas
 from apps.products.services import ProductService
 
+# TODO we dont have simple-product and variable-product. any product is a variable product.
+#  so, I should refactor the codes and rename the methods name and comments to one name 'product'.
+#  and when I create a product without options, this means that I have a product with one variant field and none options
+#  also when I create a product with 3 options but each option have one item, it means that I have a product with
+#  one variant field too.
+#  all the process over the products should be done with variants data in products. anything like cart, orders,
+#  and stock management.
+
+
 router = APIRouter(
     prefix="/products",
     tags=["Product"]
@@ -58,13 +67,21 @@ async def list_produces():
     status_code=status.HTTP_200_OK)
 async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
-    # TODO PUT a product (with options and variants)
+    # TODO update a product (with options and variants)
+    # TODO update a product with media
     # TODO update price and stock for each variant
 
-    # skip the fields that are not set in response body
-    updated_product_data = {
-        key: value for key, value in payload.model_dump().items() if value is not None
-    }
+    # skip the fields that are not set in request body
+    # updated_product_data = {
+    #     key: value for key, value in payload.model_dump().items() if value is not None
+    # }
+
+    updated_product_data = {}
+    for key, value in payload.model_dump().items():
+        if value is not None:
+            updated_product_data[key] = value
+
+    # get the variant data {'variant_id':1, 'price':2.5, 'stock':3}
 
     try:
         updated_product = ProductService.update_product(product_id, **updated_product_data)

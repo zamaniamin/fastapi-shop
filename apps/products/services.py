@@ -205,6 +205,14 @@ class ProductService:
         # Update the 'updated_at' field in the kwargs dictionary
         kwargs['updated_at'] = DateTime.now()
 
+        # --- pseudocode ---
+        # TODO get the variant by variant-id (when I want to update a field that there is inside variants, should sent
+        #  variant id too)
+        # TODO get the price of variant
+        # TODO get the stock of variant
+        # TODO update variant
+        # TODO update product
+
         # Update the product with the modified data, including 'updated_at'
         Product.update(product_id, **kwargs)
         return cls.retrieve_product(product_id)
