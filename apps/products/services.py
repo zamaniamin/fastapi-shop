@@ -206,7 +206,9 @@ class ProductService:
         kwargs['updated_at'] = DateTime.now()
 
         # Update the product with the modified data, including 'updated_at'
-        return Product.update(product_id, **kwargs)
+        Product.update(product_id, **kwargs)
+        return cls.retrieve_product(product_id)
+        # return Product.update(product_id, **kwargs)
 
     @classmethod
     def list_products(cls, limit: int = 12):

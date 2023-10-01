@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Form, UploadFile, File
+from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 
 from apps.core.services.media import MediaService
@@ -54,12 +54,23 @@ async def list_produces():
 
 @router.put(
     '/{product_id}',
+    # TODO add response model
     status_code=status.HTTP_200_OK)
 async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO PUT a product (with options and variants)
     # TODO update price and stock for each variant
-    return ProductService.update_product(product_id, **payload.model_dump())
+
+    # skip the fields that are not set in response body
+    updated_product_data = {
+        key: value for key, value in payload.model_dump().items() if value is not None
+    }
+
+    try:
+        updated_product = ProductService.update_product(product_id, **updated_product_data)
+        return {'product': updated_product}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 # TODO delete a product

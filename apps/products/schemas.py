@@ -186,12 +186,8 @@ class ListProductOut(BaseModel):
 
 
 class UpdateProductIn(BaseModel):
-    product_name: Annotated[str, Query(max_length=255)]
-
-    # description: str | None = None
-    # status: str | None = None
-    #
-    # options: list[OptionIn] | None = None
-
-    class Config:
-        from_attributes = True
+    product_name: Annotated[str, Query(max_length=255, min_length=1)] | None = None
+    description: str | None = None
+    status: str | None = None
+    price: float | None = None
+    stock: int | None = None
