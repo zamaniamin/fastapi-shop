@@ -762,16 +762,11 @@ class TestUpdateProduct(ProductTestBase):
         {"product_name": "updated name"},
         {"description": "updated description"},
         {"status": "archived"},
-        {
-            "product_name": "updated name",
-            "description": "updated description"
-        },
-        {
-            "product_name": "updated name",
-            "status": "draft"
-        },
+        {"product_name": "updated name", "description": "updated description"},
+        {"product_name": "updated name", "status": "draft"},
+        {"description": "updated description", "status": "archived"}
     ])
-    def test_update_simple_product(self, update_payload):
+    def test_update_product(self, update_payload):
         """
         Test update a product, only update fields that are there in request body and leave other fields unchanging.
         """
@@ -788,7 +783,10 @@ class TestUpdateProduct(ProductTestBase):
         # `created_at` should be same as before the update
         assert expected['created_at'] == self.convert_datetime_to_string(product.created_at)
 
-        # --- test fields ---
+        # ----------------------------------
+        # --- test update product fields ---
+        # ----------------------------------
+
         field = tuple(update_payload.keys())
         match field:
             case ('product_name', ):
@@ -816,9 +814,65 @@ class TestUpdateProduct(ProductTestBase):
                 assert expected['description'] == product.description
                 assert expected['status'] == update_payload['status']
 
+            case ('description', 'status'):
+                assert expected['product_name'] == product.product_name
+                assert expected['description'] == update_payload['description']
+                assert expected['status'] == update_payload['status']
+
             case _:
                 # To ensure that all case statements in my code are executed
                 raise ValueError(f"Unknown field(s): {field}")
+
+    def test_update_product_options(self):
+        ...
+
+    @pytest.mark.parametrize("variants_payload", [
+        {"": ""}
+    ])
+    def test_update_product_variants(self, variants_payload):
+        """
+        Test update a product, only update fields that are there in request body and leave other fields unchanging.
+        """
+
+        # --- create product ---
+        payload, product = FakeProduct.populate_simple_product()
+
+        response = self.client.put(f"{self.product_endpoint}{product.id}", json=variants_payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        expected = response.json().get('product')
+        self.assert_datetime_format(expected['updated_at'])
+
+        # `created_at` should be same as before the update
+        assert expected['created_at'] == self.convert_datetime_to_string(product.created_at)
+
+        # -------------------------------------------
+        # --- test update product variants fields ---
+        # -------------------------------------------
+
+        field = tuple(variants_payload.keys())
+        match field:
+            case ('price', ):
+                default_variant = expected['variants'][0]
+                assert expected['product_name'] == product.product_name
+                assert expected['description'] == product.description
+                assert expected['status'] == product.status
+                assert default_variant['price'] == variants_payload['price']
+                assert expected['variants'][0]['stock'] == product.variants[0]['stock']
+
+            case ('stock', ):
+                assert expected['product_name'] == product.product_name
+                assert expected['description'] == product.description
+                assert expected['status'] == product.status
+                assert expected['variants'][0]['price'] == product.variants[0]['price']
+                assert expected['variants'][0]['stock'] == variants_payload['stock']
+
+            case _:
+                # To ensure that all case statements in my code are executed
+                raise ValueError(f"Unknown field(s): {field}")
+
+    def test_update_product_media(self):
+        ...
 
     # ---------------------
     # --- Test Payloads ---
