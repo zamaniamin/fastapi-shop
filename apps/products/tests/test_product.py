@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
+from apps.products.services import ProductService
 from config.database import DatabaseManager
 
 
@@ -823,53 +824,45 @@ class TestUpdateProduct(ProductTestBase):
                 # To ensure that all case statements in my code are executed
                 raise ValueError(f"Unknown field(s): {field}")
 
-    def test_update_product_options(self):
-        ...
+    # def test_update_product_options(self):
+    #     ...
 
-    @pytest.mark.parametrize("variants_payload", [
-        {"": ""}
-    ])
-    def test_update_product_variants(self, variants_payload):
+    def test_update_product_variants(self):
         """
-        Test update a product, only update fields that are there in request body and leave other fields unchanging.
+        Test update product variants, only update fields that are there in request body
+         and leave other fields unchanging.
         """
 
         # --- create product ---
-        payload, product = FakeProduct.populate_simple_product()
+        payload, product = FakeProduct.populate_variable_product()
+        variants = ProductService.retrieve_variants(product.id)[0]
+        update_payload = {
+            'variants': [
+                {
+                    "variant_id": variants['variant_id'],
+                    "price": 4.99
+                }
+            ]
+        }
 
-        response = self.client.put(f"{self.product_endpoint}{product.id}", json=variants_payload)
+        # --- request ---
+        response = self.client.put(f"{self.product_endpoint}{product.id}", json=update_payload)
         assert response.status_code == status.HTTP_200_OK
 
+        # --- expected ---
         expected = response.json().get('product')
         self.assert_datetime_format(expected['updated_at'])
-
-        # `created_at` should be same as before the update
+        expected_variant = expected['variants'][0]
         assert expected['created_at'] == self.convert_datetime_to_string(product.created_at)
 
         # -------------------------------------------
         # --- test update product variants fields ---
         # -------------------------------------------
 
-        field = tuple(variants_payload.keys())
-        match field:
-            case ('price', ):
-                default_variant = expected['variants'][0]
-                assert expected['product_name'] == product.product_name
-                assert expected['description'] == product.description
-                assert expected['status'] == product.status
-                assert default_variant['price'] == variants_payload['price']
-                assert expected['variants'][0]['stock'] == product.variants[0]['stock']
-
-            case ('stock', ):
-                assert expected['product_name'] == product.product_name
-                assert expected['description'] == product.description
-                assert expected['status'] == product.status
-                assert expected['variants'][0]['price'] == product.variants[0]['price']
-                assert expected['variants'][0]['stock'] == variants_payload['stock']
-
-            case _:
-                # To ensure that all case statements in my code are executed
-                raise ValueError(f"Unknown field(s): {field}")
+        assert expected['product_name'] == product.product_name
+        assert expected['description'] == product.description
+        assert expected['status'] == product.status
+        assert expected_variant['price'] == 4.99
 
     def test_update_product_media(self):
         ...
