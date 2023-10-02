@@ -22,6 +22,17 @@ class VariantOut(BaseModel):
     updated_at: str | None
 
 
+class UpdateVariantIn(BaseModel):
+    variant_id: int
+    price: float | None = None
+    stock: int | None = None
+    option1: int | None = None
+    option2: int | None = None
+    option3: int | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
 """
 ---------------------------------------
 --------------- Options ---------------
@@ -191,3 +202,7 @@ class UpdateProductIn(BaseModel):
     status: str | None = None
     price: float | None = None
     stock: int | None = None
+
+    # options: list[OptionOut] | None
+    variants: list[UpdateVariantIn] | None = None
+    # media: list[ProductMediaSchema] | None = None

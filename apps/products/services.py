@@ -199,24 +199,31 @@ class ProductService:
         }
         return product
 
+    # --- pseudocode ---
+    # TODO get the variant by variant-id (when I want to update a field that there is inside variants, should sent
+    #  variant id too)
+    # TODO get the price of variant
+    # TODO get the stock of variant
+    # TODO update variant
+    # TODO update product
     @classmethod
     def update_product(cls, product_id, **kwargs):
+        # --- init data ---
 
-        # Update the 'updated_at' field in the kwargs dictionary
+        # add 'updated_at' field to kwargs
         kwargs['updated_at'] = DateTime.now()
 
-        # --- pseudocode ---
-        # TODO get the variant by variant-id (when I want to update a field that there is inside variants, should sent
-        #  variant id too)
-        # TODO get the price of variant
-        # TODO get the stock of variant
-        # TODO update variant
-        # TODO update product
+        variants = kwargs.pop('variants', None)
 
-        # Update the product with the modified data, including 'updated_at'
+        # --- update variants ---
+        if variants is not None:
+            for variant in variants:
+                if len(variant) > 1:
+                    ProductVariant.update(variant.pop('variant_id'), **variant)
+
+        # --- update product ---
         Product.update(product_id, **kwargs)
         return cls.retrieve_product(product_id)
-        # return Product.update(product_id, **kwargs)
 
     @classmethod
     def list_products(cls, limit: int = 12):

@@ -69,19 +69,14 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO update a product (with options and variants)
     # TODO update a product with media
-    # TODO update price and stock for each variant
-
-    # skip the fields that are not set in request body
-    # updated_product_data = {
-    #     key: value for key, value in payload.model_dump().items() if value is not None
-    # }
+    # TODO update stock for each variant
 
     updated_product_data = {}
-    for key, value in payload.model_dump().items():
+    payload = payload.model_dump()
+
+    for key, value in payload.items():
         if value is not None:
             updated_product_data[key] = value
-
-    # get the variant data {'variant_id':1, 'price':2.5, 'stock':3}
 
     try:
         updated_product = ProductService.update_product(product_id, **updated_product_data)
