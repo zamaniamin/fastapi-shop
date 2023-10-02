@@ -219,6 +219,7 @@ class ProductService:
         if variants is not None:
             for variant in variants:
                 if len(variant) > 1:
+                    variant['updated_at'] = DateTime.now()
                     ProductVariant.update(variant.pop('variant_id'), **variant)
 
         # --- update product ---
