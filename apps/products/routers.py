@@ -67,9 +67,7 @@ async def list_produces():
     status_code=status.HTTP_200_OK)
 async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
-    # TODO update a product (with options and variants)
     # TODO update a product with media
-    # TODO update stock for each variant
 
     updated_product_data = {}
     payload = payload.model_dump()

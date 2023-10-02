@@ -203,6 +203,5 @@ class UpdateProductIn(BaseModel):
     price: float | None = None
     stock: int | None = None
 
-    # options: list[OptionOut] | None
     variants: list[UpdateVariantIn] | None = None
     # media: list[ProductMediaSchema] | None = None
