@@ -12,8 +12,9 @@ from apps.products.services import ProductService
 
 class FakeProduct:
     """
-    Populates the database with fake products
+    Populates the database with fake products.
     """
+
     fake = Faker()
 
     options = ['color', 'size', 'material', 'Style']
@@ -24,7 +25,7 @@ class FakeProduct:
 
     def fill_products(self):
         """
-        For generating fake products as demo
+        For generating fake products as demo.
         """
         # TODO I should download 20 product images and save them in project and attach them for demo data
         self.fake.add_provider(lorem)
@@ -63,8 +64,18 @@ class FakeProduct:
         ]
 
     @classmethod
-    def get_payload_variable_product(cls):
-        # TODO install faker package and generate some random data for payload
+    def get_payload(cls):
+        payload = {
+            'product_name': cls.generate_name(),
+            'description': cls.generate_description(),
+            'status': 'active',
+            'price': cls.get_random_price(),
+            'stock': cls.get_random_stock()
+        }
+        return payload.copy()
+
+    @classmethod
+    def get_payload_with_options(cls):
         payload = {
             'product_name': cls.generate_name(),
             'description': cls.generate_description(),
@@ -76,44 +87,34 @@ class FakeProduct:
         return payload.copy()
 
     @classmethod
-    def get_payload_simple_product(cls):
-        payload = {
-            'product_name': cls.generate_name(),
-            'description': cls.generate_description(),
-            'status': 'active',
-            'price': cls.get_random_price(),
-            'stock': cls.get_random_stock()
-        }
-        return payload.copy()
-
-    @classmethod
-    def populate_simple_product(cls) -> tuple[dict[str, str | int], Product]:
+    def populate_product(cls) -> tuple[dict[str, str | int], Product]:
         """
-        Crete a full simple-product (with all fields).
+        Crete a product without options.
         """
 
-        product_data = cls.get_payload_simple_product()
+        product_data = cls.get_payload()
         return product_data.copy(), ProductService.create_product(product_data, get_obj=True)
 
     @classmethod
-    def populate_variable_product(cls) -> tuple[dict[str, str | int], Product]:
+    def populate_product_with_options(cls) -> tuple[dict[str, str | int], Product]:
         """
-        Crete a full variable-product (with all fields).
+        Crete a product with options. (with all fields)
         """
-        product_data = cls.get_payload_variable_product()
+
+        product_data = cls.get_payload_with_options()
         return product_data.copy(), ProductService.create_product(product_data, get_obj=True)
 
     @classmethod
-    async def populate_simple_product_with_media(cls):
+    async def populate_product_with_media(cls):
         payload: dict
         product: Product
 
         # --- create a product ---
-        payload, product = cls.populate_simple_product()
+        payload, product = cls.populate_product()
         payload['alt'] = 'Test Alt Text'
 
         # --- get demo images ---
-        upload = FakeMedia.populate_images_simple_product(upload_file=True, product_id=product.id)
+        upload = FakeMedia.populate_images_for_product(upload_file=True, product_id=product.id)
 
         # --- attach media to product ---
         media = ProductService.create_media(product.id, payload['alt'], upload)
@@ -121,16 +122,20 @@ class FakeProduct:
             return payload, product
 
     @classmethod
-    async def populate_variable_product_with_media(cls):
+    async def populate_product_with_options_media(cls):
+        """
+        Crete a product with options and attach some media to it.
+        """
+
         payload: dict
         product: Product
 
         # --- create a product ---
-        payload, product = cls.populate_variable_product()
+        payload, product = cls.populate_product_with_options()
         payload['alt'] = 'Test Alt Text'
 
         # --- get demo images ---
-        upload = FakeMedia.populate_images_simple_product(upload_file=True, product_id=product.id)
+        upload = FakeMedia.populate_images_for_product(upload_file=True, product_id=product.id)
 
         # --- attach media to product ---
         media = ProductService.create_media(product.id, payload['alt'], upload)
@@ -138,36 +143,32 @@ class FakeProduct:
             return payload, product
 
     @classmethod
-    async def populate_30_product(cls):
-        # --- create 12 variable and simple products with media ---
+    async def populate_30_products(cls):
+
+        # --- create 12 products with media ---
         # TODO generate random options for variable-products
-
         for i in range(6):
-            await cls.populate_variable_product_with_media()
-
+            await cls.populate_product_with_options_media()
         for i in range(6):
-            await cls.populate_simple_product_with_media()
+            await cls.populate_product_with_media()
 
         # --- create 18 products without media ---
-        # no media
         for i in range(9):
-            cls.populate_simple_product()
-
-        # with media
+            cls.populate_product()
         for i in range(9):
-            cls.populate_variable_product()
+            cls.populate_product_with_options()
 
 
 class FakeMedia:
-    simple_product_demo_dir = f'{DEMO_PRODUCTS_MEDIA_DIR}'
+    product_demo_dir = f'{DEMO_PRODUCTS_MEDIA_DIR}'
 
     @classmethod
-    def populate_images_simple_product(cls, upload_file=False, product_id: int = 1):
+    def populate_images_for_product(cls, upload_file=False, product_id: int = 1):
         """
-        Attach some media (images) just to a simple product.
+        Attach some media (images) just to a product.
 
         Read some image file in `.jpg` format from this directory:
-        `/apps/demo/products/simple/{number:1}` (you can replace your files in the dir)
+        `/apps/demo/products/{number}` (you can replace your files in the dir)
         """
 
         directory_path = f'{DEMO_PRODUCTS_MEDIA_DIR}/{product_id}'

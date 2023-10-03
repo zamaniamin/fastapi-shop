@@ -36,10 +36,10 @@ class TestCreateProductMedia(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        product_payload, product = FakeProduct.populate_simple_product()
+        product_payload, product = FakeProduct.populate_product()
 
         # --- upload files ----
-        file_paths = FakeMedia.populate_images_simple_product()
+        file_paths = FakeMedia.populate_images_for_product()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
             'product_id': product.id,
@@ -87,7 +87,7 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        payload, product = asyncio.run(FakeProduct.populate_simple_product_with_media())
+        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
 
         # --- request ---
         response = self.client.get(f"{self.product_endpoint}{product.id}/{'media'}")
@@ -116,7 +116,7 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        payload, product = FakeProduct.populate_simple_product()
+        payload, product = FakeProduct.populate_product()
 
         # --- request ---
         response = self.client.get(f"{self.product_endpoint}{product.id}/{'media'}")
@@ -143,10 +143,10 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        product_payload, product = FakeProduct.populate_simple_product()
+        product_payload, product = FakeProduct.populate_product()
 
         # --- upload files ----
-        file_paths = FakeMedia.populate_images_simple_product()
+        file_paths = FakeMedia.populate_images_for_product()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
             'product_id': product.id,
@@ -166,7 +166,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         """
 
         # --- upload files ----
-        file_paths = FakeMedia.populate_images_simple_product()
+        file_paths = FakeMedia.populate_images_for_product()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
 
         # --- request ---
@@ -179,7 +179,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        product_payload, product = FakeProduct.populate_simple_product()
+        product_payload, product = FakeProduct.populate_product()
 
         # --- upload files ----
         media_payload = {
@@ -197,7 +197,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        product_payload, product = FakeProduct.populate_simple_product()
+        product_payload, product = FakeProduct.populate_product()
 
         # --- upload files ----
         file_paths = FakeMedia.populate_docs_file()
@@ -217,7 +217,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         """
 
         # --- create a product ---
-        product_payload, product = FakeProduct.populate_simple_product()
+        product_payload, product = FakeProduct.populate_product()
 
         # --- upload files ----
         file_paths = FakeMedia.populate_large_file()

@@ -41,17 +41,16 @@ class TestCreateProduct(ProductTestBase):
         #  'active or archive'
         ...
 
-    def test_create_simple_product(self):
+    def test_create_product(self):
         """
-        Test create a simple-product by the all available inputs (assuming valid data).
-        Test response body for simple product.
+        Test create a product by assuming valid data.
 
         * every time we create product, the media should be None, because the Media after creating a product will be
           attached to it.
         """
 
         # --- request ---
-        payload = FakeProduct.get_payload_simple_product()
+        payload = FakeProduct.get_payload()
         response = self.client.post(self.product_endpoint, json=payload)
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -87,17 +86,16 @@ class TestCreateProduct(ProductTestBase):
         assert variant['updated_at'] is None
         self.assert_datetime_format(expected['created_at'])
 
-    def test_create_variable_product(self):
+    def test_create_product_with_options(self):
         """
-        Test create a variable-product by the all available inputs (assuming valid data).
-        Test response body for variable-product.
+        Test create a product by the all available inputs (assuming valid data).
 
         * every time we create a product, the media should be None, because the media after creating a product will be
           attached to it.
         """
 
         # --- request ---
-        payload = FakeProduct.get_payload_variable_product()
+        payload = FakeProduct.get_payload_with_options()
         response = self.client.post(self.product_endpoint, json=payload)
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -144,9 +142,9 @@ class TestCreateProduct(ProductTestBase):
         # --- media ---
         assert expected['media'] is None
 
-    def test_create_simple_product_required(self):
+    def test_create_product_required(self):
         """
-        Test create a simple-product just with required fields in product payload
+        Test create a product just with required fields in product payload.
         """
 
         # --- request ---
@@ -188,9 +186,9 @@ class TestCreateProduct(ProductTestBase):
         assert variant['updated_at'] is None
         self.assert_datetime_format(expected['created_at'])
 
-    def test_create_variable_product_required(self):
+    def test_create_product_with_required_options(self):
         """
-        Test create a variable-product just with required fields in product payload.
+        Test create a product just with required fields in options.
         """
 
         # --- request ---
@@ -472,16 +470,17 @@ class TestRetrieveProduct(ProductTestBase):
     Test retrieve products on the multi scenario
     """
 
-    def test_retrieve_simple_product(self):
+    def test_retrieve_product(self):
         """
-        Test retrieve a simple product:
+        Test retrieve a product:
         - with product fields.
         - with one variant.
+        - no options.
         - no media.
         """
 
         # --- create a product ---
-        payload, product = FakeProduct.populate_simple_product()
+        payload, product = FakeProduct.populate_product()
 
         # --- retrieve product ---
         response = self.client.get(f'{self.product_endpoint}{product.id}')
@@ -519,9 +518,9 @@ class TestRetrieveProduct(ProductTestBase):
         assert variant['updated_at'] is None
         self.assert_datetime_format(expected['created_at'])
 
-    def test_retrieve_variable_product(self):
+    def test_retrieve_product_with_options(self):
         """
-        Test retrieve a variable product:
+        Test retrieve a product with options:
         - with price and stock.
         - with options
         - with variants.
@@ -529,7 +528,7 @@ class TestRetrieveProduct(ProductTestBase):
         """
 
         # --- create a product ---
-        payload, product = FakeProduct.populate_variable_product()
+        payload, product = FakeProduct.populate_product_with_options()
 
         # --- retrieve product ---
         response = self.client.get(f"{self.product_endpoint}{product.id}")
@@ -578,12 +577,13 @@ class TestRetrieveProduct(ProductTestBase):
         # --- media ---
         assert expected['media'] is None
 
-    def test_retrieve_simple_product_with_media(self):
+    def test_retrieve_product_with_media(self):
         """
-        Test read a product and test response body for simple product
+        Test retrieve a product and test response.
         """
+
         # --- create a product ---
-        payload, product = asyncio.run(FakeProduct.populate_simple_product_with_media())
+        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
 
         # --- retrieve product ---
         response = self.client.get(f"{self.product_endpoint}{product.id}")
@@ -633,13 +633,13 @@ class TestRetrieveProduct(ProductTestBase):
             assert media_item["updated_at"] is None
             self.assert_datetime_format(media_item['created_at'])
 
-    def test_retrieve_variable_product_with_media(self):
+    def test_retrieve_product_with_options_media(self):
         """
-        Test retrieve a variable-product with media files
+        Test retrieve a product with options and media files.
         """
 
         # --- create a product ---
-        payload, product = asyncio.run(FakeProduct.populate_variable_product_with_media())
+        payload, product = asyncio.run(FakeProduct.populate_product_with_options_media())
 
         # --- retrieve product ---
         response = self.client.get(f"{self.product_endpoint}{product.id}")
@@ -729,7 +729,7 @@ class TestListProduct(ProductTestBase):
         Test retrieve a list of products.
         """
         # --- create 30 products ---
-        asyncio.run(FakeProduct.populate_30_product())
+        asyncio.run(FakeProduct.populate_30_products())
 
         # --- request ---
         response = self.client.get(self.product_endpoint)
@@ -773,7 +773,7 @@ class TestUpdateProduct(ProductTestBase):
         """
 
         # --- create product ---
-        payload, product = FakeProduct.populate_simple_product()
+        payload, product = FakeProduct.populate_product()
 
         response = self.client.put(f"{self.product_endpoint}{product.id}", json=update_payload)
         assert response.status_code == status.HTTP_200_OK
@@ -833,7 +833,7 @@ class TestUpdateProduct(ProductTestBase):
         """
 
         # --- create product ---
-        payload, product = FakeProduct.populate_variable_product()
+        payload, product = FakeProduct.populate_product_with_options()
 
         # --- get variants ---
         variants = ProductService.retrieve_variants(product.id)

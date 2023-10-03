@@ -23,6 +23,9 @@ Products may feature up to three distinct options. Each option can have multiple
 All operations related to products, such as managing shopping carts, processing orders, and handling stock,
  are performed through product variants. This streamlined approach enhances efficiency and simplifies product
  handling across the platform.
+
+Every time we create product, the media should be None, because the Media after creating a product will be
+attached to it.
 """
 
 from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException
@@ -31,10 +34,6 @@ from fastapi.responses import JSONResponse
 from apps.core.services.media import MediaService
 from apps.products import schemas
 from apps.products.services import ProductService
-
-# TODO we dont have simple-product and variable-product. any product is a variable product.
-#  so, I should refactor the codes and rename the methods name and comments to one name 'product'.
-
 
 router = APIRouter(
     prefix="/products",
