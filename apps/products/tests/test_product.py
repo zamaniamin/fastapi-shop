@@ -784,9 +784,9 @@ class TestUpdateProduct(ProductTestBase):
         # `created_at` should be same as before the update
         assert expected['created_at'] == self.convert_datetime_to_string(product.created_at)
 
-        # ----------------------------------
-        # --- test update product fields ---
-        # ----------------------------------
+        # ----------------------
+        # --- product fields ---
+        # ----------------------
 
         field = tuple(update_payload.keys())
         match field:
@@ -865,9 +865,9 @@ class TestUpdateProduct(ProductTestBase):
         expected_variant_1 = expected['variants'][0]
         expected_variant_2 = expected['variants'][1]
 
-        # -------------------------------------------
-        # --- test update product variants fields ---
-        # -------------------------------------------
+        # -----------------------
+        # --- variants fields ---
+        # -----------------------
 
         assert expected['product_name'] == product.product_name
         assert expected['description'] == product.description
@@ -882,7 +882,11 @@ class TestUpdateProduct(ProductTestBase):
         self.assert_datetime_format(expected_variant_2['updated_at'])
 
     def test_update_product_media(self):
-        ...
+        """
+        Test update product media, only update fields that are there in request body
+         and leave other fields unchanging.
+        """
+        # TODO update media in a product
 
     # TODO test delete a media from a product (a list of images-id)
     # ---------------------
