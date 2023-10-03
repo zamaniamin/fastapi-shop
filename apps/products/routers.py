@@ -1,3 +1,30 @@
+"""
+**Product Definition: Variable Products**
+
+In our system, every product is considered a variable product.
+Variable products encapsulate all product variations, streamlining the entire process.
+Whether you create a product without any specified options or define up to three distinct options, each with a
+single item, you are essentially working with a variable product.
+
+
+**Product Variants and Options**
+
+- **Variants:**
+Products can have multiple variants, each representing a unique combination of attributes like price, stock, and other
+ specifications.
+
+- **Options:**
+Products may feature up to three distinct options. Each option can have multiple items, allowing fora rich variety of
+ choices.
+
+
+**Simplified Product Management:**
+
+All operations related to products, such as managing shopping carts, processing orders, and handling stock,
+ are performed through product variants. This streamlined approach enhances efficiency and simplifies product
+ handling across the platform.
+"""
+
 from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -7,11 +34,6 @@ from apps.products.services import ProductService
 
 # TODO we dont have simple-product and variable-product. any product is a variable product.
 #  so, I should refactor the codes and rename the methods name and comments to one name 'product'.
-#  and when I create a product without options, this means that I have a product with one variant field and none options
-#  also when I create a product with 3 options but each option have one item, it means that I have a product with
-#  one variant field too.
-#  all the process over the products should be done with variants data in products. anything like cart, orders,
-#  and stock management.
 
 
 router = APIRouter(
