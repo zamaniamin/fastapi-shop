@@ -884,6 +884,7 @@ class TestUpdateProduct(ProductTestBase):
     def test_update_product_media(self):
         ...
 
+    # TODO test delete a media from a product (a list of images-id)
     # ---------------------
     # --- Test Payloads ---
     # ---------------------

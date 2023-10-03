@@ -212,6 +212,11 @@ class ProductService:
                     variant['updated_at'] = DateTime.now()
                     ProductVariant.update(variant.pop('variant_id'), **variant)
 
+        # --- update media ---
+        # TODO edit alt
+        # TODO change src (upload new image)
+        # TODO edit update_at
+
         # --- update product ---
         Product.update(product_id, **kwargs)
         return cls.retrieve_product(product_id)
