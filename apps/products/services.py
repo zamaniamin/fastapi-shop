@@ -91,19 +91,18 @@ class ProductService:
     @classmethod
     def __create_variants(cls):
         """
-        Create a default variant or crete variants by options combination
+        Create a default variant or create variants by options combination.
         """
 
         if cls.options:
-            # create variants by options combination (variant product)
 
-            # option_items = [option["items"] for option in cls.options_data]
+            # create variants by options combination
             items_id = cls.get_item_ids_by_product_id(cls.product.id)
             variants = list(options_combination(*items_id))
             for variant in variants:
                 values_tuple = tuple(variant)
 
-                # set each value to an option and set none if it dosnt exist
+                # set each value to an option and set none if it doesn't exist
                 while len(values_tuple) < 3:
                     values_tuple += (None,)
                 option1, option2, option3 = values_tuple
@@ -116,11 +115,8 @@ class ProductService:
                     price=cls.price,
                     stock=cls.stock
                 )
-                # (109, 102, 100)
-                # set each value to an option and set none if it dosnt exist
-                # ProductVariant.create(product_id=cls.product.id, )
         else:
-            # set a default variant (simple product)
+            # set a default variant
             ProductVariant.create(
                 product_id=cls.product.id,
                 price=cls.price,
@@ -172,14 +168,13 @@ class ProductService:
                     item_ids_dict[option_id] = []
                 item_ids_dict[option_id].append(item_id)
 
-            # Append item_ids lists to the result list
+            # Append `item_ids` lists to the result list
             item_ids_by_option.extend(item_ids_dict.values())
 
         return item_ids_by_option
 
     @classmethod
     def retrieve_product(cls, product_id):
-        # if not cls.product:
         cls.product = Product.get_or_404(product_id)
         cls.options = cls.retrieve_options(product_id)
         cls.variants = cls.retrieve_variants(product_id)
@@ -201,6 +196,7 @@ class ProductService:
 
     @classmethod
     def update_product(cls, product_id, **kwargs):
+
         # --- init data ---
         kwargs['updated_at'] = DateTime.now()
         variants = kwargs.pop('variants', None)
@@ -227,7 +223,7 @@ class ProductService:
         # - on list of products, for price, get it from "default variant"
         # - if price or stock of default variant is 0 then select first variant that is not 0
         # - or for price, get it from "less price"
-        # TODO do all of them with graphql and let the front to decide witch query should be run.
+        # do all of them with graphql and let the front devs decide witch query should be run.
 
         # also can override the list `limit` in settings.py
         if hasattr(settings, 'products_list_limit'):
@@ -275,10 +271,10 @@ class ProductService:
         """
         Save uploaded media to `media` directory and attach uploads to a product.
         """
-        # first check product exist
-        product: Product = Product.get_or_404(product_id)
 
+        product: Product = Product.get_or_404(product_id)
         media_service = MediaService(parent_directory="/products", sub_directory=product_id)
+
         for file in files:
             file_name, file_extension = media_service.save_file(file)
             ProductMedia.create(
@@ -287,6 +283,7 @@ class ProductService:
                 src=file_name,
                 type=file_extension
             )
+
         media = cls.retrieve_media(product_id)
         return media
 
