@@ -128,20 +128,16 @@ async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-# TODO separate variants update from product-update (update a variant by variant_id with independent endpoint)
-# TODO separate media update from product-update (update a media by media_id with independent endpoint)
-
-# TODO when updating a product, actions on product's images are:
-#  - add new images (upload and attach images to an existing product), this is the same as `create_product_media` (done)
-#  - delete some images from a product (unattached images from a product), should write code.
-
-
 # TODO delete a product
 
 """
 ---------------------------------------
 -------- Product-Media Routers --------
 ---------------------------------------
+
+when updating a product, actions on product's images are:
+- add new images to product: mean attach new images to an existing product, this is the same as `create_product_media()`
+- delete some images for product: mean unattached images from a product
 """
 
 
@@ -177,6 +173,7 @@ async def list_product_media(product_id: int):
         status_code=status.HTTP_204_NO_CONTENT
     )
 
+# TODO separate media update from product-update (update a media by media_id with independent endpoint)
 # TODO retrie a media
 # TODO update a media
 # TODO delete a media
