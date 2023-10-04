@@ -204,3 +204,7 @@ class UpdateProductIn(BaseModel):
     product_name: Annotated[str, Query(max_length=255, min_length=1)] | None = None
     description: str | None = None
     status: str | None = None
+
+
+class UpdateProductOut(BaseModel):
+    product: ProductSchema

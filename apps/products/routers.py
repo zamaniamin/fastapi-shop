@@ -50,14 +50,18 @@ router = APIRouter(
 @router.post(
     '/',
     status_code=status.HTTP_201_CREATED,
-    response_model=schemas.CreateProductOut)
+    response_model=schemas.CreateProductOut,
+    summary='Create a new product',
+    description='Create a new product.')
 async def create_product(product: schemas.CreateProductIn):
     return {'product': ProductService.create_product(product.model_dump())}
 
 
 @router.get(
     '/{product_id}',
+    status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductOut,
+    summary='Retrieve a single product',
     description="Retrieve a single product.")
 async def retrieve_product(product_id: int):
     # TODO user can retrieve products with status of (active , archived)
@@ -67,7 +71,10 @@ async def retrieve_product(product_id: int):
 
 @router.get(
     '/',
-    response_model=schemas.ListProductOut)
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ListProductOut,
+    summary='Retrieve a list of products',
+    description='Retrieve a list of products.')
 async def list_produces():
     # TODO permission: any user
     # TODO list products that status id `active`
@@ -84,8 +91,10 @@ async def list_produces():
 
 @router.put(
     '/{product_id}',
-    # TODO add response model
-    status_code=status.HTTP_200_OK)
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.UpdateProductOut,
+    summary='Updates a product',
+    description='Updates a product.')
 async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO update a product with media
@@ -113,8 +122,10 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
 
 @router.put(
     '/variants/{variant_id}',
+    status_code=status.HTTP_200_OK,
     response_model=schemas.UpdateVariantOut,
-    status_code=status.HTTP_200_OK)
+    summary='Updates an existing product variant',
+    description='Modify an existing Product Variant.')
 async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
     update_data = {}
 
@@ -145,8 +156,8 @@ when updating a product, actions on product's images are:
     '/media',
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.CreateProductMediaOut,
-    summary="Add new media",
-    description="Add new media to a product.")
+    summary="Create a new product image",
+    description="Create a new product image.")
 async def create_product_media(x_files: list[UploadFile] = File(), product_id: int = Form(),
                                alt: str | None = Form(None)):
     # check the file size and type
@@ -162,8 +173,8 @@ async def create_product_media(x_files: list[UploadFile] = File(), product_id: i
     '/{product_id}/media',
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductMediaOut,
-    summary="Retrieve product's media",
-    description="Retrieve a list of all media of a product.")
+    summary="Receive a list of all Product Images",
+    description="Receive a list of all Product Images.")
 async def list_product_media(product_id: int):
     media = ProductService.retrieve_media(product_id=product_id)
     if media:
