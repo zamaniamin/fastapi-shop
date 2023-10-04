@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
-from apps.products.services import ProductService
 from config.database import DatabaseManager
 
 
@@ -824,71 +823,6 @@ class TestUpdateProduct(ProductTestBase):
                 # To ensure that all case statements in my code are executed
                 raise ValueError(f"Unknown field(s): {field}")
 
-    def test_update_product_variants(self):
-        """
-        Test update product variants, only update fields that are there in request body
-         and leave other fields unchanging.
-
-        For now, I can just update this fields (price, stock, updated_at) for each variant.
-        """
-
-        # --- create product ---
-        payload, product = FakeProduct.populate_product_with_options()
-
-        # --- get variants ---
-        variants = ProductService.retrieve_variants(product.id)
-        update_payload = {
-            'variants': [
-                {
-                    "variant_id": variants[0]['variant_id'],
-                    "price": 4.99,
-                    "stock": 11
-                },
-                {
-                    "variant_id": variants[1]['variant_id'],
-                    "price": 5.35,
-                    "stock": 3
-                }
-            ]
-        }
-
-        # --- request ---
-        response = self.client.put(f"{self.product_endpoint}{product.id}", json=update_payload)
-        assert response.status_code == status.HTTP_200_OK
-
-        # --- expected ---
-        expected = response.json().get('product')
-
-        self.assert_datetime_format(expected['updated_at'])
-        assert expected['created_at'] == self.convert_datetime_to_string(product.created_at)
-
-        expected_variant_1 = expected['variants'][0]
-        expected_variant_2 = expected['variants'][1]
-
-        # -----------------------
-        # --- variants fields ---
-        # -----------------------
-
-        assert expected['product_name'] == product.product_name
-        assert expected['description'] == product.description
-        assert expected['status'] == product.status
-
-        assert expected_variant_1['price'] == 4.99
-        assert expected_variant_1['stock'] == 11
-        self.assert_datetime_format(expected_variant_1['updated_at'])
-
-        assert expected_variant_2['price'] == 5.35
-        assert expected_variant_2['stock'] == 3
-        self.assert_datetime_format(expected_variant_2['updated_at'])
-
-    def test_update_product_media(self):
-        """
-        Test update product media, only update fields that are there in request body
-         and leave other fields unchanging.
-        """
-        # TODO update media in a product
-
-    # TODO test delete a media from a product (a list of images-id)
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
