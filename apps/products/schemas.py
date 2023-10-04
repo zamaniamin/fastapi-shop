@@ -10,7 +10,7 @@ from pydantic import BaseModel, constr, field_validator, model_validator
 """
 
 
-class VariantOut(BaseModel):
+class VariantSchema(BaseModel):
     variant_id: int
     product_id: int
     price: float
@@ -25,6 +25,10 @@ class VariantOut(BaseModel):
 class UpdateVariantIn(BaseModel):
     price: float | None = None
     stock: int | None = None
+
+
+class UpdateVariantOut(BaseModel):
+    variant: VariantSchema
 
 
 """
@@ -122,7 +126,7 @@ class ProductSchema(BaseModel):
     published_at: str | None
 
     options: list[OptionOut] | None
-    variants: list[VariantOut] | None
+    variants: list[VariantSchema] | None
     media: list[ProductMediaSchema] | None = None
 
 

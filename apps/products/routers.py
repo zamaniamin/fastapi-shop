@@ -113,7 +113,7 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
 
 @router.put(
     '/variants/{variant_id}',
-    # TODO add response model
+    response_model=schemas.UpdateVariantOut,
     status_code=status.HTTP_200_OK)
 async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
     update_data = {}
