@@ -104,6 +104,38 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+"""
+---------------------------------------
+-------- Product-Variant Routers --------
+---------------------------------------
+"""
+
+
+@router.put(
+    '/variants/{variant_id}',
+    # TODO add response model
+    status_code=status.HTTP_200_OK)
+async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
+    update_data = {}
+
+    for key, value in payload.model_dump().items():
+        if value is not None:
+            update_data[key] = value
+    try:
+        updated_variant = ProductService.update_variant(variant_id, **update_data)
+        return {'variant': updated_variant}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# TODO separate variants update from product-update (update a variant by variant_id with independent endpoint)
+# TODO separate media update from product-update (update a media by media_id with independent endpoint)
+
+# TODO when updating a product, actions on product's images are:
+#  - add new images (upload and attach images to an existing product), this is the same as `create_product_media` (done)
+#  - delete some images from a product (unattached images from a product), should write code.
+
+
 # TODO delete a product
 
 """

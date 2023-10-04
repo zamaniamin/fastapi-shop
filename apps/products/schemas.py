@@ -23,14 +23,8 @@ class VariantOut(BaseModel):
 
 
 class UpdateVariantIn(BaseModel):
-    variant_id: int
     price: float | None = None
     stock: int | None = None
-    option1: int | None = None
-    option2: int | None = None
-    option3: int | None = None
-    created_at: str | None = None
-    updated_at: str | None = None
 
 
 """
@@ -102,6 +96,12 @@ class MultiFileUpload(BaseModel):
 
 class RetrieveProductMediaOut(BaseModel):
     media: list[ProductMediaSchema] | None = None
+
+
+# class UpdateMediaSchema(BaseModel):
+#     media_id: int
+#     alt: str | None = None
+#     src: str | None = None
 
 
 """
@@ -200,8 +200,3 @@ class UpdateProductIn(BaseModel):
     product_name: Annotated[str, Query(max_length=255, min_length=1)] | None = None
     description: str | None = None
     status: str | None = None
-    price: float | None = None
-    stock: int | None = None
-
-    variants: list[UpdateVariantIn] | None = None
-    # media: list[ProductMediaSchema] | None = None

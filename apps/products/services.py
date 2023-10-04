@@ -148,6 +148,22 @@ class ProductService:
                 })
         return product_variants
 
+    @staticmethod
+    def retrieve_variant(variant_id: int):
+        variant = ProductVariant.get_or_404(variant_id)
+        variant_data = {
+            "variant_id": variant.id,
+            "product_id": variant.product_id,
+            "price": variant.price,
+            "stock": variant.stock,
+            "option1": variant.option1,
+            "option2": variant.option2,
+            "option3": variant.option3,
+            "created_at": DateTime.string(variant.created_at),
+            "updated_at": DateTime.string(variant.updated_at)
+        }
+        return variant_data
+
     @classmethod
     def get_item_ids_by_product_id(cls, product_id):
         item_ids_by_option = []
@@ -199,23 +215,20 @@ class ProductService:
 
         # --- init data ---
         kwargs['updated_at'] = DateTime.now()
-        variants = kwargs.pop('variants', None)
-
-        # --- update variants ---
-        if variants is not None:
-            for variant in variants:
-                if len(variant) > 1:
-                    variant['updated_at'] = DateTime.now()
-                    ProductVariant.update(variant.pop('variant_id'), **variant)
-
-        # --- update media ---
-        # TODO edit alt
-        # TODO change src (upload new image)
-        # TODO edit update_at
 
         # --- update product ---
         Product.update(product_id, **kwargs)
         return cls.retrieve_product(product_id)
+
+    @classmethod
+    def update_variant(cls, variant_id, **kwargs):
+        # check variant exist
+        ProductVariant.get_or_404(variant_id)
+
+        kwargs['updated_at'] = DateTime.now()
+        ProductVariant.update(variant_id, **kwargs)
+
+        return cls.retrieve_variant(variant_id)
 
     @classmethod
     def list_products(cls, limit: int = 12):
