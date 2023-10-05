@@ -176,7 +176,29 @@ class TestUpdateProductMedia(ProductMediaTestBase):
 
 
 class TestDestroyProductMedia(ProductMediaTestBase):
-    ...
+    @pytest.mark.asyncio
+    def test_delete_media_from_product(self):
+        """
+
+        """
+
+        # --- create product with media ---
+        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
+
+        # --- get a media ---
+        media = ProductService.retrieve_media_list(product.id)
+        media_ids = [
+            media[0]['media_id'],
+            media[1]['media_id']
+        ]
+
+        # --- prepare URL ---
+        url = f"{self.product_media_endpoint}?product_id={product.id}&media_ids={','.join(map(str, media_ids))}"
+
+        # --- send DELETE request ---
+        response = self.client.delete(url)
+
+        assert response.status_code == 204
 
 
 class TestProductMediaPayloadFields(ProductMediaTestBase):
