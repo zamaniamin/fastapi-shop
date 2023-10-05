@@ -194,7 +194,7 @@ class ProductService:
         cls.product = Product.get_or_404(product_id)
         cls.options = cls.retrieve_options(product_id)
         cls.variants = cls.retrieve_variants(product_id)
-        cls.media = cls.retrieve_media(product_id)
+        cls.media = cls.retrieve_media_list(product_id)
 
         product = {
             'product_id': cls.product.id,
@@ -297,13 +297,13 @@ class ProductService:
                 type=file_extension
             )
 
-        media = cls.retrieve_media(product_id)
+        media = cls.retrieve_media_list(product_id)
         return media
 
     @classmethod
-    def retrieve_media(cls, product_id):
+    def retrieve_media_list(cls, product_id):
         """
-        Get all media of a product
+        Get all media of a product.
         """
         media_list = []
         product_media: list[ProductMedia] = ProductMedia.filter(ProductMedia.product_id == product_id).all()
@@ -323,6 +323,36 @@ class ProductService:
         else:
             return None
 
+    @classmethod
+    def retrieve_media(cls, media_id):
+        """
+        Get a media by id.
+        """
+        media_obj = ProductMedia.filter(ProductMedia.id == media_id).first()
+        if media_obj:
+            media = {
+                "media_id": media_obj.id,
+                "product_id": media_obj.product_id,
+                "alt": media_obj.alt,
+                "src": cls.get_media_url(media_obj.product_id, media_obj.src),
+                "type": media_obj.type,
+                "created_at": DateTime.string(media_obj.created_at),
+                "updated_at": DateTime.string(media_obj.updated_at)
+            }
+            return media
+        else:
+            return None
+
     @staticmethod
     def get_media_url(product_id, file_name: str):
         return f"{BASE_URL}/media/products/{product_id}/{file_name}" if file_name is not None else None
+
+    @classmethod
+    def update_media(cls, media_id, **kwargs):
+        # check variant exist
+        ProductMedia.get_or_404(media_id)
+
+        kwargs['updated_at'] = DateTime.now()
+        ProductMedia.update(media_id, **kwargs)
+
+        return cls.retrieve_media(media_id)

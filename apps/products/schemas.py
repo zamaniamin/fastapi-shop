@@ -102,10 +102,13 @@ class RetrieveProductMediaOut(BaseModel):
     media: list[ProductMediaSchema] | None = None
 
 
-# class UpdateMediaSchema(BaseModel):
-#     media_id: int
-#     alt: str | None = None
-#     src: str | None = None
+class UpdateMediaIn(BaseModel):
+    alt: str | None = None
+    src: str | None = None
+
+
+class UpdateMediaOut(BaseModel):
+    media: ProductMediaSchema
 
 
 """

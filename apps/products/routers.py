@@ -176,7 +176,7 @@ async def create_product_media(x_files: list[UploadFile] = File(), product_id: i
     summary="Receive a list of all Product Images",
     description="Receive a list of all Product Images.")
 async def list_product_media(product_id: int):
-    media = ProductService.retrieve_media(product_id=product_id)
+    media = ProductService.retrieve_media_list(product_id=product_id)
     if media:
         return {'media': media}
     return JSONResponse(
@@ -184,7 +184,28 @@ async def list_product_media(product_id: int):
         status_code=status.HTTP_204_NO_CONTENT
     )
 
+
+@router.put(
+    '/media/{media_id}',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.UpdateMediaOut,
+    summary='Updates an existing media',
+    description='Updates an existing media.'
+)
+async def update_media(media_id: int, payload: schemas.UpdateMediaIn):
+    update_data = {}
+
+    for key, value in payload.model_dump().items():
+        if value is not None:
+            update_data[key] = value
+    try:
+        updated_media = ProductService.update_media(media_id, **update_data)
+        return {'media': updated_media}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 # TODO separate media update from product-update (update a media by media_id with independent endpoint)
 # TODO retrie a media
 # TODO update a media
 # TODO delete a media
+# TODO delete a media from a product (unattached)
