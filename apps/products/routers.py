@@ -76,10 +76,10 @@ async def retrieve_product(product_id: int):
     summary='Retrieve a list of products',
     description='Retrieve a list of products.')
 async def list_produces():
-    # TODO permission: any user
-    # TODO list products that status id `active`
-    # TODO dont show the product with the status of `archived` and `draft`
-    # TODO status `draft` only admin can see it
+    # TODO permission: admin users (admin, is_admin), none-admin users
+    # TODO as none-admin permission, list products that they status is `active`.
+    # TODO as none-admin, dont list the product with the status of `archived` and `draft`.
+    # TODO only admin can list products with status `draft`.
     products = ProductService.list_products()
     if products:
         return {'products': products}

@@ -27,7 +27,6 @@ class FakeProduct:
         """
         For generating fake products as demo.
         """
-        # TODO I should download 20 product images and save them in project and attach them for demo data
         self.fake.add_provider(lorem)
 
     @classmethod
