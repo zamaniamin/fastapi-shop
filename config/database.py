@@ -264,12 +264,13 @@ class FastModel(DeclarativeBase):
                 raise
         return instance
 
-    @classmethod
-    def delete(cls):
+    @staticmethod
+    def delete(instance):
+
         with DatabaseManager.session as session:
 
             # destroy
-            session.delete(cls)
+            session.delete(instance)
 
             try:
                 # Commit the transaction and refresh the instance
