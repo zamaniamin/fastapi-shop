@@ -137,16 +137,22 @@ class TestUpdateProductMedia(ProductMediaTestBase):
         # --- create product ---
         payload, product = asyncio.run(FakeProduct.populate_product_with_media())
 
-        # --- get media ---
+        # --- get a media ---
         media = ProductService.retrieve_media_list(product.id)[0]
         update_payload = {
             "media_id": media['media_id'],
-            "alt": "updated alt text",
-            # "src": ''
+            "alt": "updated alt text"
         }
 
+        # --- add media file ---
+        file_paths = FakeMedia.populate_images_for_product()
+        file = ("file", open(file_paths[0], "rb"))
+
         # --- request ---
-        response = self.client.put(f"{self.product_media_endpoint}{media['media_id']}", json=update_payload)
+        response = self.client.put(
+            f"{self.product_media_endpoint}{media['media_id']}",
+            data=update_payload,
+            files={"file": file})
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
@@ -154,9 +160,19 @@ class TestUpdateProductMedia(ProductMediaTestBase):
         assert expected['alt'] == update_payload['alt']
         self.assert_datetime_format(expected['updated_at'])
         assert expected['created_at'] == media['created_at']
-        # assert expected['src'] == ''
+        assert expected['src'] != media['src']
+        assert expected['src'] is not None
 
-    # TODO test delete a media from a product (a list of images-id)
+        # --- test static file URL ---
+        url = f'/media/test{media["src"].split("/media")[-1]}'
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        # test file size is not zero
+        assert len(response.content) > 0
+
+
+# TODO test delete a media from a product (a list of images-id)
 
 
 class TestDestroyProductMedia(ProductMediaTestBase):
