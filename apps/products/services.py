@@ -379,7 +379,7 @@ class ProductService:
 
             # Delete the product media records
             for media in media_to_delete:
-                session.delete(media)
+                ProductMedia.delete(ProductMedia.get_or_404(media.id))
         return None
 
     @staticmethod

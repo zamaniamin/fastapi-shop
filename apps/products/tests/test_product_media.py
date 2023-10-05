@@ -193,12 +193,17 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         ]
 
         # --- prepare URL ---
-        url = f"{self.product_media_endpoint}?product_id={product.id}&media_ids={','.join(map(str, media_ids))}"
+        url = f"{self.product_media_endpoint}{product.id}?media_ids={','.join(map(str, media_ids))}"
 
-        # --- send DELETE request ---
+        # --- request ---
         response = self.client.delete(url)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
-        assert response.status_code == 204
+        # --- expected ---
+        media_1 = ProductService.retrieve_media(media[0]['media_id'])
+        media_2 = ProductService.retrieve_media(media[1]['media_id'])
+        assert media_1 is None
+        assert media_2 is None
 
 
 class TestProductMediaPayloadFields(ProductMediaTestBase):
