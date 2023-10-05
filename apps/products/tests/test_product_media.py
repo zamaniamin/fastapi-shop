@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct, FakeMedia
+from apps.products.services import ProductService
 from config.database import DatabaseManager
 
 
@@ -124,7 +125,38 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
 
 
 class TestUpdateProductMedia(ProductMediaTestBase):
-    ...
+    @pytest.mark.asyncio
+    def test_update_media(self):
+        """
+        Test update a media, only update fields that are there in request body
+         and leave other fields unchanging.
+
+        Update one media in each request by `media_id`.
+        """
+
+        # --- create product ---
+        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
+
+        # --- get media ---
+        media = ProductService.retrieve_media_list(product.id)[0]
+        update_payload = {
+            "media_id": media['media_id'],
+            "alt": "updated alt text",
+            # "src": ''
+        }
+
+        # --- request ---
+        response = self.client.put(f"{self.product_media_endpoint}{media['media_id']}", json=update_payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected = response.json().get('media')
+        assert expected['alt'] == update_payload['alt']
+        self.assert_datetime_format(expected['updated_at'])
+        assert expected['created_at'] == media['created_at']
+        # assert expected['src'] == ''
+
+    # TODO test delete a media from a product (a list of images-id)
 
 
 class TestDestroyProductMedia(ProductMediaTestBase):
