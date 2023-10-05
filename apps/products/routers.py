@@ -36,8 +36,7 @@ from apps.products import schemas
 from apps.products.services import ProductService
 
 router = APIRouter(
-    prefix="/products",
-    tags=["Product"]
+    prefix="/products"
 )
 
 """
@@ -52,7 +51,8 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.CreateProductOut,
     summary='Create a new product',
-    description='Create a new product.')
+    description='Create a new product.',
+    tags=["Product"])
 async def create_product(product: schemas.CreateProductIn):
     return {'product': ProductService.create_product(product.model_dump())}
 
@@ -62,7 +62,8 @@ async def create_product(product: schemas.CreateProductIn):
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductOut,
     summary='Retrieve a single product',
-    description="Retrieve a single product.")
+    description="Retrieve a single product.",
+    tags=["Product"])
 async def retrieve_product(product_id: int):
     # TODO user can retrieve products with status of (active , archived)
     product = ProductService.retrieve_product(product_id)
@@ -74,7 +75,8 @@ async def retrieve_product(product_id: int):
     status_code=status.HTTP_200_OK,
     response_model=schemas.ListProductOut,
     summary='Retrieve a list of products',
-    description='Retrieve a list of products.')
+    description='Retrieve a list of products.',
+    tags=["Product"])
 async def list_produces():
     # TODO permission: admin users (admin, is_admin), none-admin users
     # TODO as none-admin permission, list products that they status is `active`.
@@ -94,7 +96,8 @@ async def list_produces():
     status_code=status.HTTP_200_OK,
     response_model=schemas.UpdateProductOut,
     summary='Updates a product',
-    description='Updates a product.')
+    description='Updates a product.',
+    tags=["Product"])
 async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO update a product with media
@@ -113,6 +116,16 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.delete(
+    '/{product_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Deletes an existing product',
+    description='Deletes an existing product.',
+    tags=['Product'])
+async def delete_product(product_id: int):
+    ProductService.delete_media(product_id)
+
+
 """
 ---------------------------------------
 -------- Product-Variant Routers --------
@@ -125,7 +138,8 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     status_code=status.HTTP_200_OK,
     response_model=schemas.UpdateVariantOut,
     summary='Updates an existing product variant',
-    description='Modify an existing Product Variant.')
+    description='Modify an existing Product Variant.',
+    tags=['Product Variant'])
 async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
     update_data = {}
 
@@ -139,17 +153,9 @@ async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.delete(
-    '/{product_id}',
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary='Deletes an existing product',
-    description='Deletes an existing product.'
-)
-async def delete_product(product_id: int):
-    ProductService.delete_media(product_id)
+# TODO retrieve a list of variants
+# TODO retrieve a single variant
 
-
-# TODO delete a product
 
 """
 ---------------------------------------
@@ -167,7 +173,8 @@ when updating a product, actions on product's images are:
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.CreateProductMediaOut,
     summary="Create a new product image",
-    description="Create a new product image.")
+    description="Create a new product image.",
+    tags=['Product Image'])
 async def create_product_media(x_files: list[UploadFile] = File(), product_id: int = Form(),
                                alt: str | None = Form(None)):
     # check the file size and type
@@ -184,7 +191,8 @@ async def create_product_media(x_files: list[UploadFile] = File(), product_id: i
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductMediaOut,
     summary="Receive a list of all Product Images",
-    description="Receive a list of all Product Images.")
+    description="Receive a list of all Product Images.",
+    tags=['Product Image'])
 async def list_product_media(product_id: int):
     media = ProductService.retrieve_media_list(product_id=product_id)
     if media:
@@ -199,9 +207,9 @@ async def list_product_media(product_id: int):
     '/media/{media_id}',
     status_code=status.HTTP_200_OK,
     response_model=schemas.UpdateMediaOut,
-    summary='Updates an existing media',
-    description='Updates an existing media.'
-)
+    summary='Updates an existing image',
+    description='Updates an existing image.',
+    tags=['Product Image'])
 async def update_media(media_id: int, file: UploadFile = File(), alt: str | None = Form(None)):
     update_data = {}
 
@@ -221,9 +229,9 @@ async def update_media(media_id: int, file: UploadFile = File(), alt: str | None
 @router.delete(
     '/media/{product_id}',
     status_code=status.HTTP_204_NO_CONTENT,
-    summary='Delete media from a product',
-    description='Delete media from a product.'
-)
+    summary='Delete image from a product',
+    description='Delete image from a product.',
+    tags=['Product Image'])
 async def delete_product_media(product_id: int, media_ids: str = Query(...)):
     media_ids_list = list(map(int, media_ids.split(',')))
     ProductService.delete_product_media(product_id, media_ids_list)
