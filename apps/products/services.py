@@ -349,8 +349,14 @@ class ProductService:
 
     @classmethod
     def update_media(cls, media_id, **kwargs):
-        # check variant exist
-        ProductMedia.get_or_404(media_id)
+        # check media exist
+        media: ProductMedia = ProductMedia.get_or_404(media_id)
+        file = kwargs.pop('file', None)
+        if file is not None:
+            media_service = MediaService(parent_directory="/products", sub_directory=media.product_id)
+            file_name, file_extension = media_service.save_file(file)
+            kwargs['src'] = file_name
+            kwargs['type'] = file_extension
 
         kwargs['updated_at'] = DateTime.now()
         ProductMedia.update(media_id, **kwargs)

@@ -192,12 +192,19 @@ async def list_product_media(product_id: int):
     summary='Updates an existing media',
     description='Updates an existing media.'
 )
-async def update_media(media_id: int, payload: schemas.UpdateMediaIn):
+async def update_media(
+        media_id: int,
+        file: UploadFile = File(),
+        alt: str | None = Form(None)
+):
     update_data = {}
 
-    for key, value in payload.model_dump().items():
-        if value is not None:
-            update_data[key] = value
+    if file is not None:
+        update_data['file'] = file
+
+    if alt is not None:
+        update_data['alt'] = alt
+
     try:
         updated_media = ProductService.update_media(media_id, **update_data)
         return {'media': updated_media}
