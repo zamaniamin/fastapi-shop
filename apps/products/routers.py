@@ -139,6 +139,16 @@ async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.delete(
+    '/{product_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Deletes an existing product',
+    description='Deletes an existing product.'
+)
+async def delete_product(product_id: int):
+    ProductService.delete_media(product_id)
+
+
 # TODO delete a product
 
 """

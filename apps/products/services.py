@@ -146,7 +146,10 @@ class ProductService:
                     "created_at": DateTime.string(variant.created_at),
                     "updated_at": DateTime.string(variant.updated_at)
                 })
-        return product_variants
+
+        if product_variants:
+            return product_variants
+        return None
 
     @staticmethod
     def retrieve_variant(variant_id: int):
@@ -378,3 +381,7 @@ class ProductService:
             for media in media_to_delete:
                 session.delete(media)
         return None
+
+    @staticmethod
+    def delete_media(product_id):
+        Product.delete(Product.get_or_404(product_id))
