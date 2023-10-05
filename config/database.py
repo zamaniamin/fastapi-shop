@@ -263,3 +263,17 @@ class FastModel(DeclarativeBase):
                 session.rollback()
                 raise
         return instance
+
+    @classmethod
+    def delete(cls):
+        with DatabaseManager.session as session:
+
+            # destroy
+            session.delete(cls)
+
+            try:
+                # Commit the transaction and refresh the instance
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
