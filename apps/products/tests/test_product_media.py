@@ -179,7 +179,7 @@ class TestDestroyProductMedia(ProductMediaTestBase):
     @pytest.mark.asyncio
     def test_delete_media_from_product(self):
         """
-
+        Test delete media from a product.
         """
 
         # --- create product with media ---
