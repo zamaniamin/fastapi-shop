@@ -1,6 +1,6 @@
 from itertools import product as options_combination
 
-from sqlalchemy import select
+from sqlalchemy import select, and_, or_
 
 from apps.core.date_time import DateTime
 from apps.core.services.media import MediaService
@@ -362,3 +362,19 @@ class ProductService:
         ProductMedia.update(media_id, **kwargs)
 
         return cls.retrieve_media(media_id)
+
+    @staticmethod
+    def delete_product_media(product_id, media_ids: list[int]):
+
+        # Fetch the product media records to be deleted
+        with DatabaseManager.session as session:
+            filters = [
+                and_(ProductMedia.product_id == product_id, ProductMedia.id == media_id)
+                for media_id in media_ids
+            ]
+            media_to_delete = session.query(ProductMedia).filter(or_(*filters)).all()
+
+            # Delete the product media records
+            for media in media_to_delete:
+                session.delete(media)
+        return None

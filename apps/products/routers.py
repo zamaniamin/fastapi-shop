@@ -28,7 +28,7 @@ Every time we create product, the media should be None, because the Media after 
 attached to it.
 """
 
-from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException
+from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from apps.core.services.media import MediaService
@@ -192,11 +192,7 @@ async def list_product_media(product_id: int):
     summary='Updates an existing media',
     description='Updates an existing media.'
 )
-async def update_media(
-        media_id: int,
-        file: UploadFile = File(),
-        alt: str | None = Form(None)
-):
+async def update_media(media_id: int, file: UploadFile = File(), alt: str | None = Form(None)):
     update_data = {}
 
     if file is not None:
@@ -211,8 +207,16 @@ async def update_media(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-# TODO separate media update from product-update (update a media by media_id with independent endpoint)
+
+@router.delete(
+    '/media',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Delete media from a product',
+    description='Delete media from a product.'
+)
+async def delete_product_media(product_id: int, media_ids: str = Query(...)):
+    media_ids_list = list(map(int, media_ids.split(',')))
+    ProductService.delete_product_media(product_id, media_ids_list)
+
 # TODO retrie a media
-# TODO update a media
 # TODO delete a media
-# TODO delete a media from a product (unattached)
