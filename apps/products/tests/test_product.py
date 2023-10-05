@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
+from apps.products.services import ProductService
 from config.database import DatabaseManager
 
 
@@ -832,7 +833,105 @@ class TestDestroyProduct(ProductTestBase):
     """
     Test delete a product on the multi scenario
     """
-    ...
-    # ---------------------
-    # --- Test Payloads ---
-    # ---------------------
+
+    def test_delete_product(self):
+        """
+        Test delete an existing product.
+        - delete product
+        - delete variant
+        """
+
+        # --- create a product ---
+        _, product = FakeProduct.populate_product()
+
+        # --- request ---
+        response = self.client.delete(f"{self.product_endpoint}{product.id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # --- expected ---
+        expected = self.client.get(f"{self.product_endpoint}{product.id}")
+        assert expected.status_code == status.HTTP_404_NOT_FOUND
+
+        variant = ProductService.retrieve_variants(product.id)
+        assert variant is None
+
+    @pytest.mark.asyncio
+    def test_delete_product_with_media(self):
+        """
+        Test delete an existing product with attached media.
+        - delete product
+        - delete variant
+        - delete media (not the files, just remove from database)
+        """
+
+        # --- create a product with media ---
+        _, product = asyncio.run(FakeProduct.populate_product_with_media())
+
+        # --- request ---
+        response = self.client.delete(f"{self.product_endpoint}{product.id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # --- expected ---
+        expected = self.client.get(f"{self.product_endpoint}{product.id}")
+        assert expected.status_code == status.HTTP_404_NOT_FOUND
+
+        variant = ProductService.retrieve_variants(product.id)
+        assert variant is None
+
+        media = ProductService.retrieve_media_list(product.id)
+        assert media is None
+
+    def test_delete_product_with_options(self):
+        """
+        Test delete a product with options and option-items for this product.
+        - delete product
+        - delete variants
+        - delete options and option-items for this product
+        """
+
+        # --- create a product with options ---
+        _, product = FakeProduct.populate_product_with_options()
+
+        # --- request ---
+        response = self.client.delete(f"{self.product_endpoint}{product.id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # --- expected ---
+        expected = self.client.get(f"{self.product_endpoint}{product.id}")
+        assert expected.status_code == status.HTTP_404_NOT_FOUND
+
+        variant = ProductService.retrieve_variants(product.id)
+        assert variant is None
+
+        options = ProductService.retrieve_options(product.id)
+        assert options is None
+
+    @pytest.mark.asyncio
+    def test_delete_product_with_options_media(self):
+        """
+        Test delete a product with options and media.
+        - delete product
+        - delete variants
+        - delete options and option-items for this product
+        - delete media (not the files, just remove from database)
+        """
+
+        # --- create a product with options and media ---
+        _, product = asyncio.run(FakeProduct.populate_product_with_options_media())
+
+        # --- request ---
+        response = self.client.delete(f"{self.product_endpoint}{product.id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # --- expected ---
+        expected = self.client.get(f"{self.product_endpoint}{product.id}")
+        assert expected.status_code == status.HTTP_404_NOT_FOUND
+
+        variant = ProductService.retrieve_variants(product.id)
+        assert variant is None
+
+        options = ProductService.retrieve_options(product.id)
+        assert options is None
+
+        media = ProductService.retrieve_media_list(product.id)
+        assert media is None
