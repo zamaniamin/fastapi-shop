@@ -28,7 +28,7 @@ Every time we create product, the media should be None, because the Media after 
 attached to it.
 """
 
-from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Query
+from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Query, Path
 from fastapi.responses import JSONResponse
 
 from apps.core.services.media import MediaService
@@ -187,13 +187,13 @@ when updating a product, actions on product's images are:
 
 
 @router.post(
-    '/media',
+    '/{product_id}/media',
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.CreateProductMediaOut,
     summary="Create a new product image",
     description="Create a new product image.",
     tags=['Product Image'])
-async def create_product_media(x_files: list[UploadFile] = File(), product_id: int = Form(),
+async def create_product_media(x_files: list[UploadFile] = File(), product_id: int = Path(),
                                alt: str | None = Form(None)):
     # check the file size and type
     for file in x_files:

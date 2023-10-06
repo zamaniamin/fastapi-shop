@@ -43,12 +43,11 @@ class TestCreateProductMedia(ProductMediaTestBase):
         file_paths = FakeMedia.populate_images_for_product()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
-            'product_id': product.id,
             'alt': 'Test Alt Text'
         }
 
         # --- request ---
-        response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files)
         assert response.status_code == status.HTTP_201_CREATED
 
         # --- response data ---
@@ -224,12 +223,11 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         file_paths = FakeMedia.populate_images_for_product()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
-            'product_id': product.id,
             'alt': alt_value
         }
 
         # --- request ---
-        response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files)
         assert response.status_code == status.HTTP_201_CREATED
 
         expected = response.json().get('media')[0]
@@ -240,13 +238,16 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         Test crete media with empty payload.
         """
 
+        # --- create a product ---
+        product_payload, product = FakeProduct.populate_product()
+
         # --- upload files ----
         file_paths = FakeMedia.populate_images_for_product()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
 
         # --- request ---
-        response = self.client.post(self.product_media_endpoint, data={}, files=files)
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data={}, files=files)
+        assert response.status_code == status.HTTP_201_CREATED
 
     def test_create_media_with_no_file(self):
         """
@@ -258,12 +259,11 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
 
         # --- upload files ----
         media_payload = {
-            'product_id': product.id,
             'alt': 'test alt'
         }
 
         # --- request ---
-        response = self.client.post(self.product_media_endpoint, data=media_payload)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_create_media_with_invalid_file_type(self):
@@ -278,12 +278,11 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         file_paths = FakeMedia.populate_docs_file()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
-            'product_id': product.id,
             'alt': 'test alt'
         }
 
         # --- request ---
-        response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_media_with_max_size_limit(self):
@@ -298,10 +297,9 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         file_paths = FakeMedia.populate_large_file()
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
         media_payload = {
-            'product_id': product.id,
             'alt': 'test alt'
         }
 
         # --- request ---
-        response = self.client.post(self.product_media_endpoint, data=media_payload, files=files)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
