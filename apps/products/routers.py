@@ -245,7 +245,7 @@ async def update_media(media_id: int, file: UploadFile = File(), alt: str | None
 
 
 @router.delete(
-    '/media/{product_id}',
+    '/{product_id}/media',
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Delete image from a product',
     description='Delete image from a product.',

@@ -193,7 +193,7 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         ]
 
         # --- prepare URL ---
-        url = f"{self.product_media_endpoint}{product.id}?media_ids={','.join(map(str, media_ids))}"
+        url = f"{self.product_endpoint}{product.id}/media/?media_ids={','.join(map(str, media_ids))}"
 
         # --- request ---
         response = self.client.delete(url)
