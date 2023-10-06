@@ -95,13 +95,13 @@ class FakeProduct:
         return product_data.copy(), ProductService.create_product(product_data, get_obj=True)
 
     @classmethod
-    def populate_product_with_options(cls) -> tuple[dict[str, str | int], Product]:
+    def populate_product_with_options(cls, get_product_obj=True) -> tuple[dict[str, str | int], Product | dict]:
         """
         Crete a product with options. (with all fields)
         """
 
         product_data = cls.get_payload_with_options()
-        return product_data.copy(), ProductService.create_product(product_data, get_obj=True)
+        return product_data.copy(), ProductService.create_product(product_data, get_obj=get_product_obj)
 
     @classmethod
     async def populate_product_with_media(cls):
