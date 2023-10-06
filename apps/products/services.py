@@ -327,7 +327,7 @@ class ProductService:
             return None
 
     @classmethod
-    def retrieve_media(cls, media_id):
+    def retrieve_single_media(cls, media_id):
         """
         Get a media by id.
         """
@@ -364,7 +364,7 @@ class ProductService:
         kwargs['updated_at'] = DateTime.now()
         ProductMedia.update(media_id, **kwargs)
 
-        return cls.retrieve_media(media_id)
+        return cls.retrieve_single_media(media_id)
 
     @staticmethod
     def delete_product_media(product_id, media_ids: list[int]):
