@@ -153,8 +153,26 @@ async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-# TODO retrieve a list of variants
-# TODO retrieve a single variant
+@router.get(
+    '/variants/{variant_id}',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.RetrieveVariantOut,
+    summary='Retrieve a single product variant',
+    description='Retrieves a single product variant.',
+    tags=['Product Variant'])
+async def retrieve_variant(variant_id: int):
+    return {'variant': ProductService.retrieve_variant(variant_id)}
+
+
+@router.get(
+    '/{product_id}/variants',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ListVariantsOut,
+    summary='Retrieves a list of product variants',
+    description='Retrieves a list of product variants.',
+    tags=['Product Variant'])
+async def list_variants(product_id: int):
+    return {'variants': ProductService.retrieve_variants(product_id)}
 
 
 """

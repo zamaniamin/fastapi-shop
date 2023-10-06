@@ -31,6 +31,14 @@ class UpdateVariantOut(BaseModel):
     variant: VariantSchema
 
 
+class RetrieveVariantOut(BaseModel):
+    variant: VariantSchema
+
+
+class ListVariantsOut(BaseModel):
+    variants: list[VariantSchema]
+
+
 """
 ---------------------------------------
 --------------- Options ---------------
