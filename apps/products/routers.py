@@ -205,6 +205,17 @@ async def create_product_media(x_files: list[UploadFile] = File(), product_id: i
 
 
 @router.get(
+    '/media/{media_id}',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.RetrieveMediaOut,
+    summary='Retrieve a single product image',
+    description='Get a single product image by id.',
+    tags=['Product Image'])
+async def retrieve_single_media(media_id: int):
+    return {'media': ProductService.retrieve_single_media(media_id)}
+
+
+@router.get(
     '/{product_id}/media',
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductMediaOut,

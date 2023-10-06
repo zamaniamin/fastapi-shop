@@ -114,6 +114,10 @@ class UpdateMediaOut(BaseModel):
     media: ProductMediaSchema
 
 
+class RetrieveMediaOut(BaseModel):
+    media: ProductMediaSchema
+
+
 """
 ---------------------------------------
 --------------- Product ---------------
