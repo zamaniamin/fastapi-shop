@@ -224,7 +224,7 @@ class FastModel(DeclarativeBase):
             HTTPException(404): If the record is not found.
         """
         with DatabaseManager.session as session:
-            instance = session.query(cls).get(pk)
+            instance = session.get(cls, pk)
             if not instance:
                 raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
         return instance
@@ -247,7 +247,8 @@ class FastModel(DeclarativeBase):
         with DatabaseManager.session as session:
 
             # Retrieve the object by its primary key or raise a 404 exception
-            instance = session.query(cls).get(pk)
+            # instance = session.query(cls).get(pk)
+            instance = session.get(cls, pk)
             if not instance:
                 raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
 
