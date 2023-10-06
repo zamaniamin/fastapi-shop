@@ -856,7 +856,7 @@ class TestDestroyProduct(ProductTestBase):
         assert variant is None
 
     @pytest.mark.asyncio
-    def test_delete_product_with_media(self):
+    async def test_delete_product_with_media(self):
         """
         Test delete an existing product with attached media.
         - delete product
@@ -865,7 +865,7 @@ class TestDestroyProduct(ProductTestBase):
         """
 
         # --- create a product with media ---
-        _, product = asyncio.run(FakeProduct.populate_product_with_media())
+        _, product = await FakeProduct.populate_product_with_media()
 
         # --- request ---
         response = self.client.delete(f"{self.product_endpoint}{product.id}")
@@ -907,7 +907,7 @@ class TestDestroyProduct(ProductTestBase):
         assert options is None
 
     @pytest.mark.asyncio
-    def test_delete_product_with_options_media(self):
+    async def test_delete_product_with_options_media(self):
         """
         Test delete a product with options and media.
         - delete product
@@ -917,7 +917,7 @@ class TestDestroyProduct(ProductTestBase):
         """
 
         # --- create a product with options and media ---
-        _, product = asyncio.run(FakeProduct.populate_product_with_options_media())
+        _, product = await FakeProduct.populate_product_with_options_media()
 
         # --- request ---
         response = self.client.delete(f"{self.product_endpoint}{product.id}")

@@ -96,13 +96,13 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
         assert response.status_code == status.HTTP_200_OK
 
     @pytest.mark.asyncio
-    def test_list_product_media(self):
+    async def test_list_product_media(self):
         """
         Test retrieve a list of all media of a product.
         """
 
         # --- create a product ---
-        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
+        payload, product = await FakeProduct.populate_product_with_media()
 
         # --- request ---
         response = self.client.get(f"{self.product_endpoint}{product.id}/{'media'}")
@@ -140,7 +140,7 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
 
 class TestUpdateProductMedia(ProductMediaTestBase):
     @pytest.mark.asyncio
-    def test_update_media(self):
+    async def test_update_media(self):
         """
         Test update a media, only update fields that are there in request body
          and leave other fields unchanging.
@@ -149,7 +149,7 @@ class TestUpdateProductMedia(ProductMediaTestBase):
         """
 
         # --- create product ---
-        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
+        payload, product = await FakeProduct.populate_product_with_media()
 
         # --- get a media ---
         media = ProductService.retrieve_media_list(product.id)[0]
@@ -191,13 +191,13 @@ class TestUpdateProductMedia(ProductMediaTestBase):
 
 class TestDestroyProductMedia(ProductMediaTestBase):
     @pytest.mark.asyncio
-    def test_delete_media_from_product(self):
+    async def test_delete_media_from_product(self):
         """
         Test delete media from a product.
         """
 
         # --- create product with media ---
-        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
+        payload, product = await FakeProduct.populate_product_with_media()
 
         # --- get a media ---
         media = ProductService.retrieve_media_list(product.id)
