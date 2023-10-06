@@ -22,6 +22,67 @@ class VariantTestBase(BaseTestCase):
         DatabaseManager.drop_all_tables()
 
 
+class TestRetrieveVariants(VariantTestBase):
+    """
+    Test retrieving variant in multi scenario.
+    """
+
+    def test_retrieve_variant(self):
+        """
+        Test retrieve a variant of a product.
+        """
+
+        # --- create a product with variant ---
+        _, product = FakeProduct.populate_product_with_options(get_product_obj=False)
+        variant = product['variants'][0]
+
+        response = self.client.get(f"{self.variants_endpoint}{variant['variant_id']}")
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected_variant = response.json().get('variant')
+        assert isinstance(expected_variant, dict)
+        assert len(expected_variant) == 9
+        assert product['product_id'] == expected_variant['product_id']
+        assert isinstance(expected_variant['price'], float)
+        assert variant['stock'] == expected_variant['stock']
+        assert variant['option1'] == expected_variant['option1']
+        assert variant['option2'] == expected_variant['option2']
+        assert variant['option3'] == expected_variant['option3']
+        assert variant['updated_at'] == expected_variant['updated_at']
+        self.assert_datetime_format(expected_variant['created_at'])
+
+    def test_list_product_variants(self):
+        """
+        Test retrieve a variant of a product.
+        """
+
+        # --- create a product with variants ---
+        _, product = FakeProduct.populate_product_with_options(get_product_obj=False)
+        variants = product['variants']
+
+        variants_len = len(variants)
+
+        response = self.client.get(f"/products/{product['product_id']}/variants")
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected_variants = response.json().get('variants')
+        assert isinstance(expected_variants, list)
+        assert len(expected_variants) == variants_len
+
+        for i, variant in enumerate(variants):
+            expected: dict = expected_variants[i]
+            assert product['product_id'] == expected['product_id']
+            assert isinstance(expected['price'], float)
+            assert variant['stock'] == expected['stock']
+            assert variant['option1'] == expected['option1']
+            assert variant['option2'] == expected['option2']
+            assert variant['option3'] == expected['option3']
+            assert variant['updated_at'] == expected['updated_at']
+            self.assert_datetime_format(expected['created_at'])
+
+
 class TestUpdateVariants(VariantTestBase):
     """
     Test update a variant on the multi scenario.
