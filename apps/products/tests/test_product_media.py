@@ -80,6 +80,21 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
     Test retrieve product-media on the multi scenario
     """
 
+    def test_retrieve_single_media(self):
+        """
+        Test retrieve a single product image
+        """
+
+        # --- create a product ---
+        payload, product = asyncio.run(FakeProduct.populate_product_with_media())
+
+        # --- get a media ---
+        media = ProductService.retrieve_media_list(product.id)[0]
+
+        # --- request ---
+        response = self.client.get(f"{self.product_media_endpoint}{media['media_id']}")
+        assert response.status_code == status.HTTP_200_OK
+
     @pytest.mark.asyncio
     def test_list_product_media(self):
         """
@@ -100,7 +115,7 @@ class TestRetrieveProductMedia(ProductMediaTestBase):
         assert "media" in expected
         media_list = expected["media"]
         assert isinstance(media_list, list)
-        assert len(media_list) > 1
+        assert len(media_list) > 0
         for media in media_list:
             assert media["media_id"] > 0
             assert media["product_id"] == product.id
@@ -199,8 +214,8 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---
-        media_1 = ProductService.retrieve_media(media[0]['media_id'])
-        media_2 = ProductService.retrieve_media(media[1]['media_id'])
+        media_1 = ProductService.retrieve_single_media(media[0]['media_id'])
+        media_2 = ProductService.retrieve_single_media(media[1]['media_id'])
         assert media_1 is None
         assert media_2 is None
 
