@@ -385,3 +385,15 @@ class ProductService:
     @staticmethod
     def delete_product(product_id):
         Product.delete(Product.get_or_404(product_id))
+
+    @classmethod
+    def delete_media_file(cls, media_id: int):
+        media = ProductMedia.get_or_404(media_id)
+        product_id = media.product_id
+
+        media_service = MediaService(parent_directory="/products", sub_directory=product_id)
+        is_fie_deleted = media_service.delete_file(media.src)
+        if is_fie_deleted:
+            ProductMedia.delete(ProductMedia.get_or_404(media_id))
+            return True
+        return False

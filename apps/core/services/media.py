@@ -67,7 +67,19 @@ class MediaService:
         if file_size > file_size_in_bytes:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f"File size exceeds {file_size_in_bytes}MB limit")
-        
+
         # to reset the cursor to the beginning of the file.
         file.file.seek(0)
         return True
+
+    def delete_file(self, file_name: str):
+        file_path = os.path.join(self.path, file_name)
+
+        # Attempt to delete the file
+        try:
+            os.remove(file_path)
+            return True  # Return True if the file is successfully deleted
+        except OSError as e:
+            # Handle the case where the file could not be deleted
+            print(f"Error: {e}")
+            return False  # Return False if there was an error deleting the file

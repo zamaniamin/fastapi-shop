@@ -186,9 +186,6 @@ class TestUpdateProductMedia(ProductMediaTestBase):
         assert len(response.content) > 0
 
 
-# TODO test delete a media from a product (a list of images-id)
-
-
 class TestDestroyProductMedia(ProductMediaTestBase):
     @pytest.mark.asyncio
     async def test_delete_media_from_product(self):
@@ -218,6 +215,31 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         media_2 = ProductService.retrieve_single_media(media[1]['media_id'])
         assert media_1 is None
         assert media_2 is None
+
+    @pytest.mark.asyncio
+    async def test_delete_media_file(self):
+        """
+        Test delete a media file.
+        """
+
+        # --- create a product with media ---
+        _, product = await FakeProduct.populate_product_with_media()
+
+        # --- retrieve media to get a media_id ---
+        media = ProductService.retrieve_media_list(product.id)[0]
+        media_id = media['media_id']
+        # --- request ---
+        response = self.client.delete(f"{self.product_media_endpoint}{media_id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # --- expected ---
+        expected_media = ProductService.retrieve_single_media(media_id)
+        assert expected_media is None
+
+        # --- test static file URL ---
+        url = f'/media/test{media["src"].split("/media")[-1]}'
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestProductMediaPayloadFields(ProductMediaTestBase):

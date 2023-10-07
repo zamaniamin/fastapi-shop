@@ -123,7 +123,7 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
     description='Deletes an existing product.',
     tags=['Product'])
 async def delete_product(product_id: int):
-    ProductService.delete_media(product_id)
+    ProductService.delete_product(product_id)
 
 
 """
@@ -265,5 +265,12 @@ async def delete_product_media(product_id: int, media_ids: str = Query(...)):
     media_ids_list = list(map(int, media_ids.split(',')))
     ProductService.delete_product_media(product_id, media_ids_list)
 
-# TODO retrie a media
-# TODO delete a media
+
+@router.delete(
+    '/media/{media_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Delete a media file',
+    description='Delete a media file.',
+    tags=['Product Image'])
+async def delete_media_file(media_id: int):
+    ProductService.delete_media_file(media_id)
