@@ -383,5 +383,5 @@ class ProductService:
         return None
 
     @staticmethod
-    def delete_media(product_id):
+    def delete_product(product_id):
         Product.delete(Product.get_or_404(product_id))
