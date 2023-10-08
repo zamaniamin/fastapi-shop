@@ -1,4 +1,5 @@
 import importlib
+import logging
 import os
 from pathlib import Path
 
@@ -44,5 +45,6 @@ class RouterManager:
                         if hasattr(module, "router"):
                             # Add the imported router to your FastAPI application
                             self.app.include_router(module.router)
-                    except ImportError:
-                        pass
+                    except ImportError as e:
+                        # Log the ImportError message for debugging purposes
+                        logging.error(f"Error importing module {module_name}: {e}")
