@@ -6,7 +6,10 @@ from apps.core.date_time import DateTime
 class BaseTestCase:
 
     @staticmethod
-    def assert_datetime_format(date):
+    def assert_datetime_format(date: str | datetime):
+        if isinstance(date, datetime):
+            date = DateTime.string(date)
+
         formatted_date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
         assert date == formatted_date
 
