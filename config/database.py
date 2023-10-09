@@ -210,6 +210,21 @@ class FastModel(DeclarativeBase):
         return query
 
     @classmethod
+    def get(cls, pk):
+        """
+        Retrieve a record by its primary key.
+
+        Args:
+            pk: The primary key value of the record to retrieve.
+
+        Returns:
+            The model instance with the specified primary key, or None if not found
+        """
+        with DatabaseManager.session as session:
+            instance = session.get(cls, pk)
+        return instance
+
+    @classmethod
     def get_or_404(cls, pk):
         """
         Retrieve a record by its primary key or raise a 404 HTTPException if not found.
