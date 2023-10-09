@@ -13,7 +13,7 @@ class User(FastModel):
     first_name = Column(String(256), nullable=True)
     last_name = Column(String(256), nullable=True)
 
-    otp_key = Column(String)
+    otp_key = Column(String, nullable=True)
     verified_email = Column(Boolean, default=False)
 
     is_active = Column(Boolean, default=False)
