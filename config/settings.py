@@ -18,3 +18,4 @@ BASE_URL = "http://127.0.0.1:8000"
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_DIR = BASE_DIR / "media"
 products_list_limit = 12
+OTP_EXPIRATION_SECONDS = 90
