@@ -39,8 +39,36 @@ class AccountService:
             'message': 'Please check your email for an OTP code to confirm your email address.'
         }
 
-        # send otp code to email
-        # otp = cls.read_otp(data["otp_key"])
+    @classmethod
+    def verify_registration(cls, **data):
+        # --- init ---
+        email = data['email']
+        otp = data['otp']
+
+        # --- get user by email ---
+        user = UserManager.get_user(email=email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found."
+            )
+
+        # --- verify otp for this user ---
+        if not cls.verify_otp(user.otp_key, otp):
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="Invalid OTP code."
+            )
+
+        user.update(user.id, otp_key=None, verified_email=True, is_active=True)
+
+        # --- login user, generate a JWT token ---
+
+        # set
+        return {
+            'token': '',
+            'message': 'Your email address has been confirmed. Account activated successfully.'
+        }
 
     @classmethod
     def send_otp(cls, otp_key, email):
@@ -51,12 +79,8 @@ class AccountService:
         # TODO how to ensure that email is sent and delivery?
 
         otp = cls.read_otp(otp_key)
-        dev_show = f"""\n
-        --- Testing OTP ------------------------------------------------------
-        To verify your email address, please enter the following code: {otp}
-        ----------------------------------------------------------------------
-        """
-        print(dev_show, )
+        dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
+        print(dev_show)
 
         email_body = f"""
         Subject: Verify your email address
