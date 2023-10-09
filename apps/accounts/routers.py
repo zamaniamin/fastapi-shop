@@ -14,9 +14,19 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.RegisterOut,
     summary='Register a new user',
-    description='Register a new user by email,for now with email.')
+    description='Register a new user by email.')
 async def register(payload: schemas.RegisterIn):
     return AccountService.register(**payload.model_dump(exclude={"password_confirm"}))
+
+
+@router.post(
+    "/register/verify",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.RegisterVerifyOut,
+    summary='Verify user registration',
+    description='Verify a new user registration by confirming the provided OTP.')
+async def verify_registration(payload: schemas.RegisterVerifyIn):
+    return AccountService.verify_registration(**payload.model_dump())
 
 
 # =====================================
@@ -26,21 +36,6 @@ async def register(payload: schemas.RegisterIn):
 # SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 # ALGORITHM = "HS256"
 # ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-"""
---- 2 --- verify (email / phone number) by otp code
-
-{
-  "email": "example@email.com",
-  "otp": "123456"
-}
-
-{
-  "message": "Your email address has been confirmed."
-  "JWT_Token": ""
-}
-"""
 
 # =====================================
 

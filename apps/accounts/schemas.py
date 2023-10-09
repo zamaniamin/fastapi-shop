@@ -29,3 +29,13 @@ class RegisterIn(BaseModel):
 class RegisterOut(BaseModel):
     email: EmailStr
     message: str
+
+
+class RegisterVerifyIn(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class RegisterVerifyOut(BaseModel):
+    token: str
+    message: str
