@@ -111,10 +111,11 @@ class TestRegister(AccountTestBase):
         assert expected_user.is_active is True
         assert expected_user.is_superuser is False
 
-        assert expected_user.last_login is None
+        self.assert_datetime_format(expected_user.last_login)
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)
 
+    # TODO test JWT token
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
