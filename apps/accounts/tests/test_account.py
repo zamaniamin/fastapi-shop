@@ -22,7 +22,7 @@ class AccountTestBase(BaseTestCase):
         DatabaseManager.drop_all_tables()
 
 
-class TestRegister(AccountTestBase):
+class TestRegisterAccount(AccountTestBase):
 
     def test_register_with_email(self):
         """
@@ -30,7 +30,7 @@ class TestRegister(AccountTestBase):
         """
 
         payload = {
-            'email': 'admin@test.com',
+            'email': 'test@test.com',
             'password': 'Test_12345',
             'password_confirm': 'Test_12345'
         }
@@ -113,11 +113,69 @@ class TestRegister(AccountTestBase):
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)
 
-    # TODO test JWT token
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
 
-    # TODO test `register` with invalid payloads.
-    # TODO test `verify_registration` with invalid payloads.
+    # TODO --- `register` ---
+
+    # TODO test register with empy payload
+
+    # TODO test register without email
+    # TODO test register with invalid email
+    # TODO test register with duplicate email
+
+    # TODO test register without password
+    # TODO test register without password_confirm
+    # TODO test register with invalid password
+    # TODO test register with passwords do not match
+    # TODO test register with password `min_length`
+    # TODO test register with password `max_length`
+    # TODO test register with strong password
+
+    # TODO --- `verify_registration` ---
+
+    # TODO test verify with empty payload
+
+    # TODO test verify without email
+    # TODO test verify with invalid email
+    # TODO test verify with an existing email that not related to this verification
+
+    # TODO test verify without OTP
+    # TODO test verify with invalid OTP
+    # TODO test verify with an expired OTP
+
+
+class TestAuthorize(BaseTestCase):
+    ...
+
+
+class TestLoginAccount(BaseTestCase):
+    ...
+    # TODO test login
+    # TODO test login if user is not active.
+
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
+
+    # TODO test login with empty payload
+    # TODO test login without email
+    # TODO test login with an existing email not related to this password
+    # TODO test login
+    # TODO test login
+    # TODO test login
+    # TODO test login for `swagger Authorize`
+
+
+class TestOTP(BaseTestCase):
+    ...
+    # TODO test OTP `OTP_EXPIRATION_SECONDS`
     # TODO test OTP is expired
+    # TODO test OTP email is sent
+
+
+class TestJWT(BaseTestCase):
+    ...
+    # TODO test JWT token
+    # TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
