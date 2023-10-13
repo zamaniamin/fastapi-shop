@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta, datetime
 
 from fastapi import HTTPException, status, Depends
@@ -62,7 +63,7 @@ class AccountService:
 
         Args:
             data['email'] (str): User's email address.
-            data['otp'} (str): One-Time Password (OTP) code for email verification.
+            data['otp'] (str): One-Time Password (OTP) code for email verification.
 
         Raises:
             HTTPException: If the user is not found, the email is already verified, or an invalid OTP is provided.
@@ -252,9 +253,9 @@ class AuthToken:
             'first_name': user.first_name,
             'last_name': user.last_name,
             'verified_email': user.verified_email,
-            'date_joined': user.date_joined,
-            'updated_at': user.updated_at,
-            'last_login': user.last_login
+            'date_joined': DateTime.string(user.date_joined),
+            'updated_at': DateTime.string(user.updated_at),
+            'last_login': DateTime.string(user.last_login)
         }
         return response_data
 
@@ -262,3 +263,56 @@ class AuthToken:
     def is_current_user_active(cls, is_active):
         if not is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")
+
+
+class PasswordValidator:
+    min_length: int = 8
+    max_length: int = 24
+    has_number: bool = True
+    has_uppercase: bool = True
+    has_lowercase: bool = True
+
+    @classmethod
+    def validate_password(cls, password: str, has_special_char: bool = True) -> str:
+        """
+        Validate a password based on the given constraints.
+
+        Args:
+            password: The password to validate.
+            has_special_char: Use special characters in the password.
+
+        Returns:
+            The validated password, or raises a HTTPException if the password is invalid.
+        """
+
+        if len(password) < cls.min_length:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f'Invalid password. Must contain at least {cls.min_length} characters.',
+            )
+
+        if not cls.has_number and re.search(r'[0-9]', password) is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Invalid password. Must contain at least one number (0-9).',
+            )
+
+        if not cls.has_uppercase and re.search(r'[A-Z]', password) is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Invalid password. Must contain at least one uppercase letter (A-Z).',
+            )
+
+        if not cls.has_lowercase and re.search(r'[a-z]', password) is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Invalid password. Must contain at least one lowercase letter (a-z).',
+            )
+
+        if not has_special_char and re.search(r'[!@#$%^&*()_+{}\[\]:;"\'<>,.?/\\|]', password) is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Invalid password. Must contain at least one special character (!@#$%^&*()_+{}[]:;"\'<>.,.?/|).',
+            )
+
+        return password

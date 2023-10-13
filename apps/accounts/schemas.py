@@ -1,6 +1,8 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr, field_validator, model_validator, Field
 
+from apps.accounts.services.auth import PasswordValidator
+
 
 # ------------------------
 # --- Register Schemas ---
@@ -13,11 +15,7 @@ class RegisterIn(BaseModel):
 
     @field_validator("password")
     def validate_password(cls, password: str):
-        if len(password) >= 8:
-            return password
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail='Invalid password. Must contain at least 8 characters.')
+        return PasswordValidator.validate_password(password=password, has_special_char=False)
 
     @model_validator(mode="after")
     def passwords_match(self):
@@ -56,17 +54,17 @@ class LoginOut(BaseModel):
 # --------------------
 
 class CurrentUserDependsIn(BaseModel):
-    email: EmailStr = Field(..., description="user email")
-    password: str = Field(..., min_length=8, max_length=24, description="user password")
-
-    # email: EmailStr
+    email: EmailStr = Field(description="user email")
+    password: str = Field(min_length=PasswordValidator.min_length,
+                          max_length=PasswordValidator.max_length,
+                          description="user password")
 
 
 class CurrentUserOut(BaseModel):
     user_id: int
     email: EmailStr
-    first_name: str
-    last_name: str
+    first_name: str | None
+    last_name: str | None
     verified_email: bool
     date_joined: str
     updated_at: str
