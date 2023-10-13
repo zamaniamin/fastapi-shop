@@ -1,10 +1,14 @@
-from fastapi import HTTPException, status
+from datetime import timedelta, datetime
+
+from fastapi import HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pyotp import TOTP, random_base32
 
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
-from config.settings import OTP_EXPIRATION_SECONDS
+from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 
 
 class AccountService:
@@ -28,16 +32,16 @@ class AccountService:
             )
 
         # hash the password
-        data["password"] = cls.hash_password(data["password"])
+        data["password"] = cls.__hash_password(data["password"])
 
         # generate an otp code
-        data["otp_key"] = cls.generate_otp_key()
+        data["otp_key"] = cls.__generate_otp_key()
 
         # create new user
         new_user = UserManager.new_user(**data)
 
         # send otp code to email
-        cls.send_otp(data["otp_key"], data['email'])
+        cls.__send_otp(data["otp_key"], data['email'])
 
         return {
             'email': new_user.email,
@@ -87,7 +91,7 @@ class AccountService:
             )
 
         # --- verify otp for this user ---
-        if not cls.verify_otp(user.otp_key, otp):
+        if not cls.__verify_otp(user.otp_key, otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code."
@@ -97,10 +101,10 @@ class AccountService:
         user.update(user.id, otp_key=None, verified_email=True, is_active=True, last_login=DateTime.now())
 
         # --- login user, generate and send authentication token to the client ---
-        # auth_token = cls.get_auth_token(user.id)
+        access_token = AuthToken.create_access_token(user.email)
 
         return {
-            'access_token': '',
+            'access_token': access_token,
             'message': 'Your email address has been confirmed. Account activated successfully.'
         }
 
@@ -108,12 +112,42 @@ class AccountService:
     # --- Login ---
     # -------------
 
+    @classmethod
+    def login(cls, email: str, password: str):
+        """
+        Login with given email and password.
+        """
+
+        user = AccountService.authenticate_user(email, password)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        response = {
+            "access_token": AuthToken.create_access_token(user.email),
+            "token_type": "bearer"
+        }
+        return response
+
+    @classmethod
+    def authenticate_user(cls, email: str, password: str):
+        user = UserManager.get_user(email=email)
+        if not user:
+            return False
+        if not cls.verify_password(password, user.password):
+            return False
+        return user
+
     # ---------------------
     # --- Hash Password ---
     # ---------------------
 
     @classmethod
-    def hash_password(cls, password: str):
+    def __hash_password(cls, password: str):
         return cls.password_context.hash(password)
 
     @classmethod
@@ -125,7 +159,7 @@ class AccountService:
     # ----------------
 
     @classmethod
-    def send_otp(cls, otp_key, email):
+    def __send_otp(cls, otp_key, email):
         """
         As a development OTP will be printed in the terminal
         """
@@ -151,7 +185,7 @@ class AccountService:
             """
 
     @staticmethod
-    def generate_otp_key():
+    def __generate_otp_key():
         return random_base32()
 
     @staticmethod
@@ -160,6 +194,71 @@ class AccountService:
         return totp.now()
 
     @staticmethod
-    def verify_otp(secret: str, user_totp: str):
+    def __verify_otp(secret: str, user_totp: str):
         totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
         return totp.verify(user_totp)
+
+
+class AuthToken:
+    ALGORITHM = "HS256"
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
+
+    @classmethod
+    def create_access_token(cls, data):
+        """
+        Create a new access token.
+        """
+
+        # --- set data to encode ---
+        to_encode = {'sub': data}
+
+        # --- set expire date ---
+        to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
+
+        # --- encod data, return new access token ---
+        return jwt.encode(to_encode, SECRET_KEY, algorithm=cls.ALGORITHM)
+
+    @classmethod
+    async def fetch_user_by_token(cls, token: str = Depends(oauth2_scheme)):
+        """
+        Get current user from JWT token.
+        """
+
+        # --- set exception ---
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials.",
+            headers={"WWW-Authenticate": "Bearer"})
+
+        # --- validate token ---
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[cls.ALGORITHM])
+            email: str = payload.get("sub")
+            if email is None:
+                raise credentials_exception
+        except JWTError:
+            raise credentials_exception
+
+        # --- get user ---
+        user = UserManager.get_user(email=email)
+        if user is None:
+            raise credentials_exception
+
+        cls.is_current_user_active(user.is_active)
+
+        response_data = {
+            'user_id': user.id,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'verified_email': user.verified_email,
+            'date_joined': user.date_joined,
+            'updated_at': user.updated_at,
+            'last_login': user.last_login
+        }
+        return response_data
+
+    @classmethod
+    def is_current_user_active(cls, is_active):
+        if not is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")

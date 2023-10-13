@@ -1,50 +1,72 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
-from apps.accounts.services.auth import AccountService
+from apps.accounts.services.auth import AccountService, AuthToken
 
 router = APIRouter(
-    prefix="/accounts",
-    tags=["Authentication"]
+    prefix='/accounts'
 )
 
 
+# ------------------------
+# --- Register Routers ---
+# ------------------------
+
 @router.post(
-    "/register",
+    '/register',
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.RegisterOut,
     summary='Register a new user',
-    description='Register a new user by email.')
+    description='Register a new user by email and password.',
+    tags=['Authentication'])
 async def register(payload: schemas.RegisterIn):
     return AccountService.register(**payload.model_dump(exclude={"password_confirm"}))
 
 
 @router.post(
-    "/register/verify",
-    status_code=status.HTTP_201_CREATED,
+    '/register/verify',
+    status_code=status.HTTP_200_OK,
     response_model=schemas.RegisterVerifyOut,
     summary='Verify user registration',
-    description='Verify a new user registration by confirming the provided OTP.')
+    description='Verify a new user registration by confirming the provided OTP.',
+    tags=['Authentication'])
 async def verify_registration(payload: schemas.RegisterVerifyIn):
     return AccountService.verify_registration(**payload.model_dump())
 
 
-# =====================================
+# ---------------------
+# --- Login Routers ---
+# ---------------------
 
-# to get a string like this run:
-# Use this command to generate a key: openssl rand -hex 32
-# SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-# ALGORITHM = "HS256"
-# ACCESS_TOKEN_EXPIRE_MINUTES = 30
+@router.post(
+    '/login',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.LoginOut,
+    summary='Login a user',
+    description='Login a user with valid credentials, if user account is active.',
+    tags=['Authentication'])
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    return AccountService.login(form_data.username, form_data.password)
 
-# =====================================
 
+# ---------------------
+# --- Users Routers ---
+# ---------------------
 
-"""
-POST /accounts/login
-GET /accounts/me
-PUT /accounts/me
-DELETE /accounts/me
-"""
+@router.get(
+    '/me/',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.CurrentUserOut,
+    summary='Retrieve current user',
+    description='Retrieve current user if user is active.',
+    tags=['Users'])
+async def read_users_me(current_user: schemas.CurrentUserDependsIn = Depends(AuthToken.fetch_user_by_token)):
+    return current_user
 
-# =====================================
+# TODO GET /accounts/me
+# TODO PUT /accounts/me
+# TODO DELETE /accounts/me
+# TODO Reset Password
+# TODO change email address
+# TODO add Permission (admin and user)

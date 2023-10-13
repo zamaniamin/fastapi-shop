@@ -1,29 +1,31 @@
-import re
+from fastapi import HTTPException, status
+from pydantic import BaseModel, EmailStr, field_validator, model_validator, Field
 
-from pydantic import BaseModel, EmailStr, field_validator, ValidationError
 
+# ------------------------
+# --- Register Schemas ---
+# ------------------------
 
 class RegisterIn(BaseModel):
     email: EmailStr
     password: str
     password_confirm: str
 
-    @classmethod
     @field_validator("password")
     def validate_password(cls, password: str):
-        constraints = [
-            len(password) >= 8,
-            re.search(r'[0-9]', password) is not None,  # Has a number
-            re.search(r'[A-Z]', password) is not None,  # Has an Uppercase letter
-            re.search(r'[a-z]', password) is not None,  # Has a Lowercase letter
-            re.search(r'[!@#$%^&*()_+{}\[\]:;"\'<>,.?/\\|]', password) is not None  # Has a special char
-        ]
-
-        if all(constraints):
+        if len(password) >= 8:
             return password
-        raise ValidationError(
-            "Invalid password. Must contain at least 8 characters, 1 number, 1 uppercase letter, 1 lowercase "
-            "letter, and 1 special character.")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail='Invalid password. Must contain at least 8 characters.')
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.password_confirm:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Passwords do not match!')
+        return self
 
 
 class RegisterOut(BaseModel):
@@ -37,5 +39,35 @@ class RegisterVerifyIn(BaseModel):
 
 
 class RegisterVerifyOut(BaseModel):
-    token: str
+    access_token: str
     message: str
+
+
+# --------------------
+# --- Login Schemas ---
+# --------------------
+class LoginOut(BaseModel):
+    access_token: str
+    token_type: str
+
+
+# --------------------
+# --- User Schemas ---
+# --------------------
+
+class CurrentUserDependsIn(BaseModel):
+    email: EmailStr = Field(..., description="user email")
+    password: str = Field(..., min_length=8, max_length=24, description="user password")
+
+    # email: EmailStr
+
+
+class CurrentUserOut(BaseModel):
+    user_id: int
+    email: EmailStr
+    first_name: str
+    last_name: str
+    verified_email: bool
+    date_joined: str
+    updated_at: str
+    last_login: str

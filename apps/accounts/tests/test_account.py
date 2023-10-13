@@ -73,26 +73,24 @@ class TestRegister(AccountTestBase):
             'email': 'user@test.com',
             'password': 'Test_12345'
         }
-        register = AccountService.register(**register_payload)
+        AccountService.register(**register_payload)
 
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
-        otp_key = user.otp_key
-        otp = AccountService.read_otp(otp_key)
 
         # --- payload ---
         verify_payload = {
             'email': register_payload['email'],
-            'otp': otp
+            'otp': AccountService.read_otp(user.otp_key)
         }
 
         # --- request ---
         response = self.client.post(self.register_verify_endpoint, json=verify_payload)
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
         expected = response.json()
-        # assert expected['token'] == payload['email']
+        assert expected['access_token'] is not None
         assert expected['message'] == 'Your email address has been confirmed. Account activated successfully.'
 
         expected_user = UserManager.get_user(email=register_payload['email'])
