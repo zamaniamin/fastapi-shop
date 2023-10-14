@@ -323,3 +323,5 @@ class PasswordValidator:
             )
 
         return password
+
+# TODO add a sessions service to manage sections like telegram app (Devices).
