@@ -128,6 +128,20 @@ class AccountService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive account.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.verified_email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Unverified email address.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         response = {
             "access_token": AuthToken.create_access_token(user.email),
             "token_type": "bearer"
