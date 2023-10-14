@@ -1,3 +1,4 @@
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -117,26 +118,67 @@ class TestRegisterAccount(AccountTestBase):
     # --- Test Payloads ---
     # ---------------------
 
+    @pytest.mark.parametrize("invalid_fields", [
+        {},
+        {'': ''},
+        {'test': 'test'},
+        {'email': 'invalid@testcom', 'password': 'PASSWORD'},
+        {'password': 'PASSWORD', 'password_confirm': 'PASSWORD'},
+        {'email': 'valid@test.com', 'password': ''},
+        {'email': 'valid@test.com', 'password': 'PASSWORD_t1'},
+        {'email': 'invalid@testcom', 'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t1'}])
+    def test_register_invalid_payload_fields(self, invalid_fields):
+        """
+        Test register a new user with invalid payload fields.
+        """
+
+        response = self.client.post(self.register_endpoint, json=invalid_fields)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize("invalid_email", [
+        {'email': ''},
+        {'email': 'valid@test.com'},
+        {'email': '@com', 'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t1'},
+        {'email': 'as@.com', 'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t1'},
+        {'email': 'as@.d.com', 'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t1'}])
+    def test_register_invalid_email(self, invalid_email):
+        """
+        Test register a new user with an invalid email.
+        """
+
+        response = self.client.post(self.register_endpoint, json=invalid_email)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize("invalid_passwords", [
+        {'email': 'valid@test.com', 'password': '', 'password_confirm': ''},
+        {'email': 'valid@test.com', 'password': 'PASSWORD', 'password_confirm': 'PASSWORD'},
+        {'email': 'valid@test.com', 'password': 'PASSWORD_', 'password_confirm': 'PASSWORD_'},
+        {'email': 'valid@test.com', 'password': 'password_', 'password_confirm': 'password_'},
+        {'email': 'valid@test.com', 'password': 'password1', 'password_confirm': 'password1'},
+        {'email': 'valid@test.com', 'password': '_assword1', 'password_confirm': '_assword1'},
+        {'email': 'valid@test.com', 'password': 'Pa@1', 'password_confirm': 'Pa@1'},
+        {'email': 'valid@test.com', 'password': 'asdfghjk', 'password_confirm': 'asdfghjk'},
+        {'email': 'valid@test.com', 'password': '12345678', 'password_confirm': '12345678'},
+        {'email': 'valid@test.com', 'password': 'password_tt', 'password_confirm': 'password_tt'},
+        {'email': 'valid@test.com', 'password': 'password_Tt', 'password_confirm': 'password_Tt'},
+        {'email': 'valid@test.com', 'password': 'passwordTt', 'password_confirm': 'passwordTt'},
+        {'email': 'valid@test.com', 'password': 'Pass1', 'password_confirm': 'Pass1'},
+        {'email': 'valid@test.com', 'password': 'Pass1_Pass1_Pass1_Pass1_1',
+         'password_confirm': 'Pass1_Pass1_Pass1_Pass1_1'},
+        {'email': 'valid@test.com', 'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t2'}])
+    def test_register_invalid_password(self, invalid_passwords):
+        """
+        Test register a new user with invalid password.
+        """
+
+        response = self.client.post(self.register_endpoint, json=invalid_passwords)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     # TODO --- `register` ---
-
-    # TODO test register with empy payload
-
-    # TODO test register without email
-    # TODO test register with invalid email
     # TODO test register with duplicate email
 
-    # TODO test register without password
-    # TODO test register without password_confirm
-    # TODO test register with invalid password
-    # TODO test register with passwords do not match
-    # TODO test register with password `min_length`
-    # TODO test register with password `max_length`
-    # TODO test register with strong password
-
     # TODO --- `verify_registration` ---
-
     # TODO test verify with empty payload
-
     # TODO test verify without email
     # TODO test verify with invalid email
     # TODO test verify with an existing email that not related to this verification
