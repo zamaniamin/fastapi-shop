@@ -72,19 +72,12 @@ class TestRegisterAccount(AccountTestBase):
         """
 
         # --- register a user ---
-        register_payload = {
-            'email': FakeAccount.random_email(),
-            'password': FakeAccount.password
-        }
-        AccountService.register(**register_payload)
-
-        # --- read otp code ---
-        user = UserManager.get_user(email=register_payload['email'])
+        email, otp = FakeAccount.register_unverified()
 
         # --- payload ---
         verify_payload = {
-            'email': register_payload['email'],
-            'otp': AccountService.read_otp(user.otp_key)
+            'email': email,
+            'otp': otp
         }
 
         # --- request ---
@@ -96,13 +89,13 @@ class TestRegisterAccount(AccountTestBase):
         assert expected['access_token'] is not None
         assert expected['message'] == 'Your email address has been confirmed. Account activated successfully.'
 
-        expected_user = UserManager.get_user(email=register_payload['email'])
+        expected_user = UserManager.get_user(email=email)
 
         assert expected_user is not None
         assert expected_user.id > 0
 
-        assert expected_user.email == register_payload['email']
-        assert AccountService.verify_password(register_payload['password'], expected_user.password) is True
+        assert expected_user.email == email
+        assert AccountService.verify_password(FakeAccount.password, expected_user.password) is True
         assert expected_user.otp_key is None
 
         assert expected_user.first_name is None
@@ -156,6 +149,23 @@ class TestRegisterAccount(AccountTestBase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # TODO test verify register with incorrect otp
+    def test_verify_registration_incorrect_otp(self):
+        """
+        Test verify email address with incorrect otp code.
+        """
+
+        # --- register a user ---
+        email, otp = FakeAccount.register_unverified()
+
+        # --- payload ---
+        verify_payload = {
+            'email': email,
+            'otp': '123456'
+        }
+
+        # --- request ---
+        response = self.client.post(self.register_verify_endpoint, json=verify_payload)
+        assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
 
     # TODO test verify register with expired otp
 

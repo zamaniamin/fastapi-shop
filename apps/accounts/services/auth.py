@@ -95,7 +95,7 @@ class AccountService:
         if not cls.__verify_otp(user.otp_key, otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Invalid OTP code."
+                detail="Invalid OTP code.Please double-check and try again."
             )
 
         # --- Update user data and activate the account ---
