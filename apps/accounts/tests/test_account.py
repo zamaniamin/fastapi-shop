@@ -322,9 +322,22 @@ class TestLoginAccount(AccountTestBase):
     # --- Test Payloads ---
     # ---------------------
 
-    # TODO test login with empty payload
-    # TODO test login without email
-    # TODO test login with an unknown email
+    @pytest.mark.parametrize("invalid_fields", [
+        {},
+        {'username': '', 'password': ''},
+        {'username': ''},
+        {'password': '<PASSWORD>'},
+        {'username': 'valid@test.com'},
+        {'username': 'any_username'}])
+    def test_login_with_invalid_payloads(self, invalid_fields):
+        """
+        Test login to account with invalid payloads.
+        """
+
+        # --- login request ---
+        response = self.client.post(self.login_endpoint, data=invalid_fields)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     # TODO test login for `swagger Authorize`
 
 
