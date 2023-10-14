@@ -26,7 +26,7 @@ class AccountTestBase(BaseTestCase):
 
 class TestRegisterAccount(AccountTestBase):
 
-    def test_register_with_email(self):
+    def test_successful_register_with_email(self):
         """
         Test Register a new user with valid credentials.
         """
@@ -65,7 +65,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.last_login is None
         self.assert_datetime_format(expected_user.date_joined)
 
-    def test_verify_registration(self):
+    def test_successful_verify_registration(self):
         """
         Test activating the account after verifying the OTP code (verify email).
         """
@@ -247,14 +247,12 @@ class TestRegisterAccount(AccountTestBase):
     # TODO test verify with an expired OTP
 
 
-class TestAuthorize(BaseTestCase):
-    ...
-
-
 class TestLoginAccount(BaseTestCase):
     ...
-    # TODO test login
+    # TODO test successful login
     # TODO test login if user is not active.
+    # TODO test login if user email in unverified
+    # TODO test login with incorrect password
 
     # ---------------------
     # --- Test Payloads ---
@@ -262,10 +260,7 @@ class TestLoginAccount(BaseTestCase):
 
     # TODO test login with empty payload
     # TODO test login without email
-    # TODO test login with an existing email not related to this password
-    # TODO test login
-    # TODO test login
-    # TODO test login
+    # TODO test login with an unknown email
     # TODO test login for `swagger Authorize`
 
 
