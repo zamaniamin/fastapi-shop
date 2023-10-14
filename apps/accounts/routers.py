@@ -61,8 +61,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     summary='Retrieve current user',
     description='Retrieve current user if user is active.',
     tags=['Users'])
-async def read_users_me(current_user: schemas.CurrentUserDependsIn = Depends(AuthToken.fetch_user_by_token)):
-    return current_user
+async def retrieve_me(current_user: schemas.CurrentUserDependsIn = Depends(AuthToken.fetch_user_by_token)):
+    return {'user': current_user}
 
 # TODO GET /accounts/me
 # TODO PUT /accounts/me

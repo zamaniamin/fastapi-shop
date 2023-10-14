@@ -55,12 +55,11 @@ class LoginOut(BaseModel):
 
 class CurrentUserDependsIn(BaseModel):
     email: EmailStr = Field(description="user email")
-    password: str = Field(min_length=PasswordValidator.min_length,
-                          max_length=PasswordValidator.max_length,
+    password: str = Field(min_length=PasswordValidator.min_length, max_length=PasswordValidator.max_length,
                           description="user password")
 
 
-class CurrentUserOut(BaseModel):
+class UserSchema(BaseModel):
     user_id: int
     email: EmailStr
     first_name: str | None
@@ -69,3 +68,7 @@ class CurrentUserOut(BaseModel):
     date_joined: str
     updated_at: str
     last_login: str
+
+
+class CurrentUserOut(BaseModel):
+    user: UserSchema
