@@ -2,6 +2,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from apps.accounts.faker.data import FakeAccount
 from apps.accounts.services.auth import AccountService
 from apps.accounts.services.user import UserManager
 from apps.core.base_test_case import BaseTestCase
@@ -31,9 +32,9 @@ class TestRegisterAccount(AccountTestBase):
         """
 
         payload = {
-            'email': 'test@test.com',
-            'password': 'Test_12345',
-            'password_confirm': 'Test_12345'
+            'email': FakeAccount.random_email(),
+            'password': FakeAccount.password,
+            'password_confirm': FakeAccount.password
         }
 
         # --- request ---
@@ -71,8 +72,8 @@ class TestRegisterAccount(AccountTestBase):
 
         # --- register a user ---
         register_payload = {
-            'email': 'user@test.com',
-            'password': 'Test_12345'
+            'email': FakeAccount.random_email(),
+            'password': FakeAccount.password
         }
         AccountService.register(**register_payload)
 
@@ -114,17 +115,44 @@ class TestRegisterAccount(AccountTestBase):
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)
 
-    def test_register_existing_email(self):
+    def test_register_existing_verified_email(self):
         """
-        Test register a new user with an existing email.
+        Test register a new user with an existing verified email address.
         """
+
+        email, _ = FakeAccount.verified_registration()
         payload = {
-            'email': 'test@test.com',
-            'password': 'Test_12345',
-            'password_confirm': 'Test_12345'
+            'email': email,
+            'password': FakeAccount.password,
+            'password_confirm': FakeAccount.password
         }
         response = self.client.post(self.register_endpoint, json=payload)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_register_existing_unverified_email(self):
+        """
+        Test register a new user with an existing unverified email address.
+        """
+        emai, _ = FakeAccount.register_unverified()
+        payload = {
+            'email': emai,
+            'password': FakeAccount.password,
+            'password_confirm': FakeAccount.password
+        }
+        response = self.client.post(self.register_endpoint, json=payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize("unknown_email", [
+        {'email': 'valid@test.com', 'otp': ''},
+        {'email': 'valid@test.com', 'otp': '123'}])
+    def test_verify_register_unknown_email(self, unknown_email):
+        """
+        Test verify-register a new user with unknown email address.
+        """
+
+        # --- request ---
+        response = self.client.post(self.register_verify_endpoint, json=unknown_email)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # ---------------------
     # --- Test Payloads ---
@@ -162,38 +190,60 @@ class TestRegisterAccount(AccountTestBase):
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("invalid_passwords", [
-        {'email': 'valid@test.com', 'password': '', 'password_confirm': ''},
-        {'email': 'valid@test.com', 'password': 'PASSWORD', 'password_confirm': 'PASSWORD'},
-        {'email': 'valid@test.com', 'password': 'PASSWORD_', 'password_confirm': 'PASSWORD_'},
-        {'email': 'valid@test.com', 'password': 'password_', 'password_confirm': 'password_'},
-        {'email': 'valid@test.com', 'password': 'password1', 'password_confirm': 'password1'},
-        {'email': 'valid@test.com', 'password': '_assword1', 'password_confirm': '_assword1'},
-        {'email': 'valid@test.com', 'password': 'Pa@1', 'password_confirm': 'Pa@1'},
-        {'email': 'valid@test.com', 'password': 'asdfghjk', 'password_confirm': 'asdfghjk'},
-        {'email': 'valid@test.com', 'password': '12345678', 'password_confirm': '12345678'},
-        {'email': 'valid@test.com', 'password': 'password_tt', 'password_confirm': 'password_tt'},
-        {'email': 'valid@test.com', 'password': 'password_Tt', 'password_confirm': 'password_Tt'},
-        {'email': 'valid@test.com', 'password': 'passwordTt', 'password_confirm': 'passwordTt'},
-        {'email': 'valid@test.com', 'password': 'Pass1', 'password_confirm': 'Pass1'},
-        {'email': 'valid@test.com', 'password': 'Pass1_Pass1_Pass1_Pass1_1',
-         'password_confirm': 'Pass1_Pass1_Pass1_Pass1_1'},
-        {'email': 'valid@test.com', 'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t2'}])
+        {'password': '', 'password_confirm': ''},
+        {'password': 'PASSWORD', 'password_confirm': 'PASSWORD'},
+        {'password': 'PASSWORD_', 'password_confirm': 'PASSWORD_'},
+        {'password': 'password_', 'password_confirm': 'password_'},
+        {'password': 'password1', 'password_confirm': 'password1'},
+        {'password': '_assword1', 'password_confirm': '_assword1'},
+        {'password': 'Pa@1', 'password_confirm': 'Pa@1'},
+        {'password': 'asdfghjk', 'password_confirm': 'asdfghjk'},
+        {'password': '12345678', 'password_confirm': '12345678'},
+        {'password': 'password_tt', 'password_confirm': 'password_tt'},
+        {'password': 'password_Tt', 'password_confirm': 'password_Tt'},
+        {'password': 'passwordTt', 'password_confirm': 'passwordTt'},
+        {'password': 'Pass1', 'password_confirm': 'Pass1'},
+        {'password': 'Pass1_Pass1_Pass1_Pass1_1', 'password_confirm': 'Pass1_Pass1_Pass1_Pass1_1'},
+        {'password': 'PASSWORD_t1', 'password_confirm': 'PASSWORD_t2'}])
     def test_register_invalid_password(self, invalid_passwords):
         """
         Test register a new user with invalid password.
         """
-
+        invalid_passwords['email'] = FakeAccount.random_email()
         response = self.client.post(self.register_endpoint, json=invalid_passwords)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    # TODO --- `verify_registration` ---
-    # TODO test verify with empty payload
-    # TODO test verify without email
-    # TODO test verify with invalid email
-    # TODO test verify with an existing email that not related to this verification
+    @pytest.mark.parametrize("invalid_fields", [
+        {},
+        {'': ''},
+        {'test': 'test'},
+        {'email': ''},
+        {'email': 'valid@test.com'},
+        {'email': 'invalid@testcom', 'otp': '12'},
+        {'email': '', 'otp': '12'}])
+    def test_verify_register_invalid_payload(self, invalid_fields):
+        """
+        Test verify-register a new user with invalid payload.
+        """
 
-    # TODO test verify without OTP
-    # TODO test verify with invalid OTP
+        # --- request ---
+        response = self.client.post(self.register_verify_endpoint, json=invalid_fields)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize("invalid_otp", [
+        {},
+        {'otp': ''},
+        {'otp': '11111111'},
+        {'otp': 'aaaa1111'},
+        {'otp': 'aaaaaaaa'}])
+    def test_verify_register_invalid_otp(self, invalid_otp):
+        """
+        Test register a new user with invalid password.
+        """
+        invalid_otp['email'] = FakeAccount.register_unverified()
+        response = self.client.post(self.register_endpoint, json=invalid_otp)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     # TODO test verify with an expired OTP
 
 
