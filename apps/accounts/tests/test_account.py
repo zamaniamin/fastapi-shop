@@ -155,6 +155,12 @@ class TestRegisterAccount(AccountTestBase):
         response = self.client.post(self.register_verify_endpoint, json=unknown_email)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    # TODO test verify register with incorrect otp
+
+    # TODO test verify register with expired otp
+
+    # TODO test OTP email is sent on register
+
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
@@ -244,8 +250,6 @@ class TestRegisterAccount(AccountTestBase):
         invalid_otp['email'] = FakeAccount.register_unverified()
         response = self.client.post(self.register_endpoint, json=invalid_otp)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    # TODO test verify with an expired OTP
 
 
 class TestLoginAccount(AccountTestBase):
@@ -340,15 +344,4 @@ class TestLoginAccount(AccountTestBase):
 
     # TODO test login for `swagger Authorize`
 
-
-class TestOTP(BaseTestCase):
-    ...
-    # TODO test OTP `OTP_EXPIRATION_SECONDS`
-    # TODO test OTP is expired
-    # TODO test OTP email is sent
-
-
-class TestJWT(BaseTestCase):
-    ...
-    # TODO test JWT token
-    # TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
+# TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
