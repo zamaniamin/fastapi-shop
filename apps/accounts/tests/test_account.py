@@ -13,6 +13,7 @@ from config.database import DatabaseManager
 class AccountTestBase(BaseTestCase):
     register_endpoint = "/accounts/register/"
     register_verify_endpoint = "/accounts/register/verify/"
+    login_endpoint = "/accounts/login/"
 
     @classmethod
     def setup_class(cls):
@@ -247,9 +248,28 @@ class TestRegisterAccount(AccountTestBase):
     # TODO test verify with an expired OTP
 
 
-class TestLoginAccount(BaseTestCase):
-    ...
-    # TODO test successful login
+class TestLoginAccount(AccountTestBase):
+    def test_successful_login(self):
+        """
+        Test successful login for a user.
+        """
+
+        # --- register and verify a user ---
+        email, _ = FakeAccount.verified_registration()
+        payload = {
+            'username': email,
+            'password': FakeAccount.password
+        }
+
+        # --- login request ---
+        response = self.client.post(self.login_endpoint, data=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected_login = response.json()
+        assert expected_login['access_token'] is not None
+        assert expected_login['token_type'] == 'bearer'
+
     # TODO test login if user is not active.
     # TODO test login if user email in unverified
     # TODO test login with incorrect password
