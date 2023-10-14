@@ -114,6 +114,18 @@ class TestRegisterAccount(AccountTestBase):
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)
 
+    def test_register_existing_email(self):
+        """
+        Test register a new user with an existing email.
+        """
+        payload = {
+            'email': 'test@test.com',
+            'password': 'Test_12345',
+            'password_confirm': 'Test_12345'
+        }
+        response = self.client.post(self.register_endpoint, json=payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
@@ -173,9 +185,6 @@ class TestRegisterAccount(AccountTestBase):
 
         response = self.client.post(self.register_endpoint, json=invalid_passwords)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    # TODO --- `register` ---
-    # TODO test register with duplicate email
 
     # TODO --- `verify_registration` ---
     # TODO test verify with empty payload
