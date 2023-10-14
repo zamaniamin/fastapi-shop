@@ -148,10 +148,9 @@ class TestRegisterAccount(AccountTestBase):
         response = self.client.post(self.register_verify_endpoint, json=unknown_email)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # TODO test verify register with incorrect otp
     def test_verify_registration_incorrect_otp(self):
         """
-        Test verify email address with incorrect otp code.
+        Test verify email address with incorrect otp code or expired otp code.
         """
 
         # --- register a user ---
@@ -166,8 +165,6 @@ class TestRegisterAccount(AccountTestBase):
         # --- request ---
         response = self.client.post(self.register_verify_endpoint, json=verify_payload)
         assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
-
-    # TODO test verify register with expired otp
 
     # TODO test OTP email is sent on register
 
@@ -352,6 +349,5 @@ class TestLoginAccount(AccountTestBase):
         response = self.client.post(self.login_endpoint, data=invalid_fields)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    # TODO test login for `swagger Authorize`
-
+# TODO test login for `swagger Authorize`
 # TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
