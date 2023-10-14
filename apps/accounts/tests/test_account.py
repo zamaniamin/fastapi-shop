@@ -270,9 +270,53 @@ class TestLoginAccount(AccountTestBase):
         assert expected_login['access_token'] is not None
         assert expected_login['token_type'] == 'bearer'
 
-    # TODO test login if user is not active.
-    # TODO test login if user email in unverified
-    # TODO test login with incorrect password
+    def test_login_with_incorrect_password(self):
+        """
+        Test login with incorrect password.
+        """
+
+        # --- register and verify a user ---
+        email, _ = FakeAccount.verified_registration()
+        payload = {
+            'username': email,
+            'password': FakeAccount.password + "t"
+        }
+
+        # --- login request ---
+        response = self.client.post(self.login_endpoint, data=payload)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_login_with_inactive_account(self):
+        """
+        Test login if user account is inactive.
+        """
+
+        # --- register and verify a user ---
+        email, _ = FakeAccount.register_unverified()
+        payload = {
+            'username': email,
+            'password': FakeAccount.password
+        }
+
+        # --- login request ---
+        response = self.client.post(self.login_endpoint, data=payload)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_login_with_unverified_email(self):
+        """
+        Test login a user with unverified email address.
+        """
+
+        # --- register and verify a user ---
+        email, _ = FakeAccount.register_unverified()
+        payload = {
+            'username': email,
+            'password': FakeAccount.password
+        }
+
+        # --- login request ---
+        response = self.client.post(self.login_endpoint, data=payload)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # ---------------------
     # --- Test Payloads ---
