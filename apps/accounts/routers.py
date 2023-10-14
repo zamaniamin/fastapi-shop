@@ -69,4 +69,5 @@ async def read_users_me(current_user: schemas.CurrentUserDependsIn = Depends(Aut
 # TODO DELETE /accounts/me
 # TODO Reset Password
 # TODO change email address
+# TODO resend otp code
 # TODO add Permission (admin and user)
