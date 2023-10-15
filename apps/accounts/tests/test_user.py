@@ -47,3 +47,11 @@ class TestUser(UserTestBase):
         self.assert_datetime_format(expected_user['date_joined'])
         self.assert_datetime_format(expected_user['updated_at'])
         self.assert_datetime_format(expected_user['last_login'])
+
+    def test_retrieve_me_protected(self):
+        """
+        Test endpoint is protected.
+        """
+
+        response = self.client.get(self.user_endpoint)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
