@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
 from apps.accounts.services.auth import AccountService, AuthToken
+from apps.accounts.services.user import User, UserManager
 
 router = APIRouter(
     prefix='/accounts'
@@ -61,10 +62,9 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     summary='Retrieve current user',
     description='Retrieve current user if user is active.',
     tags=['Users'])
-async def retrieve_me(current_user: schemas.CurrentUserDependsIn = Depends(AuthToken.fetch_user_by_token)):
-    return {'user': current_user}
+async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token)):
+    return {'user': UserManager.to_dict(current_user)}
 
-# TODO GET /accounts/me
 # TODO PUT /accounts/me
 # TODO DELETE /accounts/me
 # TODO Reset Password

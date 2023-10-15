@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, field_validator, model_validator, Field
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 from apps.accounts.services.auth import PasswordValidator
 
@@ -52,11 +52,6 @@ class LoginOut(BaseModel):
 # --------------------
 # --- User Schemas ---
 # --------------------
-
-class CurrentUserDependsIn(BaseModel):
-    email: EmailStr = Field(description="user email")
-    password: str = Field(min_length=PasswordValidator.min_length, max_length=PasswordValidator.max_length,
-                          description="user password")
 
 
 class UserSchema(BaseModel):
