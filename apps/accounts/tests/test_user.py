@@ -22,7 +22,7 @@ class UserTestBase(BaseTestCase):
 
 class TestUser(UserTestBase):
 
-    def test_retrieve_me(self):
+    def test_successful_retrieve_me(self):
         """
         Test retrieving a current user.
         """
