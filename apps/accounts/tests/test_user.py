@@ -47,6 +47,9 @@ class TestUser(UserTestBase):
         self.assert_datetime_format(expected_user['date_joined'])
         self.assert_datetime_format(expected_user['updated_at'])
         self.assert_datetime_format(expected_user['last_login'])
+        assert 'password' not in expected_user
+        assert 'is_active' not in expected_user
+        assert 'otp_key' not in expected_user
 
     def test_retrieve_me_protected(self):
         """
