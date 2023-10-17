@@ -1,5 +1,3 @@
-from fastapi import HTTPException
-
 from apps.accounts.models import User
 from apps.core.date_time import DateTime
 
@@ -23,16 +21,6 @@ class UserManager:
         elif email:
             return User.filter(User.email == email).first()
         return None
-
-    @staticmethod
-    def get_user_or_404(user_id: int | None = None, email: str = None):
-        if user_id:
-            instance = User.get_or_404(user_id)
-        elif email:
-            instance = User.filter(User.email == email).first()
-            if not instance:
-                raise HTTPException(status_code=404, detail=f"User not found")
-        return instance
 
     @staticmethod
     def to_dict(user: User):
