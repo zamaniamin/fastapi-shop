@@ -65,8 +65,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token)):
     return {'user': UserManager.to_dict(current_user)}
 
+
+@router.get(
+    '/{user_id}',
+    status_code=status.HTTP_200_OK,
+    # response_model=,
+    summary='Retrieve a single user',
+    description='Retrieve a single user by ID.',
+    tags=['Users'])
+async def retrieve_user(user_id: int):
+    # TODO (admin / permission) only admins can read the users data
+    return {'user': UserManager.to_dict(UserManager.get_user_or_404(user_id))}
+
+# TODO start the permissions system
+
 # TODO PUT /accounts/me
-# TODO DELETE /accounts/me
 # TODO Reset Password
 # TODO change email address
 # TODO resend otp code
