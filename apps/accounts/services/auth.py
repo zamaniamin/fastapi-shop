@@ -7,6 +7,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pyotp import TOTP, random_base32
 
+from apps.accounts.models import User
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
 from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
@@ -102,7 +103,7 @@ class AccountService:
         user.update(user.id, otp_key=None, verified_email=True, is_active=True, last_login=DateTime.now())
 
         # --- login user, generate and send authentication token to the client ---
-        access_token = AuthToken.create_access_token(user.email)
+        access_token = AuthToken.create_access_token(user)
 
         return {
             'access_token': access_token,
@@ -143,7 +144,7 @@ class AccountService:
             )
 
         response = {
-            "access_token": AuthToken.create_access_token(user.email),
+            "access_token": AuthToken.create_access_token(user),
             "token_type": "bearer"
         }
         return response
@@ -219,13 +220,13 @@ class AuthToken:
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
 
     @classmethod
-    def create_access_token(cls, data):
+    def create_access_token(cls, user: User):
         """
         Create a new access token.
         """
 
         # --- set data to encode ---
-        to_encode = {'sub': data}
+        to_encode = {'sub': str(user.id)}
 
         # --- set expire date ---
         to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
@@ -248,14 +249,14 @@ class AuthToken:
         # --- validate token ---
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[cls.ALGORITHM])
-            email: str = payload.get("sub")
-            if email is None:
+            user_id = payload.get("sub")
+            if user_id is None:
                 raise credentials_exception
         except JWTError:
             raise credentials_exception
 
         # --- get user ---
-        user = UserManager.get_user(email=email)
+        user = UserManager.get_user(user_id)
         if user is None:
             raise credentials_exception
 
