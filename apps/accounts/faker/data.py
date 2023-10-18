@@ -69,7 +69,7 @@ class FakeUser:
 
         user_data = {
             'email': cls.random_email(),
-            'password': cls.password,
+            'password': cls.password,  # TODO hash password
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
             'otp_key': None,
