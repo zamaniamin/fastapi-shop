@@ -81,7 +81,7 @@ class FakeUser:
         }
 
         user = UserManager.new_user(**user_data)
-        access_token = AuthToken.create_access_token(user.email)
+        access_token = AuthToken.create_access_token(user)
         return user, access_token
 
     @classmethod
