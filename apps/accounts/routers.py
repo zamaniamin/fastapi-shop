@@ -1,8 +1,9 @@
-from fastapi import APIRouter, status, Depends, HTTPException
+from fastapi import APIRouter, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
 from apps.accounts.services.auth import AccountService, AuthToken
+from apps.accounts.services.permissions import Permission
 from apps.accounts.services.user import User, UserManager
 
 router = APIRouter(
@@ -66,30 +67,19 @@ async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token
     return {'user': UserManager.to_dict(current_user)}
 
 
-def is_admin():
-    async def _is_admin(token: str = Depends(AuthToken.oauth2_scheme)):
-        user: User = await AuthToken.fetch_user_by_token(token)
-        if user.role != 'admin':
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have permission to access this resource."
-            )
-
-    return _is_admin
-
-
 @router.get(
     '/{user_id}',
     status_code=status.HTTP_200_OK,
-    # response_model=,
+    response_model=schemas.CurrentUserOut,
     summary='Retrieve a single user',
     description='Retrieve a single user by ID.',
     tags=['Users'],
-    dependencies=[Depends(is_admin())]
-    # dependencies=[Depends(Permission.is_admin)]  # only admins can read the users data
+    dependencies=[Depends(Permission.is_admin)]
 )
 async def retrieve_user(user_id: int):
-    #     # TODO (admin / permission)
+    """
+    Only admins can read the users data.
+    """
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
 # TODO PUT /accounts/me
