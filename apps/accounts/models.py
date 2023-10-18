@@ -19,6 +19,8 @@ class User(FastModel):
     is_active = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
 
+    role = Column(String(5), default="user")
+
     date_joined = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
     last_login = Column(DateTime, nullable=True)
