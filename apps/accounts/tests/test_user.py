@@ -60,12 +60,28 @@ class TestUser(UserTestBase):
         response = self.client.get(self.user_endpoint)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+    def test_retrieve_single_user(self):
+        """
+        Test retrieve a single user by ID with admin role. only 'admin' can access to it.
+        """
+
+        # --- create an admin with access-token ---
+        admin, access_token = FakeUser.populate_admin()
+        user, _ = FakeUser.populate_user()
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        # --- request to fetch user data from token ---
+        response = self.client.get(f"{self.accounts_endpoint}{user.id}", headers=headers)
+        assert response.status_code == status.HTTP_200_OK
+
     def test_retrieve_single_user_403(self):
         """
         Test retrieve a single user by ID with user role. only 'admin' can access to it.
         """
 
-        # --- create an admin with access-token ---
+        # --- create user with access-token ---
         user_1, access_token = FakeUser.populate_user()
         user_2, _ = FakeUser.populate_user()
         headers = {
