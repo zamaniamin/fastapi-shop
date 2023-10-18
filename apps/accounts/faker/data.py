@@ -62,6 +62,30 @@ class FakeUser:
     password = 'Test_1234'
 
     @classmethod
+    def populate_admin(cls):
+        """
+        Create an admin and generate an access token too.
+        """
+
+        user_data = {
+            'email': cls.random_email(),
+            'password': cls.password,  # TODO hash password
+            'first_name': cls.fake.first_name(),
+            'last_name': cls.fake.last_name(),
+            'otp_key': None,
+            'verified_email': True,
+            'is_active': True,
+            'is_superuser': True,
+            'role': 'admin',
+            'last_login': DateTime.now(),
+            'updated_at': DateTime.now()
+        }
+
+        user = UserManager.new_user(**user_data)
+        access_token = AuthToken.create_access_token(user)
+        return user, access_token
+
+    @classmethod
     def populate_user(cls):
         """
         Create a new user and generate an access token too.
