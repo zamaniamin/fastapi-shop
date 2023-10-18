@@ -9,6 +9,7 @@ from config.database import DatabaseManager
 
 class UserTestBase(BaseTestCase):
     user_endpoint = "/accounts/me/"
+    accounts_endpoint = "/accounts/"
 
     @classmethod
     def setup_class(cls):
@@ -58,3 +59,19 @@ class TestUser(UserTestBase):
 
         response = self.client.get(self.user_endpoint)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_retrieve_single_user_403(self):
+        """
+        Test retrieve a single user by ID with user role. only 'admin' can access to it.
+        """
+
+        # --- create an admin with access-token ---
+        user_1, access_token = FakeUser.populate_user()
+        user_2, _ = FakeUser.populate_user()
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        # --- request to fetch user data from token ---
+        response = self.client.get(f"{self.accounts_endpoint}{user_2.id}", headers=headers)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
