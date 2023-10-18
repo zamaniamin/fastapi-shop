@@ -72,14 +72,11 @@ async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token
     status_code=status.HTTP_200_OK,
     response_model=schemas.CurrentUserOut,
     summary='Retrieve a single user',
-    description='Retrieve a single user by ID.',
+    description='Retrieve a single user by ID. Only admins can read the users data.',
     tags=['Users'],
     dependencies=[Depends(Permission.is_admin)]
 )
 async def retrieve_user(user_id: int):
-    """
-    Only admins can read the users data.
-    """
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
 # TODO PUT /accounts/me
