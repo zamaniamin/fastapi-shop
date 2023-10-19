@@ -93,4 +93,5 @@ async def retrieve_user(user_id: int):
 # TODO Reset Password / change password
 # TODO change email address
 # TODO resend otp code
+# TODO logout (expire token)
 # TODO DELETE /accounts/me
