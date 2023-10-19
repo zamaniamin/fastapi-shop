@@ -143,6 +143,8 @@ class AccountService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # TODO update `last_login`
+
         response = {
             "access_token": AuthToken.create_access_token(user),
             "token_type": "bearer"
