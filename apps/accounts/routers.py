@@ -90,9 +90,7 @@ async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depe
 async def retrieve_user(user_id: int):
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
-# TODO PUT /accounts/me
-# TODO DELETE /accounts/me
 # TODO Reset Password / change password
 # TODO change email address
 # TODO resend otp code
-# TODO add Permission (admin and user)
+# TODO DELETE /accounts/me
