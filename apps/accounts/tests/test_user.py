@@ -8,7 +8,7 @@ from config.database import DatabaseManager
 
 
 class UserTestBase(BaseTestCase):
-    user_endpoint = "/accounts/me/"
+    current_user_endpoint = "/accounts/me/"
     accounts_endpoint = "/accounts/"
 
     @classmethod
@@ -35,7 +35,7 @@ class TestUser(UserTestBase):
         }
 
         # --- request to fetch user data from token ---
-        response = self.client.get(self.user_endpoint, headers=headers)
+        response = self.client.get(self.current_user_endpoint, headers=headers)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected user ---
@@ -57,7 +57,7 @@ class TestUser(UserTestBase):
         Test endpoint is protected.
         """
 
-        response = self.client.get(self.user_endpoint)
+        response = self.client.get(self.current_user_endpoint)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_retrieve_single_user(self):
@@ -91,3 +91,32 @@ class TestUser(UserTestBase):
         # --- request to fetch user data from token ---
         response = self.client.get(f"{self.accounts_endpoint}{user_2.id}", headers=headers)
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_update_current_user(self):
+        """
+        Test update the current user with "user" role.
+        """
+
+        # --- create user ---
+        user, access_token = FakeUser.populate_user()
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            'first_name': FakeUser.fake.first_name(),
+            'last_name': FakeUser.fake.last_name()
+        }
+
+        # --- request ---
+        response = self.client.put(self.current_user_endpoint, headers=headers, json=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected_user = response.json().get('user')
+        assert expected_user['first_name'] == payload['first_name']
+        assert expected_user['last_name'] == payload['last_name']
+        self.assert_datetime_format(expected_user['updated_at'])
+
+    # TODO update current admin
