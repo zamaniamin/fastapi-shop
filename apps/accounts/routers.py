@@ -57,7 +57,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 # ---------------------
 
 @router.get(
-    '/me/',
+    '/me',
     status_code=status.HTTP_200_OK,
     response_model=schemas.CurrentUserOut,
     summary='Retrieve current user',
@@ -65,6 +65,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     tags=['Users'])
 async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token)):
     return {'user': UserManager.to_dict(current_user)}
+
+
+@router.put(
+    '/me',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.CurrentUserOut,
+    summary='Update current user',
+    description='Update current user.',
+    tags=['Users'])
+async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AuthToken.fetch_user_by_token)):
+    return {'user': UserManager.update_user(current_user.id, **payload.model_dump())}
 
 
 @router.get(
@@ -81,7 +92,7 @@ async def retrieve_user(user_id: int):
 
 # TODO PUT /accounts/me
 # TODO DELETE /accounts/me
-# TODO Reset Password
+# TODO Reset Password / change password
 # TODO change email address
 # TODO resend otp code
 # TODO add Permission (admin and user)

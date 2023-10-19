@@ -22,6 +22,16 @@ class UserManager:
             return User.filter(User.email == email).first()
         return None
 
+    @classmethod
+    def update_user(cls, user_id: int, **data):
+        """
+        Update a user by their ID.
+        """
+
+        data['last_login'] = DateTime.now()
+        user = User.update(user_id, **data)
+        return cls.to_dict(user)
+
     @staticmethod
     def to_dict(user: User):
         """

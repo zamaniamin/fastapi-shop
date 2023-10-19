@@ -67,3 +67,12 @@ class UserSchema(BaseModel):
 
 class CurrentUserOut(BaseModel):
     user: UserSchema
+
+
+class UpdateUserSchema(BaseModel):
+    first_name: str | None
+    last_name: str | None
+
+
+class UpdateUserIn(BaseModel):
+    user: UpdateUserSchema
