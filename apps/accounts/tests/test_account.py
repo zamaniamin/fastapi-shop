@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeAccount, FakeUser
 from apps.accounts.services.authenticate import AccountService
+from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.user import UserManager
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
@@ -54,7 +55,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.id > 0
 
         assert expected_user.email == payload["email"]
-        assert AccountService.verify_password(payload['password'], expected_user.password) is True
+        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
         assert expected_user.otp_key is not None
 
         assert expected_user.first_name is None
@@ -97,7 +98,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.id > 0
 
         assert expected_user.email == email
-        assert AccountService.verify_password(FakeAccount.password, expected_user.password) is True
+        assert PasswordManager.verify_password(FakeAccount.password, expected_user.password) is True
         assert expected_user.otp_key is None
 
         assert expected_user.first_name is None

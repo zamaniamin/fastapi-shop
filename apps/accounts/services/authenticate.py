@@ -1,20 +1,18 @@
-import re
 from datetime import timedelta, datetime
 
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pyotp import TOTP, random_base32
 
 from apps.accounts.models import User
+from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
 from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 
 
-class AccountService:
-    password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+class AccountService:  # TODO rename file to account.py
 
     # ----------------
     # --- Register ---
@@ -34,7 +32,7 @@ class AccountService:
             )
 
         # hash the password
-        data["password"] = cls.__hash_password(data["password"])
+        data["password"] = PasswordManager.hash_password(data["password"])
 
         # generate an otp code
         data["otp_key"] = cls.__generate_otp_key()
@@ -156,23 +154,11 @@ class AccountService:
         user = UserManager.get_user(email=email)
         if not user:
             return False
-        if not cls.verify_password(password, user.password):
+        if not PasswordManager.verify_password(password, user.password):
             return False
         return user
 
-    # ---------------------
-    # --- Hash Password ---
-    # ---------------------
-
     # TODO add class hash password
-
-    @classmethod
-    def __hash_password(cls, password: str):
-        return cls.password_context.hash(password)
-
-    @classmethod
-    def verify_password(cls, plain_password: str, hashed_password: str):
-        return cls.password_context.verify(plain_password, hashed_password)
 
     # ----------------
     # --- OTP Code ---
@@ -263,7 +249,7 @@ class AccountService:
 
         # --- Update user data and activate the account ---
         # TODO check `update_at` is updated or should update its value there
-        UserManager.update_user(user.id, otp_key=None, password=cls.__hash_password(password))
+        UserManager.update_user(user.id, otp_key=None, password=PasswordManager.hash_password(password))
         # TODO send an email and notice user the email is changed.
         # --- login user, generate and send authentication token to the client ---
         # access_token = AuthToken.create_access_token(user)
@@ -329,65 +315,5 @@ class AuthToken:
     def is_current_user_active(cls, is_active):  # TODO convert to static method and move to usermanager
         if not is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")
-
-
-class PasswordValidator:
-    min_length: int = 8
-    max_length: int = 24
-
-    @classmethod
-    def validate_password(cls, password: str, has_number: bool = True, has_lowercase: bool = True,
-                          has_uppercase: bool = True, has_special_char: bool = True) -> str:
-        """
-        Validate a password based on the given constraints.
-
-        Args:
-            password: The password to validate.
-            has_number: Use numbers (0-9) in the password.
-            has_lowercase: Use lowercase characters (a-z) in the password.
-            has_uppercase: Use uppercase characters (A-Z) in the password.
-            has_special_char: Use special characters (!@#$%^&*()_+{}[]:;"\'<>.,.?/|) in the password.
-
-        Returns:
-            The validated password, or raises a HTTPException if the password is invalid.
-        """
-
-        if len(password) < cls.min_length:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f'Invalid password. Must contain at least {cls.min_length} characters.',
-            )
-
-        if len(password) > cls.max_length:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f'Invalid password. Must not contain more than {cls.max_length} characters.',
-            )
-
-        if has_number and re.search(r'[0-9]', password) is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Invalid password. Must contain at least one number (0-9).',
-            )
-
-        if has_uppercase and re.search(r'[A-Z]', password) is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Invalid password. Must contain at least one uppercase letter (A-Z).',
-            )
-
-        if has_lowercase and re.search(r'[a-z]', password) is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Invalid password. Must contain at least one lowercase letter (a-z).',
-            )
-
-        if has_special_char and re.search(r'[!@#$%^&*()_+{}\[\]:;"\'<>,.?/\\|]', password) is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Invalid password. Must contain at least one special character (!@#$%^&*()_+{}[]:;"\'<>.,.?/|).',
-            )
-
-        return password
 
 # TODO add a sessions service to manage sections like telegram app (Devices).
