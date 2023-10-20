@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
-from apps.accounts.services.authenticate import AccountService, AuthToken
+from apps.accounts.services.authenticate import AccountService, JWT
 from apps.accounts.services.permissions import Permission
 from apps.accounts.services.user import User, UserManager
 
@@ -92,7 +92,7 @@ async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
     summary='Retrieve current user',
     description='Retrieve current user if user is active.',
     tags=['Users'])
-async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token)):
+async def retrieve_me(current_user: User = Depends(JWT.fetch_user)):
     return {'user': UserManager.to_dict(current_user)}
 
 
@@ -103,7 +103,7 @@ async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token
     summary='Update current user',
     description='Update current user.',
     tags=['Users'])
-async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AuthToken.fetch_user_by_token)):
+async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(JWT.fetch_user)):
     user = UserManager.update_user(current_user.id, **payload.model_dump())
     return {'user': UserManager.to_dict(user)}
 

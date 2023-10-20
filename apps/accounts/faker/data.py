@@ -1,6 +1,7 @@
 from faker import Faker
 
-from apps.accounts.services.authenticate import AccountService, AuthToken
+from apps.accounts.services.authenticate import AccountService
+from apps.accounts.services.token import JWT, OTP
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
 
@@ -29,7 +30,7 @@ class FakeAccount:
 
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
-        otp = AccountService.read_otp(user.otp_key)
+        otp = OTP.read_otp(user.otp_key)
 
         return user.email, otp
 
@@ -48,7 +49,7 @@ class FakeAccount:
 
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
-        otp = AccountService.read_otp(user.otp_key)
+        otp = OTP.read_otp(user.otp_key)
         verified = AccountService.verify_registration(**{'email': user.email, 'otp': otp})
         return user.email, verified['access_token']
 
@@ -82,7 +83,7 @@ class FakeUser:
         }
 
         user = UserManager.new_user(**user_data)
-        access_token = AuthToken.create_access_token(user)
+        access_token = JWT.create_access_token(user)
         return user, access_token
 
     @classmethod
@@ -105,7 +106,7 @@ class FakeUser:
         }
 
         user = UserManager.new_user(**user_data)
-        access_token = AuthToken.create_access_token(user)
+        access_token = JWT.create_access_token(user)
         return user, access_token
 
     @classmethod

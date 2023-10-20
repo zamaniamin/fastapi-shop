@@ -1,18 +1,13 @@
-from datetime import timedelta, datetime
-
-from fastapi import HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from pyotp import TOTP, random_base32
+from fastapi import HTTPException, status
 
 from apps.accounts.models import User
 from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.token import JWT, OTP
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
-from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 
 
-class AccountService:  # TODO rename file to account.py
+class AccountService:
 
     # ----------------
     # --- Register ---
@@ -35,13 +30,13 @@ class AccountService:  # TODO rename file to account.py
         data["password"] = PasswordManager.hash_password(data["password"])
 
         # generate an otp code
-        data["otp_key"] = cls.__generate_otp_key()
+        data["otp_key"] = OTP.generate_otp_key()
 
         # create new user
         new_user = UserManager.new_user(**data)
 
         # send otp code to email
-        cls.__send_otp(data["otp_key"], data['email'])
+        OTP.send_otp(data["otp_key"], data['email'])
 
         return {
             'email': new_user.email,
@@ -91,7 +86,7 @@ class AccountService:  # TODO rename file to account.py
             )
 
         # --- verify otp for this user ---
-        if not cls.__verify_otp(user.otp_key, otp):
+        if not OTP.verify_otp(user.otp_key, otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
@@ -101,7 +96,7 @@ class AccountService:  # TODO rename file to account.py
         user.update(user.id, otp_key=None, verified_email=True, is_active=True, last_login=DateTime.now())
 
         # --- login user, generate and send authentication token to the client ---
-        access_token = AuthToken.create_access_token(user)
+        access_token = JWT.create_access_token(user)
 
         return {
             'access_token': access_token,
@@ -144,7 +139,7 @@ class AccountService:  # TODO rename file to account.py
         # TODO update `last_login`
 
         response = {
-            "access_token": AuthToken.create_access_token(user),
+            "access_token": JWT.create_access_token(user),
             "token_type": "bearer"
         }
         return response
@@ -157,54 +152,6 @@ class AccountService:  # TODO rename file to account.py
         if not PasswordManager.verify_password(password, user.password):
             return False
         return user
-
-    # TODO add class hash password
-
-    # ----------------
-    # --- OTP Code ---
-    # ----------------
-
-    # TODO add class OTP code
-
-    @classmethod
-    def __send_otp(cls, otp_key, email):
-        """
-        As a development OTP will be printed in the terminal
-        """
-
-        # TODO how to ensure that email is sent and delivery?
-
-        otp = cls.read_otp(otp_key)
-        dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
-        print(dev_show)
-
-        email_body = f"""
-            Subject: Verify your email address
-
-            Dear "{email}",
-            Thank you for registering for an account on [Your Website Name].
-
-            To verify your email address and complete your registration, please enter the following code:
-            {otp}
-
-            If you do not verify your email address within 24 hours, your account will be deleted.
-            Thank you,
-            The "Fast Store" Team
-            """
-
-    @staticmethod
-    def __generate_otp_key():
-        return random_base32()
-
-    @staticmethod
-    def read_otp(secret: str):
-        totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
-        return totp.now()
-
-    @staticmethod
-    def __verify_otp(secret: str, user_totp: str):
-        totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
-        return totp.verify(user_totp)
 
     # ----------------------
     # --- Reset Password ---
@@ -223,8 +170,8 @@ class AccountService:  # TODO rename file to account.py
         UserManager.is_verified_email(user)
 
         # send otp code to email address
-        user = UserManager.update_user(user.id, otp_key=cls.__generate_otp_key())
-        cls.__send_otp(user.otp_key, user.email)
+        user = UserManager.update_user(user.id, otp_key=OTP.generate_otp_key())
+        OTP.send_otp(user.otp_key, user.email)
 
         return {
             'message': 'Please check your email for an OTP code to confirm the password reset request.'
@@ -240,7 +187,7 @@ class AccountService:  # TODO rename file to account.py
         password = data['password']
 
         user = UserManager.get_user_or_404(email=email)
-        if not cls.__verify_otp(user.otp_key, otp):
+        if not OTP.verify_otp(user.otp_key, otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
@@ -259,61 +206,5 @@ class AccountService:  # TODO rename file to account.py
             'message': 'Your password has been changed.'
         }
         # TODO (best practice) generate a new token or force to login again??
-
-
-class AuthToken:
-    ALGORITHM = "HS256"
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
-
-    @classmethod
-    def create_access_token(cls, user: User):
-        """
-        Create a new access token.
-        """
-
-        # --- set data to encode ---
-        to_encode = {'user_id': user.id}
-
-        # --- set expire date ---
-        to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
-
-        # TODO remove current user from token-blacklist
-        # --- encod data, return new access token ---
-        return jwt.encode(to_encode, SECRET_KEY, algorithm=cls.ALGORITHM)
-
-    @classmethod
-    async def fetch_user_by_token(cls, token: str = Depends(oauth2_scheme)):
-        """
-        Get current user from JWT token.
-        """
-
-        # --- set exception ---
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials.",
-            headers={"WWW-Authenticate": "Bearer"})
-
-        # --- validate token ---
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[cls.ALGORITHM])
-            user_id = payload.get("user_id")
-            if user_id is None:
-                raise credentials_exception
-        except JWTError as e:
-            raise credentials_exception
-
-        # --- get user ---
-        user = UserManager.get_user(user_id)
-        if user is None:
-            raise credentials_exception
-
-        cls.is_current_user_active(user.is_active)
-
-        return user
-
-    @classmethod
-    def is_current_user_active(cls, is_active):  # TODO convert to static method and move to usermanager
-        if not is_active:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")
 
 # TODO add a sessions service to manage sections like telegram app (Devices).
