@@ -2,7 +2,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from apps.accounts.faker.data import FakeAccount
+from apps.accounts.faker.data import FakeAccount, FakeUser
 from apps.accounts.services.auth import AccountService
 from apps.accounts.services.user import UserManager
 from apps.core.base_test_case import BaseTestCase
@@ -14,6 +14,8 @@ class AccountTestBase(BaseTestCase):
     register_endpoint = "/accounts/register/"
     register_verify_endpoint = "/accounts/register/verify/"
     login_endpoint = "/accounts/login/"
+    reset_password_endpoint = "/accounts/reset-password/"
+    verify_reset_password_endpoint = "/accounts/reset-password/verify"
 
     @classmethod
     def setup_class(cls):
@@ -348,6 +350,62 @@ class TestLoginAccount(AccountTestBase):
         # --- login request ---
         response = self.client.post(self.login_endpoint, data=invalid_fields)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class TestResetPassword(AccountTestBase):
+    def test_reset_password_with_email(self):
+        """
+        Test reset password by user email address.
+        """
+
+        # --- create a user ---
+        user, _ = FakeUser.populate_user()
+
+        # --- request ---
+        payload = {
+            'email': user.email
+        }
+        response = self.client.post(self.reset_password_endpoint, json=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected = response.json()
+        assert expected['message'] == 'Please check your email for an OTP code to confirm the password reset request.'
+
+    def test_verify_reset_password_with_email(self):
+        """
+        Test verify reset password by user email address and then change their password.
+        """
+
+        # --- create a user ---
+        fake_user, _ = FakeUser.populate_user()
+
+        # --- set a reset request ---
+        AccountService.reset_password(fake_user.email)
+        user = UserManager.get_user(fake_user.id)
+        old_password = user.password
+
+        # --- request ---
+        payload = {
+            'email': user.email,
+            'otp': AccountService.read_otp(user.otp_key),
+            'password': FakeUser.password,
+            'password_confirm': FakeUser.password
+        }
+        response = self.client.post(self.verify_reset_password_endpoint, json=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected = response.json()
+        assert expected['message'] == 'Your password has been changed.'
+
+        expected_user = UserManager.get_user(user.id)
+        assert expected_user.password != old_password
+        assert expected_user.otp_key is None
+
+        # TODO login with new password
+        # TODO check the old token is in blacklist
+        # TODO check token in changed, old_token != new_token
 
 # TODO test login for `swagger Authorize`
 # TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
