@@ -4,11 +4,7 @@ from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from apps.accounts.services.authenticate import PasswordValidator
 
 
-# ------------------------
-# --- Register Schemas ---
-# ------------------------
-
-class RegisterIn(BaseModel):
+class ValidatePasswordInSchema(BaseModel):
     email: EmailStr
     password: str
     password_confirm: str
@@ -24,6 +20,14 @@ class RegisterIn(BaseModel):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail='Passwords do not match!')
         return self
+
+
+# ------------------------
+# --- Register Schemas ---
+# ------------------------
+
+class RegisterIn(ValidatePasswordInSchema):
+    pass
 
 
 class RegisterOut(BaseModel):
@@ -61,23 +65,8 @@ class PasswordResetOut(BaseModel):
     message: str
 
 
-class PasswordResetVerifyIn(BaseModel):
-    email: EmailStr
+class PasswordResetVerifyIn(ValidatePasswordInSchema):
     otp: str
-    password: str
-    password_confirm: str
-
-    @field_validator("password")
-    def validate_password(cls, password: str):
-        return PasswordValidator.validate_password(password=password, has_special_char=False)
-
-    @model_validator(mode="after")
-    def passwords_match(self):
-        if self.password != self.password_confirm:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Passwords do not match!')
-        return self
 
 
 class PasswordResetVerifyOut(BaseModel):
