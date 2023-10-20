@@ -1,3 +1,6 @@
+from fastapi import HTTPException
+from starlette import status
+
 from apps.accounts.models import User
 from apps.core.date_time import DateTime
 
@@ -22,15 +25,26 @@ class UserManager:
             return User.filter(User.email == email).first()
         return None
 
+    @staticmethod
+    def get_user_or_404(user_id: int | None = None, email: str = None):
+        user: User | None = None
+        if user_id:
+            user = User.get_or_404(user_id)
+        elif email:
+            user = User.filter(User.email == email).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found.")
+        return user
+
     @classmethod
     def update_user(cls, user_id: int, **data):
         """
         Update a user by their ID.
         """
 
+        # TODO change `last_login` to `updated_at`, check this field is auto updated or not
         data['last_login'] = DateTime.now()
-        user = User.update(user_id, **data)
-        return cls.to_dict(user)
+        return User.update(user_id, **data)
 
     @staticmethod
     def to_dict(user: User):
@@ -52,3 +66,15 @@ class UserManager:
     @staticmethod
     def new_user(**user_data):
         return User.create(**user_data)
+
+    @staticmethod
+    def is_active(user: User):
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")
+
+    @staticmethod
+    def is_verified_email(user: User):
+        if not user.verified_email:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail="Pleas verify your email address to continue.")
+        # TODO guide user to follow the steps need to verify email address.
