@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
-from apps.accounts.services.auth import PasswordValidator
+from apps.accounts.services.authenticate import PasswordValidator
 
 
 # ------------------------

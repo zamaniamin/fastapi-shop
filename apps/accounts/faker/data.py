@@ -1,6 +1,6 @@
 from faker import Faker
 
-from apps.accounts.services.auth import AccountService, AuthToken
+from apps.accounts.services.authenticate import AccountService, AuthToken
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
-from apps.accounts.services.auth import AccountService, AuthToken
+from apps.accounts.services.authenticate import AccountService, AuthToken
 from apps.accounts.services.permissions import Permission
 from apps.accounts.services.user import User, UserManager
 

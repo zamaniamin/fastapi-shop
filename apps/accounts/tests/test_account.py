@@ -3,7 +3,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeAccount, FakeUser
-from apps.accounts.services.auth import AccountService
+from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.user import UserManager
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app

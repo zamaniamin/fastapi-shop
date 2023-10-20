@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, Depends
 
 from apps.accounts.models import User
-from apps.accounts.services.auth import AuthToken
+from apps.accounts.services.authenticate import AuthToken
 
 
 class Permission:
