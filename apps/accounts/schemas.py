@@ -49,6 +49,41 @@ class LoginOut(BaseModel):
     token_type: str
 
 
+# ------------------------
+# --- Password Schemas ---
+# ------------------------
+
+class PasswordResetIn(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetOut(BaseModel):
+    message: str
+
+
+class PasswordResetVerifyIn(BaseModel):
+    email: EmailStr
+    otp: str
+    password: str
+    password_confirm: str
+
+    @field_validator("password")
+    def validate_password(cls, password: str):
+        return PasswordValidator.validate_password(password=password, has_special_char=False)
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.password_confirm:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Passwords do not match!')
+        return self
+
+
+class PasswordResetVerifyOut(BaseModel):
+    message: str
+
+
 # --------------------
 # --- User Schemas ---
 # --------------------

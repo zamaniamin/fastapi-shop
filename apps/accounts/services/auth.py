@@ -164,6 +164,8 @@ class AccountService:
     # --- Hash Password ---
     # ---------------------
 
+    # TODO add class hash password
+
     @classmethod
     def __hash_password(cls, password: str):
         return cls.password_context.hash(password)
@@ -175,6 +177,8 @@ class AccountService:
     # ----------------
     # --- OTP Code ---
     # ----------------
+
+    # TODO add class OTP code
 
     @classmethod
     def __send_otp(cls, otp_key, email):
@@ -216,6 +220,60 @@ class AccountService:
         totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
         return totp.verify(user_totp)
 
+    # ----------------------
+    # --- Reset Password ---
+    # ----------------------
+
+    @classmethod
+    def reset_password(cls, email: str):
+        """
+        Reset password by user email address.
+        """
+
+        user: User | None
+
+        user = UserManager.get_user_or_404(email=email)
+        UserManager.is_active(user)
+        UserManager.is_verified_email(user)
+
+        # send otp code to email address
+        user = UserManager.update_user(user.id, otp_key=cls.__generate_otp_key())
+        cls.__send_otp(user.otp_key, user.email)
+
+        return {
+            'message': 'Please check your email for an OTP code to confirm the password reset request.'
+        }
+
+    @classmethod
+    def verify_reset_password(cls, **data):
+        """
+        Verify the request for reset password.
+        """
+        email = data['email']
+        otp = data['otp']
+        password = data['password']
+
+        user = UserManager.get_user_or_404(email=email)
+        if not cls.__verify_otp(user.otp_key, otp):
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="Invalid OTP code.Please double-check and try again."
+            )
+        # TODO if otp is valid, then add current user to token-blacklist (logout mechanism)
+
+        # --- Update user data and activate the account ---
+        # TODO check `update_at` is updated or should update its value there
+        UserManager.update_user(user.id, otp_key=None, password=cls.__hash_password(password))
+        # TODO send an email and notice user the email is changed.
+        # --- login user, generate and send authentication token to the client ---
+        # access_token = AuthToken.create_access_token(user)
+
+        return {
+            # 'access_token': access_token,
+            'message': 'Your password has been changed.'
+        }
+        # TODO (best practice) generate a new token or force to login again??
+
 
 class AuthToken:
     ALGORITHM = "HS256"
@@ -233,6 +291,7 @@ class AuthToken:
         # --- set expire date ---
         to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
 
+        # TODO remove current user from token-blacklist
         # --- encod data, return new access token ---
         return jwt.encode(to_encode, SECRET_KEY, algorithm=cls.ALGORITHM)
 
@@ -267,7 +326,7 @@ class AuthToken:
         return user
 
     @classmethod
-    def is_current_user_active(cls, is_active):
+    def is_current_user_active(cls, is_active):  # TODO convert to static method and move to usermanager
         if not is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")
 

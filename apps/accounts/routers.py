@@ -53,6 +53,35 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 # ---------------------
+# --- Password Routers ---
+# ---------------------
+
+
+@router.post(
+    '/reset-password',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.PasswordResetOut,
+    summary='Reset password',
+    description="Initiate a password reset request by sending a verification email to the user's "
+                "registered email address.",
+    tags=['Authentication'])
+async def reset_password(payload: schemas.PasswordResetIn):
+    return AccountService.reset_password(**payload.model_dump())
+
+
+@router.post(
+    '/reset-password/verify',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.PasswordResetVerifyOut,
+    summary='Verify reset password',
+    description="Verify the password reset request by confirming the provided OTP sent to the user's "
+                "registered email address.",
+    tags=['Authentication'])
+async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
+    return AccountService.verify_reset_password(**payload.model_dump())
+
+
+# ---------------------
 # --- Users Routers ---
 # ---------------------
 
@@ -75,7 +104,8 @@ async def retrieve_me(current_user: User = Depends(AuthToken.fetch_user_by_token
     description='Update current user.',
     tags=['Users'])
 async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AuthToken.fetch_user_by_token)):
-    return {'user': UserManager.update_user(current_user.id, **payload.model_dump())}
+    user = UserManager.update_user(current_user.id, **payload.model_dump())
+    return {'user': UserManager.to_dict(user)}
 
 
 @router.get(
