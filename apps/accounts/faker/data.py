@@ -53,7 +53,7 @@ class FakeAccount:
         return user.email, verified['access_token']
 
     @classmethod
-    def random_email(cls):
+    def random_email(cls):  # TODO remove this
         return cls.fake.email()
 
 
@@ -109,5 +109,5 @@ class FakeUser:
         return user, access_token
 
     @classmethod
-    def random_email(cls):
+    def random_email(cls):  # TODO remove this
         return cls.fake.email()
