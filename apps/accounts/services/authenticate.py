@@ -93,7 +93,7 @@ class AccountService:
             )
 
         # --- Update user data and activate the account ---
-        user.update(user.id, otp_key=None, verified_email=True, is_active=True, last_login=DateTime.now())
+        UserManager.update_user(user.id, otp_key=None, verified_email=True, is_active=True, last_login=DateTime.now())
 
         # --- login user, generate and send authentication token to the client ---
         access_token = JWT.create_access_token(user)
