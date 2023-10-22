@@ -406,7 +406,7 @@ class TestResetPassword(AccountTestBase):
         assert expected['message'] == 'Your password has been changed.'
 
         expected_user = UserManager.get_user(user.id)
-        assert expected_user.password != old_password
+        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
         assert expected_user.otp_key is None
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(user.updated_at)
