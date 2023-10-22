@@ -78,7 +78,7 @@ class UserManager:
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
-            'verified_email': user.verified_email,
+            'is_verified_email': user.is_verified_email,
             'date_joined': DateTime.string(user.date_joined),
             'updated_at': DateTime.string(user.updated_at),
             'last_login': DateTime.string(user.last_login)
@@ -106,7 +106,7 @@ class UserManager:
 
     @staticmethod
     def is_verified_email(user: User):
-        if not user.verified_email:
+        if not user.is_verified_email:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail="Pleas verify your email address to continue.")
         # TODO guide user to follow the steps need to verify email address.

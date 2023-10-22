@@ -83,7 +83,7 @@ class UserSchema(BaseModel):
     email: EmailStr
     first_name: str | None
     last_name: str | None
-    verified_email: bool
+    is_verified_email: bool
     date_joined: str
     updated_at: str
     last_login: str

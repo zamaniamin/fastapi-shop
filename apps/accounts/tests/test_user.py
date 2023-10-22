@@ -44,7 +44,7 @@ class TestUser(UserTestBase):
         assert expected_user['email'] == user.email
         assert expected_user['first_name'] == user.first_name
         assert expected_user['last_name'] == user.last_name
-        assert expected_user['verified_email'] == user.verified_email
+        assert expected_user['is_verified_email'] == user.is_verified_email
         self.assert_datetime_format(expected_user['date_joined'])
         self.assert_datetime_format(expected_user['updated_at'])
         self.assert_datetime_format(expected_user['last_login'])

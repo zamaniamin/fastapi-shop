@@ -20,7 +20,7 @@ class User(FastModel):
     last_name = Column(String(256), nullable=True)
 
     # TODO rename to `is_verified_email`
-    verified_email = Column(Boolean, default=False)
+    is_verified_email = Column(Boolean, default=False)
 
     is_active = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)

@@ -62,7 +62,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.first_name is None
         assert expected_user.last_name is None
 
-        assert expected_user.verified_email is False
+        assert expected_user.is_verified_email is False
         assert expected_user.is_active is False
         assert expected_user.is_superuser is False
 
@@ -105,7 +105,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.first_name is None
         assert expected_user.last_name is None
 
-        assert expected_user.verified_email is True
+        assert expected_user.is_verified_email is True
         assert expected_user.is_active is True
         assert expected_user.is_superuser is False
 

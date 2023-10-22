@@ -79,7 +79,7 @@ class AccountService:
             )
 
         # --- check email verified or not ---
-        if user.verified_email:
+        if user.is_verified_email:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="This email is already verified."
@@ -93,7 +93,8 @@ class AccountService:
             )
 
         # --- Update user data and activate the account ---
-        UserManager.update_user(user.id, otp_key=None, verified_email=True, is_active=True, last_login=DateTime.now())
+        UserManager.update_user(user.id, otp_key=None, is_verified_email=True, is_active=True,
+                                last_login=DateTime.now())
 
         # --- login user, generate and send authentication token to the client ---
         access_token = JWT.create_access_token(user)
@@ -129,7 +130,7 @@ class AccountService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if not user.verified_email:
+        if not user.is_verified_email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Unverified email address.",
