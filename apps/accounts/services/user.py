@@ -54,7 +54,7 @@ class UserManager:
         """
 
         # TODO change `last_login` to `updated_at`, check this field is auto updated or not
-        data['last_login'] = DateTime.now()
+        # data['last_login'] = DateTime.now()
 
         # update secrets
         otp_key = data.pop('otp_key', None)
