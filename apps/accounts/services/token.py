@@ -5,19 +5,41 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pyotp import TOTP, random_base32
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserSecret
 from apps.accounts.services.user import UserManager
 from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 
 
 class JWT:
+    """
+    Utility class for handling JWT authentication and access tokens.
+
+    A user's access token will be expired due to actions such as "resetting the password," "changing the password," or
+    even "logging out" (logout mechanism).
+
+    The `access-token` stored in the database serves as a flag for the logout mechanism, ensuring that when a user
+    wants to log out of the system, the current token will no longer be valid.
+    """
+
     ALGORITHM = "HS256"
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
 
+    # --- set exception ---
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials.",
+        headers={"WWW-Authenticate": "Bearer"})
+
     @classmethod
-    def create_access_token(cls, user: User):
+    def create_access_token(cls, user: User) -> str:
         """
-        Create a new access token.
+        Create a new access token for the provided user.
+
+        Args:
+            user (User): The user object for whom the access token needs to be created.
+
+        Returns:
+            str: Access token string.
         """
 
         # --- set data to encode ---
@@ -26,39 +48,74 @@ class JWT:
         # --- set expire date ---
         to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
 
-        # TODO remove current user from token-blacklist
-        # --- encod data, return new access token ---
-        return jwt.encode(to_encode, SECRET_KEY, algorithm=cls.ALGORITHM)
+        # --- generate access token ---
+        access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=cls.ALGORITHM)
+
+        cls.update_access_token(user.id, access_token)
+        return access_token
 
     @classmethod
-    async def fetch_user(cls, token: str = Depends(oauth2_scheme)):
+    async def fetch_user(cls, token: str = Depends(oauth2_scheme)) -> User:
         """
-        Get current user from JWT token.
-        """
+        Retrieve the user associated with the provided JWT token.
 
-        # --- set exception ---
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials.",
-            headers={"WWW-Authenticate": "Bearer"})
+        Args:
+            token (str): JWT token.
+
+        Returns:
+            User: User object if the token is valid, raises HTTPException if not.
+        """
 
         # --- validate token ---
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[cls.ALGORITHM])
-            user_id = payload.get("user_id")
-            if user_id is None:
-                raise credentials_exception
         except JWTError as e:
-            raise credentials_exception
+            raise cls.credentials_exception
+
+        # --- validate payloads in token ---
+        user_id = payload.get("user_id")
+        if user_id is None:
+            raise cls.credentials_exception
 
         # --- get user ---
+        # TODO move user data to token and dont fetch them from database
         user = UserManager.get_user(user_id)
         if user is None:
-            raise credentials_exception
+            raise cls.credentials_exception
+
+        cls.is_valid_access_token(user_id, token)
 
         UserManager.is_active(user)
-
         return user
+
+    @classmethod
+    def is_valid_access_token(cls, user_id: int, current_access_token: str):
+        """
+        Check if the access-token for current user is same or not.
+
+        if not, user should be login to their account and generate new access-token.
+        """
+
+        valid_access_token = UserSecret.filter(UserSecret.user_id == user_id).first().access_token
+        if current_access_token != valid_access_token:
+            raise cls.credentials_exception
+        return True
+
+    @staticmethod
+    def update_access_token(user_id: int, access_token: str):
+        """
+        Update the valid access-token for current user (a flag for logout mechanism) and older tokens will be rejected.
+
+        """
+
+        UserSecret.update(UserSecret.filter(UserSecret.user_id == user_id).first().id, access_token=access_token)
+
+    @staticmethod
+    def expire_current_access_token(user_id: int):
+        """
+        User's old access-token is expired by an actions like change or reset password.
+        """
+        UserSecret.update(UserSecret.filter(UserSecret.user_id == user_id).first().id, access_token=None)
 
 
 class OTP:
