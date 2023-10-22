@@ -44,7 +44,7 @@ class UserSecret(FastModel):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     otp_key = Column(String, nullable=True)
-    is_blacklisted = Column(Boolean, default=False)
+    access_token = Column(String, nullable=True)  # for more security use user IP address
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
