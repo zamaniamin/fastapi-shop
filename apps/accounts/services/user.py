@@ -65,6 +65,13 @@ class UserManager:
         user.otp_key = otp_key
         return user
 
+    @classmethod
+    def update_last_login(cls, user_id: int):
+        """
+        Update user's last login.
+        """
+        User.update(user_id, last_login=DateTime.now())
+
     @staticmethod
     def to_dict(user: User):
         """

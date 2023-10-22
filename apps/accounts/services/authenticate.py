@@ -137,8 +137,7 @@ class AccountService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # TODO update `last_login`
-
+        UserManager.update_last_login(user.id)
         response = {
             "access_token": JWT.create_access_token(user),
             "token_type": "bearer"
