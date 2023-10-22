@@ -1,6 +1,6 @@
 from faker import Faker
 
-from apps.accounts.services.authenticate import AccountService
+from apps.accounts.services.authenticate import AccountService, PasswordManager
 from apps.accounts.services.token import JWT, OTP
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
@@ -70,7 +70,7 @@ class FakeUser:
 
         user_data = {
             'email': cls.random_email(),
-            'password': cls.password,  # TODO hash password
+            'password': PasswordManager.hash_password(cls.password),  # TODO hash password
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
             'otp_key': None,
@@ -94,7 +94,7 @@ class FakeUser:
 
         user_data = {
             'email': cls.random_email(),
-            'password': cls.password,  # TODO hash password
+            'password': PasswordManager.hash_password(cls.password),  # TODO hash password
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
             'otp_key': None,
