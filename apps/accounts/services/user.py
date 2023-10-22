@@ -53,9 +53,6 @@ class UserManager:
         Update a user by their ID.
         """
 
-        # TODO change `last_login` to `updated_at`, check this field is auto updated or not
-        # data['last_login'] = DateTime.now()
-
         # update secrets
         otp_key = data.pop('otp_key', None)
         if otp_key is not None:
