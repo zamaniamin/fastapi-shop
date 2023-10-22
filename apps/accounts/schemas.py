@@ -5,7 +5,6 @@ from apps.accounts.services.password import PasswordManager
 
 
 class ValidatePasswordInSchema(BaseModel):
-    email: EmailStr
     password: str
     password_confirm: str
 
@@ -27,7 +26,7 @@ class ValidatePasswordInSchema(BaseModel):
 # ------------------------
 
 class RegisterIn(ValidatePasswordInSchema):
-    pass
+    email: EmailStr
 
 
 class RegisterOut(BaseModel):
@@ -66,10 +65,19 @@ class PasswordResetOut(BaseModel):
 
 
 class PasswordResetVerifyIn(ValidatePasswordInSchema):
+    email: EmailStr
     otp: str
 
 
 class PasswordResetVerifyOut(BaseModel):
+    message: str
+
+
+class PasswordChangeIn(ValidatePasswordInSchema):
+    current_password: str
+
+
+class PasswordChangeOut(BaseModel):
     message: str
 
 

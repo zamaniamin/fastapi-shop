@@ -206,4 +206,26 @@ class AccountService:
             'message': 'Your password has been changed.'
         }
 
+    @classmethod
+    def change_password(cls, user: User, **data):
+        """
+        Change password for current user, and then current access-token will be expired.
+        """
+
+        current_password = data['current_password']
+        password = data['password']
+
+        if not PasswordManager.verify_password(current_password, user.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password.")
+
+        # if ok, hash pass and update user and set new pass
+        UserManager.update_user(user.id, password=PasswordManager.hash_password(password))
+
+        # --- expire old token ---
+        JWT.expire_current_access_token(user.id)
+
+        return {
+            'message': 'Your password has been changed.'
+        }
+
 # TODO add a sessions service to manage sections like telegram app (Devices).

@@ -52,9 +52,9 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return AccountService.login(form_data.username, form_data.password)
 
 
-# ---------------------
+# ------------------------
 # --- Password Routers ---
-# ---------------------
+# ------------------------
 
 
 @router.post(
@@ -79,6 +79,17 @@ async def reset_password(payload: schemas.PasswordResetIn):
     tags=['Authentication'])
 async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
     return AccountService.verify_reset_password(**payload.model_dump())
+
+
+@router.post(
+    '/me/change-password',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.PasswordChangeOut,
+    summary='Change password',
+    description='Change password for current user.',
+    tags=['Authentication'])
+async def change_password(payload: schemas.PasswordChangeIn, current_user: User = Depends(JWT.fetch_user)):
+    return AccountService.change_password(current_user, **payload.model_dump())
 
 
 # ---------------------
@@ -120,7 +131,6 @@ async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depe
 async def retrieve_user(user_id: int):
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
-# TODO Reset Password / change password
 # TODO change email address
 # TODO resend otp code
 # TODO logout (expire token)
