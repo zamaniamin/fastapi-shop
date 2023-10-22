@@ -217,6 +217,7 @@ class ProductService:
     def update_product(cls, product_id, **kwargs):
 
         # --- init data ---
+        # TODO `updated_at` is autoupdate dont need to code
         kwargs['updated_at'] = DateTime.now()
 
         # --- update product ---
@@ -228,6 +229,7 @@ class ProductService:
         # check variant exist
         ProductVariant.get_or_404(variant_id)
 
+        # TODO `updated_at` is autoupdate dont need to code
         kwargs['updated_at'] = DateTime.now()
         ProductVariant.update(variant_id, **kwargs)
 
@@ -361,6 +363,7 @@ class ProductService:
             kwargs['src'] = file_name
             kwargs['type'] = file_extension
 
+        # TODO `updated_at` is autoupdate dont need to code
         kwargs['updated_at'] = DateTime.now()
         ProductMedia.update(media_id, **kwargs)
 
