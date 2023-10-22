@@ -17,4 +17,7 @@ if __name__ == "__main__":
     # init routers
     RouterManager(app).import_routers()
 
+    # TODO --- Demo Users ---
+
+    # --- Demo Products ---
     asyncio.run(FakeProduct.populate_30_products())
