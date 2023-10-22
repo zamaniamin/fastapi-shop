@@ -3,6 +3,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeAccount, FakeUser
+from apps.accounts.models import UserSecret
 from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import OTP
@@ -383,7 +384,7 @@ class TestResetPassword(AccountTestBase):
         """
 
         # --- create a user ---
-        fake_user, _ = FakeUser.populate_user()
+        fake_user, access_token = FakeUser.populate_user()
 
         # --- set a reset request ---
         AccountService.reset_password(fake_user.email)
@@ -407,10 +408,23 @@ class TestResetPassword(AccountTestBase):
         expected_user = UserManager.get_user(user.id)
         assert expected_user.password != old_password
         assert expected_user.otp_key is None
+        self.assert_datetime_format(expected_user.updated_at)
+        self.assert_datetime_format(user.updated_at)
+        assert expected_user.updated_at != user.updated_at
 
-        # TODO login with new password
-        # TODO check the old token is in blacklist
-        # TODO check token in changed, old_token != new_token
+        # --- test current token is set to none ---
+        expected_access_token = UserSecret.filter(UserSecret.user_id == expected_user.id).first().access_token
+        assert expected_access_token is None
+
+        # --- test fetch user with old access-token ---
+        header = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        result = self.client.get("/accounts/me", headers=header)
+        assert result.status_code == status.HTTP_401_UNAUTHORIZED
+
+# TODO login with new password
 
 # TODO test match password on register
 # TODO test match password on reset password
