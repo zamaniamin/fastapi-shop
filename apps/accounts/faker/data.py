@@ -6,14 +6,19 @@ from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
 
 
-class FakeAccount:
+class BaseFakeAccount:
+    fake = Faker()
+    password = 'Test_1234'
+
+    @classmethod
+    def random_email(cls):
+        return cls.fake.email()
+
+
+class FakeAccount(BaseFakeAccount):
     """
     Populates the database with fake accounts.
     """
-
-    fake = Faker()
-
-    password = 'Test_1234'
 
     @classmethod
     def register_unverified(cls):
@@ -53,14 +58,8 @@ class FakeAccount:
         verified = AccountService.verify_registration(**{'email': user.email, 'otp': otp})
         return user.email, verified['access_token']
 
-    @classmethod
-    def random_email(cls):  # TODO remove this
-        return cls.fake.email()
 
-
-class FakeUser:
-    fake = Faker()
-    password = 'Test_1234'
+class FakeUser(BaseFakeAccount):
 
     @classmethod
     def populate_admin(cls):
@@ -70,7 +69,7 @@ class FakeUser:
 
         user_data = {
             'email': cls.random_email(),
-            'password': PasswordManager.hash_password(cls.password),  # TODO hash password
+            'password': PasswordManager.hash_password(cls.password),
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
             'otp_key': None,
@@ -94,7 +93,7 @@ class FakeUser:
 
         user_data = {
             'email': cls.random_email(),
-            'password': PasswordManager.hash_password(cls.password),  # TODO hash password
+            'password': PasswordManager.hash_password(cls.password),
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
             'otp_key': None,
@@ -108,7 +107,3 @@ class FakeUser:
         user = UserManager.new_user(**user_data)
         access_token = JWT.create_access_token(user)
         return user, access_token
-
-    @classmethod
-    def random_email(cls):  # TODO remove this
-        return cls.fake.email()
