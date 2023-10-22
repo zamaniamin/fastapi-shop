@@ -180,8 +180,9 @@ class AccountService:
     @classmethod
     def verify_reset_password(cls, **data):
         """
-        Verify the request for reset password.
+        Verify the request for reset password and if otp is valid then current access-token will expire.
         """
+
         email = data['email']
         otp = data['otp']
         password = data['password']
@@ -192,19 +193,17 @@ class AccountService:
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
             )
-        # TODO if otp is valid, then add current user to token-blacklist (logout mechanism)
 
         # --- Update user data and activate the account ---
-        # TODO check `update_at` is updated or should update its value there
         UserManager.update_user(user.id, otp_key=None, password=PasswordManager.hash_password(password))
-        # TODO send an email and notice user the email is changed.
-        # --- login user, generate and send authentication token to the client ---
-        # access_token = AuthToken.create_access_token(user)
+
+        # --- expire old token ---
+        JWT.expire_current_access_token(user.id)
+
+        # TODO send an email and notice user the password is changed.
 
         return {
-            # 'access_token': access_token,
             'message': 'Your password has been changed.'
         }
-        # TODO (best practice) generate a new token or force to login again??
 
 # TODO add a sessions service to manage sections like telegram app (Devices).
