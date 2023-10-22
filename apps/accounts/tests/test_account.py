@@ -412,5 +412,13 @@ class TestResetPassword(AccountTestBase):
         # TODO check the old token is in blacklist
         # TODO check token in changed, old_token != new_token
 
+# TODO test match password on register
+# TODO test match password on reset password
+# TODO test match password on change password
+
+# TODO test strong password on register
+# TODO test strong password on reset password
+# TODO test strong password on change password
+
 # TODO test login for `swagger Authorize`
 # TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
