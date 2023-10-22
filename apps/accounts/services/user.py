@@ -30,6 +30,7 @@ class UserManager:
             return None
 
         # Add the otp_key to the User object
+        # TODO add this `get_otp_key= False` then get it.
         user.otp_key = UserSecret.filter(UserSecret.user_id == user.id).first().otp_key
 
         return user
