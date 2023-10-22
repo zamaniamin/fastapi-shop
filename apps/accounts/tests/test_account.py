@@ -285,6 +285,9 @@ class TestLoginAccount(AccountTestBase):
         assert expected_login['access_token'] is not None
         assert expected_login['token_type'] == 'bearer'
 
+        expected_user = UserManager.get_user(email=email)
+        self.assert_datetime_format(expected_user.last_login)
+
     def test_login_with_incorrect_password(self):
         """
         Test login with incorrect password.
