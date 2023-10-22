@@ -21,7 +21,7 @@ class UserTestBase(BaseTestCase):
         DatabaseManager.drop_all_tables()
 
 
-class TestUser(UserTestBase):
+class TestRetrieveUser(UserTestBase):
 
     def test_successful_retrieve_me(self):
         """
@@ -92,6 +92,12 @@ class TestUser(UserTestBase):
         response = self.client.get(f"{self.accounts_endpoint}{user_2.id}", headers=headers)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
+
+
+class TestUpdateUser(UserTestBase):
     def test_update_current_user(self):
         """
         Test update the current user with "user" role.
@@ -120,3 +126,9 @@ class TestUser(UserTestBase):
         self.assert_datetime_format(expected_user['updated_at'])
 
     # TODO update current admin
+
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
+
+# TODO test delete user
