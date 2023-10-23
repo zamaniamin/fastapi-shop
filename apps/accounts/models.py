@@ -104,7 +104,7 @@ class UserChangeRequest(FastModel):
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     new_email = Column(String(256), nullable=True)
     # new_phone = Column(String(20), nullable=True)  # Adjust the length based on your requirements
-    change_type = Column(String(10), nullable=False)
+    change_type = Column(String(10), nullable=True)
     otp_key = Column(String, nullable=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
