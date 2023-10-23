@@ -42,3 +42,5 @@ MEDIA_DIR = BASE_DIR / "media"
 # int number as MB
 MAX_FILE_SIZE = 5
 products_list_limit = 12
+
+# TODO add settings to limit register new user or close register
