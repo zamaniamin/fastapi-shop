@@ -81,6 +81,18 @@ class PasswordChangeOut(BaseModel):
     message: str
 
 
+# ----------------------------
+# --- Change-Email Schemas ---
+# ----------------------------
+
+class EmailChangeIn(BaseModel):
+    new_email: EmailStr
+
+
+class EmailChangeOut(BaseModel):
+    message: str
+
+
 # --------------------
 # --- User Schemas ---
 # --------------------

@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserChangeRequest
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import JWT, OTP
 from apps.accounts.services.user import UserManager
@@ -226,6 +226,45 @@ class AccountService:
 
         return {
             'message': 'Your password has been changed.'
+        }
+
+    @classmethod
+    def change_email(cls, user, new_email):
+        """
+        Change password for current user.
+        """
+
+        # Check if the new email address is not already associated with another user
+        if UserManager.get_user(email=new_email) is None:
+
+            existing_change_request = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
+            otp_key = OTP.generate_otp_key()
+            try:
+                if existing_change_request:
+                    existing_change_request.update(user.id, new_email=new_email, change_type='email',
+                                                   otp_key=otp_key)
+                else:
+                    UserChangeRequest.create(user_id=user.id, new_email=new_email, change_type='email',
+                                             otp_key=otp_key)
+            except Exception as e:
+                # Handle specific exceptions if possible
+                # TODO handle this in server log
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to update/create change request: {str(e)}"
+                )
+
+            # # send otp code to new email address
+            OTP.send_otp(otp_key, new_email)
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This email has already been taken."
+            )
+
+        return {
+            'message': f'Please check your email "{new_email}" for an OTP code to confirm the change email request.'
         }
 
 # TODO add a sessions service to manage sections like telegram app (Devices).

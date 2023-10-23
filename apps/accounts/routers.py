@@ -120,6 +120,17 @@ async def change_password(payload: schemas.PasswordChangeIn, current_user: User 
     return AccountService.change_password(current_user, **payload.model_dump())
 
 
+@router.post(
+    '/me/change-email',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.EmailChangeOut,
+    summary='Change current user email',
+    description='Change the email address for the current user.',
+    tags=['Users'])
+async def change_email(email: schemas.EmailChangeIn, current_user: User = Depends(JWT.fetch_user)):
+    return AccountService.change_email(current_user, **email.model_dump())
+
+
 @router.get(
     '/{user_id}',
     status_code=status.HTTP_200_OK,
