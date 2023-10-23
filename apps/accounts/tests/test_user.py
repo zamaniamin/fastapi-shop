@@ -2,6 +2,11 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeUser
+from apps.accounts.models import UserSecret, UserChangeRequest
+from apps.accounts.services.authenticate import AccountService
+from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.token import OTP
+from apps.accounts.services.user import UserManager
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from config.database import DatabaseManager
@@ -9,6 +14,9 @@ from config.database import DatabaseManager
 
 class UserTestBase(BaseTestCase):
     current_user_endpoint = "/accounts/me/"
+    change_password_endpoint = "/accounts/me/change-password/"
+    change_email_endpoint = "/accounts/me/change-email/"
+    verify_change_email_endpoint = "/accounts/me/change-email/verify/"
     accounts_endpoint = "/accounts/"
 
     @classmethod
@@ -130,5 +138,149 @@ class TestUpdateUser(UserTestBase):
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
+
+
+class TestChanges(UserTestBase):
+
+    def test_change_password(self):
+        """
+        Test change password by current user.
+        """
+
+        # --- create a user ---
+        user, access_token = FakeUser.populate_user()
+        header = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        # --- request ---
+        payload = {
+            'current_password': FakeUser.password,
+            'password': FakeUser.password + "test",
+            'password_confirm': FakeUser.password + "test"
+        }
+        response = self.client.post(self.change_password_endpoint, headers=header, json=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected ---
+        expected = response.json()
+        assert expected['message'] == 'Your password has been changed.'
+
+        # --- expected user data, ensure other info wasn't changed ---
+        expected_user = UserManager.get_user(user.id)
+        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
+        assert expected_user.email == user.email
+        assert expected_user.is_verified_email is True
+        assert expected_user.otp_key is None
+        assert expected_user.role == user.role
+        assert expected_user.first_name == user.first_name
+        assert expected_user.last_name == user.last_name
+        assert expected_user.updated_at != user.updated_at
+        assert expected_user.date_joined == user.date_joined
+        assert expected_user.last_login == user.last_login
+        self.assert_datetime_format(expected_user.date_joined)
+        self.assert_datetime_format(expected_user.updated_at)
+        self.assert_datetime_format(expected_user.last_login)
+
+        # --- test current token is set to none ---
+        expected_access_token = UserSecret.filter(UserSecret.user_id == expected_user.id).first().access_token
+        assert expected_access_token is None
+
+        # --- test fetch user with old access-token ---
+        header = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        result = self.client.get(self.current_user_endpoint, headers=header)
+        assert result.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_change_email(self):
+        """
+        Test change the email of the current user.
+        """
+
+        # --- create a user ---
+        user, access_token = FakeUser.populate_user()
+
+        # --- request ---
+        header = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {'new_email': FakeUser.random_email()}
+
+        response = self.client.post(self.change_email_endpoint, headers=header, json=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected change request ---
+        change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
+        assert change_request.new_email == payload["new_email"]
+        assert change_request.change_type == 'email'
+        assert change_request.otp_key is not None
+
+        # --- expected response ---
+        expected = response.json()
+        assert expected['message'] == (f'Please check your email \"{payload["new_email"]}\" for an OTP code to'
+                                       f' confirm the change email request.')
+
+    def test_verify_email_change_request(self):
+        """
+        Test verify the change email of the current.
+        """
+
+        # --- create a user ---
+        user, access_token = FakeUser.populate_user()
+        new_email = FakeUser.random_email()
+
+        # --- set a change email request ---
+        AccountService.change_email(user, new_email)
+        change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
+
+        # --- request ---
+        header = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            'otp': OTP.read_otp(change_request.otp_key),
+        }
+
+        response = self.client.post(self.verify_change_email_endpoint, headers=header, json=payload)
+        assert response.status_code == status.HTTP_200_OK
+
+        # --- expected response ---
+        expected = response.json()
+        assert expected['message'] == 'Your email is changed.'
+
+        # --- expected user data, ensure other info wasn't changed ---
+        expected_user = UserManager.get_user(user.id)
+        assert expected_user.email == new_email
+        assert expected_user.is_verified_email is True
+        assert expected_user.otp_key is None
+        assert expected_user.role == user.role
+        assert expected_user.first_name == user.first_name
+        assert expected_user.last_name == user.last_name
+        assert expected_user.password == user.password
+        assert expected_user.updated_at != user.updated_at
+        assert expected_user.date_joined == user.date_joined
+        assert expected_user.last_login == user.last_login
+        self.assert_datetime_format(expected_user.date_joined)
+        self.assert_datetime_format(expected_user.updated_at)
+        self.assert_datetime_format(expected_user.last_login)
+
+        # --- expected in UserChangeRequest ---
+        change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
+        assert change_request.new_email is None
+        assert change_request.otp_key is None
+        assert change_request.change_type is None
+
+        # --- test current token is valid ---
+        expected_access_token = UserSecret.filter(UserSecret.user_id == expected_user.id).first().access_token
+        assert expected_access_token == access_token
+
+        # ---------------------
+        # --- Test Payloads ---
+        # ---------------------
 
 # TODO test delete user
