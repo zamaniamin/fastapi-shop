@@ -75,21 +75,10 @@ async def reset_password(payload: schemas.PasswordResetIn):
     response_model=schemas.PasswordResetVerifyOut,
     summary='Verify reset password',
     description="Verify the password reset request by confirming the provided OTP sent to the user's "
-                "registered email address.",
+                "registered email address. If the change is successful, the user will need to login again.",
     tags=['Authentication'])
 async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
     return AccountService.verify_reset_password(**payload.model_dump())
-
-
-@router.post(
-    '/me/change-password',
-    status_code=status.HTTP_200_OK,
-    response_model=schemas.PasswordChangeOut,
-    summary='Change password',
-    description='Change password for current user.',
-    tags=['Authentication'])
-async def change_password(payload: schemas.PasswordChangeIn, current_user: User = Depends(JWT.fetch_user)):
-    return AccountService.change_password(current_user, **payload.model_dump())
 
 
 # ---------------------
@@ -117,6 +106,18 @@ async def retrieve_me(current_user: User = Depends(JWT.fetch_user)):
 async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(JWT.fetch_user)):
     user = UserManager.update_user(current_user.id, **payload.model_dump())
     return {'user': UserManager.to_dict(user)}
+
+
+@router.post(
+    '/me/change-password',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.PasswordChangeOut,
+    summary='Change current user password',
+    description='Change the password for the current user. If the change is successful, the user will '
+                'need to login again.',
+    tags=['Users'])
+async def change_password(payload: schemas.PasswordChangeIn, current_user: User = Depends(JWT.fetch_user)):
+    return AccountService.change_password(current_user, **payload.model_dump())
 
 
 @router.get(
