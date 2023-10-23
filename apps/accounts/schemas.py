@@ -93,6 +93,14 @@ class EmailChangeOut(BaseModel):
     message: str
 
 
+class EmailChangeVerifyIn(BaseModel):
+    otp: str
+
+
+class EmailChangeVerifyOut(BaseModel):
+    message: str
+
+
 # --------------------
 # --- User Schemas ---
 # --------------------

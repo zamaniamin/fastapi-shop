@@ -131,6 +131,17 @@ async def change_email(email: schemas.EmailChangeIn, current_user: User = Depend
     return AccountService.change_email(current_user, **email.model_dump())
 
 
+@router.post(
+    '/me/change-email/verify',
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.EmailChangeVerifyOut,
+    summary='Verify change current user email',
+    description='Verify change the email address for the current user.',
+    tags=['Users'])
+async def verify_change_email(otp: schemas.EmailChangeVerifyIn, current_user: User = Depends(JWT.fetch_user)):
+    return AccountService.verify_change_email(current_user, **otp.model_dump())
+
+
 @router.get(
     '/{user_id}',
     status_code=status.HTTP_200_OK,

@@ -267,4 +267,34 @@ class AccountService:
             'message': f'Please check your email "{new_email}" for an OTP code to confirm the change email request.'
         }
 
+    @classmethod
+    def verify_change_email(cls, user, otp):
+        """
+        Verify change password for current user.
+        """
+
+        change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
+
+        if change_request:
+
+            if OTP.verify_otp(change_request.otp_key, otp):
+                if change_request.change_type == 'email':
+                    # change email
+                    UserManager.update_user(user.id, email=change_request.new_email)
+
+                    # reset change-request data
+                    UserChangeRequest.update(change_request.id, new_email=None, otp_key=None, change_type=None)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                    detail="Invalid OTP code. Please double-check and try again.")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid request try it again later.")
+
+        return {
+            'message': 'Your email is changed.'
+        }
+
 # TODO add a sessions service to manage sections like telegram app (Devices).
