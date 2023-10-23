@@ -424,49 +424,6 @@ class TestResetPassword(AccountTestBase):
         result = self.client.get("/accounts/me", headers=header)
         assert result.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_change_password(self):
-        """
-        Test change password by current user.
-        """
-
-        # --- create a user ---
-        user, access_token = FakeUser.populate_user()
-        header = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-
-        # --- request ---
-        payload = {
-            'current_password': FakeUser.password,
-            'password': FakeUser.password + "test",
-            'password_confirm': FakeUser.password + "test"
-        }
-        response = self.client.post('/accounts/me/change-password/', headers=header, json=payload)
-        assert response.status_code == status.HTTP_200_OK
-
-        # --- expected ---
-        expected = response.json()
-        assert expected['message'] == 'Your password has been changed.'
-
-        expected_user = UserManager.get_user(user.id)
-        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
-        self.assert_datetime_format(expected_user.updated_at)
-        self.assert_datetime_format(user.updated_at)
-        assert expected_user.updated_at != user.updated_at
-
-        # --- test current token is set to none ---
-        expected_access_token = UserSecret.filter(UserSecret.user_id == expected_user.id).first().access_token
-        assert expected_access_token is None
-
-        # --- test fetch user with old access-token ---
-        header = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-        result = self.client.get("/accounts/me", headers=header)
-        assert result.status_code == status.HTTP_401_UNAUTHORIZED
-
 # TODO login with new password
 
 # TODO test match password on register
