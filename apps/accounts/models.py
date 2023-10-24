@@ -92,10 +92,9 @@ class UserChangeRequest(FastModel):
         id (int): Unique identifier for the change request.
         user_id (int): ID of the user who initiated the change request.
         new_email (str): New email address requested by the user.
-        is_email_verified (bool): Flag indicating whether the new email address has been verified.
         change_type (str): Indicates the type of change request ('email' or 'phone').
         otp_key (str): OTP (One-Time Password) key used for email or phone number verification.
-        created_at (datetime): Timestamp indicating when the change request was created.
+        updated_at (datetime): Timestamp indicating when the change request was created.
     """
 
     __tablename__ = "users_changes_requests"
