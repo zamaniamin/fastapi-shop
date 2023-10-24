@@ -114,6 +114,9 @@ class TestRegisterAccount(AccountTestBase):
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)
 
+        # TODO test resend otp on 'verify registration' if otp is expired.
+        # TODO test stop resend otp until the prev otp is still valid (not expired).
+
     def test_register_existing_verified_email(self):
         """
         Test register a new user with an existing verified email address.
@@ -423,6 +426,9 @@ class TestResetPassword(AccountTestBase):
         }
         result = self.client.get("/accounts/me", headers=header)
         assert result.status_code == status.HTTP_401_UNAUTHORIZED
+
+        # TODO test resend otp on 'verify reset password' if otp is expired.
+        # TODO test stop resend otp until the prev otp is still valid (not expired).
 
 # TODO login with new password
 

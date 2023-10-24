@@ -283,4 +283,7 @@ class TestChanges(UserTestBase):
         # --- Test Payloads ---
         # ---------------------
 
+        # TODO test resend otp on 'verify change email' if otp is expired.
+        # TODO test stop resend otp until the prev otp is still valid (not expired).
+
 # TODO test delete user
