@@ -76,6 +76,27 @@ class PasswordResetVerifyOut(BaseModel):
 class PasswordChangeIn(ValidatePasswordInSchema):
     current_password: str
 
+    @staticmethod
+    def examples():
+        examples = {
+            'openapi_examples': {
+                "valid": {
+                    "summary": "Valid Password",
+                    "description": """For a valid password you should:
+* Use numbers _**0-9**_ in the password.
+* Use lowercase characters _**a-z**_ in the password.
+* Use uppercase characters _**A-Z**_ in the password.
+* **Optional:** Use special characters __!?@#$%^&*()+{}[]<>/__ in the password.
+                        """,
+                    "value": {
+                        "current_password": "Password123",
+                        "password": "NewPassword123",
+                        "password_confirm": "NewPassword123"
+                    },
+                }
+            }}
+        return examples
+
 
 class PasswordChangeOut(BaseModel):
     message: str

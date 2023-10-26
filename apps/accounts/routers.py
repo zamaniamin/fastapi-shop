@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
@@ -111,15 +111,16 @@ async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depe
     return {'user': UserManager.to_dict(user)}
 
 
-@router.post(
-    '/me/change-password',
+@router.patch(
+    '/me/password',
     status_code=status.HTTP_200_OK,
     response_model=schemas.PasswordChangeOut,
     summary='Change current user password',
     description='Change the password for the current user. If the change is successful, the user will '
                 'need to login again.',
     tags=['Users'])
-async def change_password(payload: schemas.PasswordChangeIn, current_user: User = Depends(JWT.fetch_user)):
+async def change_password(payload: schemas.PasswordChangeIn = Body(**schemas.PasswordChangeIn.examples()),
+                          current_user: User = Depends(JWT.fetch_user)):
     return AccountService.change_password(current_user, **payload.model_dump())
 
 

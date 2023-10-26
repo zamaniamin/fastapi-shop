@@ -14,7 +14,7 @@ from config.database import DatabaseManager
 
 class UserTestBase(BaseTestCase):
     current_user_endpoint = "/accounts/me/"
-    change_password_endpoint = "/accounts/me/change-password/"
+    change_password_endpoint = "/accounts/me/password/"
     change_email_endpoint = "/accounts/me/email/"
     verify_change_email_endpoint = "/accounts/me/email/verify/"
     accounts_endpoint = "/accounts/"
@@ -160,7 +160,7 @@ class TestChanges(UserTestBase):
             'password': FakeUser.password + "test",
             'password_confirm': FakeUser.password + "test"
         }
-        response = self.client.post(self.change_password_endpoint, headers=header, json=payload)
+        response = self.client.patch(self.change_password_endpoint, headers=header, json=payload)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
