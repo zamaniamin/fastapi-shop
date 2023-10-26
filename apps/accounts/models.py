@@ -76,6 +76,8 @@ class UserSecret(FastModel):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     otp_key = Column(String, nullable=True)
+    # TODO
+    # otp_for = Column(String, nullable=True)  # register / reset-password / change email
     access_token = Column(String, nullable=True)
 
     created_at = Column(DateTime, server_default=func.now())

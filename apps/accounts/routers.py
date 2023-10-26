@@ -15,6 +15,7 @@ router = APIRouter(
 # --- Register Routers ---
 # ------------------------
 
+
 @router.post(
     '/register',
     status_code=status.HTTP_201_CREATED,
@@ -40,6 +41,7 @@ async def verify_registration(payload: schemas.RegisterVerifyIn):
 # ---------------------
 # --- Login Routers ---
 # ---------------------
+
 
 @router.post(
     '/login',
@@ -84,6 +86,7 @@ async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
 # ---------------------
 # --- Users Routers ---
 # ---------------------
+
 
 @router.get(
     '/me',
@@ -154,9 +157,26 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn, current_user: Us
 async def retrieve_user(user_id: int):
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
+# -------------------
+# --- OTP Routers ---
+# -------------------
+
+# @router.post(
+#     '/otp/{action}',
+#     status_code=status.HTTP_200_OK,
+#     summary='Resend OTP',
+#     description='Resend OTP for registration, password reset, or email change verification.',
+#     tags=['Authentication'])
+# async def resend_otp(action: str = Path(..., title="Action",
+#                                         description="Specify action: register, reset-password, or change-email")):
+#     ...
+
 # TODO resend otp (if expired)
 # TODO stop resend otp (if not expired).
 
 
 # TODO logout (expire token)
 # TODO DELETE /accounts/me
+
+# TODO add all tests for all endpoints
+# TODO add docs and examples to endpoints

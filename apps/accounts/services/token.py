@@ -120,6 +120,9 @@ class JWT:
 
 class OTP:
 
+    # TODO add to email service
+    # TODO how to ensure that email is sent and delivery?
+
     @classmethod
     def send_otp(cls, otp_key, email):  # TODO add to email service
         """
@@ -146,6 +149,30 @@ class OTP:
             The "Fast Store" Team
             """
 
+    # @classmethod
+    # def send_otp(cls, otp_key, email):
+    #     """
+    #     As a development OTP will be printed in the terminal
+    #     """
+    #     totp = TOTP(otp_key, interval=OTP_EXPIRATION_SECONDS)
+    #
+    #     time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
+    #     if time_remaining == 0:
+    #
+    #         # send or resend
+    #
+    #         otp = cls.read_otp(otp_key)
+    #         dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
+    #         print(dev_show)
+    #     else:
+    #
+    #         # OTP has not expired, do not resend
+    #
+    #         HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail=f"OTP not expired. Resend available in {time_remaining} seconds."
+    #         )
+
     @staticmethod
     def generate_otp_key():
         return random_base32()
@@ -156,6 +183,6 @@ class OTP:
         return totp.now()
 
     @staticmethod
-    def verify_otp(secret: str, user_totp: str):
+    def verify_otp(secret: str, otp_code: str):
         totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
-        return totp.verify(user_totp)
+        return totp.verify(otp_code)
