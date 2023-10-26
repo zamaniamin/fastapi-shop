@@ -15,8 +15,8 @@ from config.database import DatabaseManager
 class UserTestBase(BaseTestCase):
     current_user_endpoint = "/accounts/me/"
     change_password_endpoint = "/accounts/me/change-password/"
-    change_email_endpoint = "/accounts/me/change-email/"
-    verify_change_email_endpoint = "/accounts/me/change-email/verify/"
+    change_email_endpoint = "/accounts/me/email/"
+    verify_change_email_endpoint = "/accounts/me/email/verify/"
     accounts_endpoint = "/accounts/"
 
     @classmethod
@@ -210,7 +210,7 @@ class TestChanges(UserTestBase):
         }
         payload = {'new_email': FakeUser.random_email()}
 
-        response = self.client.post(self.change_email_endpoint, headers=header, json=payload)
+        response = self.client.patch(self.change_email_endpoint, headers=header, json=payload)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected change request ---
@@ -246,7 +246,7 @@ class TestChanges(UserTestBase):
             'otp': OTP.read_otp(change_request.otp_key),
         }
 
-        response = self.client.post(self.verify_change_email_endpoint, headers=header, json=payload)
+        response = self.client.patch(self.verify_change_email_endpoint, headers=header, json=payload)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected response ---

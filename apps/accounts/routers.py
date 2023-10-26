@@ -123,8 +123,8 @@ async def change_password(payload: schemas.PasswordChangeIn, current_user: User 
     return AccountService.change_password(current_user, **payload.model_dump())
 
 
-@router.post(
-    '/me/change-email',
+@router.patch(
+    '/me/email',
     status_code=status.HTTP_200_OK,
     response_model=schemas.EmailChangeOut,
     summary='Change current user email',
@@ -134,8 +134,8 @@ async def change_email(email: schemas.EmailChangeIn, current_user: User = Depend
     return AccountService.change_email(current_user, **email.model_dump())
 
 
-@router.post(
-    '/me/change-email/verify',
+@router.patch(
+    '/me/email/verify',
     status_code=status.HTTP_200_OK,
     response_model=schemas.EmailChangeVerifyOut,
     summary='Verify change current user email',
