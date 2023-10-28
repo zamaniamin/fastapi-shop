@@ -28,6 +28,44 @@ class ValidatePasswordInSchema(BaseModel):
 class RegisterIn(ValidatePasswordInSchema):
     email: EmailStr
 
+    @staticmethod
+    def examples():
+        examples = {
+            'openapi_examples': {
+                "default": {
+                    "summary": "Default",
+                    "value": {
+                        "email": "user@example.com",
+                        "password": "string",
+                        "password_confirm": "string"
+                    },
+                },
+                "with-email": {
+                    "summary": "Register a new user with email verification (OTP)",
+                    "description": """
+
+> `email:"user@example.com"` The unique email address of the user. Attempting to assign the same email address to users
+returns an error.
+> 
+>`password:"<Password1>"` The password.
+> 
+> `password:"<Password1>"` The password that's confirmed.  
+    
+For a valid password you should:
+* Use numbers _**0-9**_ in the password.
+* Use lowercase characters _**a-z**_ in the password.
+* Use uppercase characters _**A-Z**_ in the password.
+* **Optional:** Use special characters __!?@#$%^&*()+{}[]<>/__ in the password.""",
+                    "value": {
+                        "email": "user@example.com",
+                        "password": "NewPassword123",
+                        "password_confirm": "NewPassword123"
+                    },
+                }
+            }
+        }
+        return examples
+
 
 class RegisterOut(BaseModel):
     email: EmailStr
