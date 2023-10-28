@@ -86,7 +86,7 @@ class TestRegisterAccount(AccountTestBase):
         }
 
         # --- request ---
-        response = self.client.post(self.register_verify_endpoint, json=verify_payload)
+        response = self.client.patch(self.register_verify_endpoint, json=verify_payload)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
@@ -153,7 +153,7 @@ class TestRegisterAccount(AccountTestBase):
         """
 
         # --- request ---
-        response = self.client.post(self.register_verify_endpoint, json=unknown_email)
+        response = self.client.patch(self.register_verify_endpoint, json=unknown_email)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_verify_registration_incorrect_otp(self):
@@ -171,7 +171,7 @@ class TestRegisterAccount(AccountTestBase):
         }
 
         # --- request ---
-        response = self.client.post(self.register_verify_endpoint, json=verify_payload)
+        response = self.client.patch(self.register_verify_endpoint, json=verify_payload)
         assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
 
     # TODO test OTP email is sent on register
@@ -249,7 +249,7 @@ class TestRegisterAccount(AccountTestBase):
         """
 
         # --- request ---
-        response = self.client.post(self.register_verify_endpoint, json=invalid_fields)
+        response = self.client.patch(self.register_verify_endpoint, json=invalid_fields)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("invalid_otp", [

@@ -40,7 +40,7 @@ async def register(payload: schemas.RegisterIn = Body(**schemas.RegisterIn.examp
     return AccountService.register(**payload.model_dump(exclude={"password_confirm"}))
 
 
-@router.post(
+@router.patch(
     '/register/verify',
     status_code=status.HTTP_200_OK,
     response_model=schemas.RegisterVerifyOut,
