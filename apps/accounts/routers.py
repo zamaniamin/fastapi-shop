@@ -84,7 +84,7 @@ async def reset_password(payload: schemas.PasswordResetIn):
     return AccountService.reset_password(**payload.model_dump())
 
 
-@router.post(
+@router.patch(
     '/reset-password/verify',
     status_code=status.HTTP_200_OK,
     response_model=schemas.PasswordResetVerifyOut,

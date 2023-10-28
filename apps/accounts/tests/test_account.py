@@ -401,7 +401,7 @@ class TestResetPassword(AccountTestBase):
             'password': FakeUser.password,
             'password_confirm': FakeUser.password
         }
-        response = self.client.post(self.verify_reset_password_endpoint, json=payload)
+        response = self.client.patch(self.verify_reset_password_endpoint, json=payload)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
