@@ -210,7 +210,7 @@ class TestChanges(UserTestBase):
         }
         payload = {'new_email': FakeUser.random_email()}
 
-        response = self.client.patch(self.change_email_endpoint, headers=header, json=payload)
+        response = self.client.post(self.change_email_endpoint, headers=header, json=payload)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected change request ---

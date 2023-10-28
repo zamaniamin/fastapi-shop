@@ -137,12 +137,15 @@ async def change_password(payload: schemas.PasswordChangeIn = Body(**schemas.Pas
     return AccountService.change_password(current_user, **payload.model_dump())
 
 
-@router.patch(
+@router.post(
     '/me/email',
     status_code=status.HTTP_200_OK,
     response_model=schemas.EmailChangeOut,
     summary='Change current user email',
-    description='Change the email address for the current user.',
+    description="""## Change the email address for the current user.
+    
+After the new email is set, an OTP code will be sent to the new email address for verification purposes.    
+""",
     tags=['Users'])
 async def change_email(email: schemas.EmailChangeIn, current_user: User = Depends(JWT.fetch_user)):
     return AccountService.change_email(current_user, **email.model_dump())
@@ -153,7 +156,11 @@ async def change_email(email: schemas.EmailChangeIn, current_user: User = Depend
     status_code=status.HTTP_200_OK,
     response_model=schemas.EmailChangeVerifyOut,
     summary='Verify change current user email',
-    description='Verify change the email address for the current user.',
+    description="""## Verify the email address change for the current user.
+
+Validating the OTP code sent to the user's new email address. If the OTP is valid, the new 
+email address will be saved as the user's main email address.
+""",
     tags=['Users'])
 async def verify_change_email(otp: schemas.EmailChangeVerifyIn, current_user: User = Depends(JWT.fetch_user)):
     return AccountService.verify_change_email(current_user, **otp.model_dump())
