@@ -3,11 +3,11 @@ from datetime import timedelta, datetime
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from pyotp import TOTP, random_base32
+from pyotp import TOTP
 
 from apps.accounts.models import User, UserSecret
 from apps.accounts.services.user import UserManager
-from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
+from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, OTP_SECRET_KEY
 
 
 class JWT:
@@ -105,10 +105,13 @@ class JWT:
     def update_access_token(user_id: int, access_token: str):
         """
         Update the valid access-token for current user (a flag for logout mechanism) and older tokens will be rejected.
-
         """
 
-        UserSecret.update(UserSecret.filter(UserSecret.user_id == user_id).first().id, access_token=access_token)
+        secret = UserSecret.filter(UserSecret.user_id == user_id).first()
+        if secret:
+            UserSecret.update(secret.id, access_token=access_token)
+        else:
+            UserSecret.create(user_id=user_id, access_token=access_token)
 
     @staticmethod
     def expire_current_access_token(user_id: int):
@@ -124,65 +127,43 @@ class OTP:
     # TODO how to ensure that email is sent and delivery?
 
     @classmethod
-    def send_otp(cls, otp_key, email):  # TODO add to email service
+    def send_otp(cls, email):
         """
         As a development OTP will be printed in the terminal
         """
 
-        # TODO how to ensure that email is sent and delivery?
-
-        otp = cls.read_otp(otp_key)
+        otp = cls.get_otp()
         dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
         print(dev_show)
 
-        email_body = f"""
-            Subject: Verify your email address
-
-            Dear "{email}",
-            Thank you for registering for an account on [Your Website Name].
-
-            To verify your email address and complete your registration, please enter the following code:
-            {otp}
-
-            If you do not verify your email address within 24 hours, your account will be deleted.
-            Thank you,
-            The "Fast Store" Team
-            """
-
-    # @classmethod
-    # def send_otp(cls, otp_key, email):
-    #     """
-    #     As a development OTP will be printed in the terminal
-    #     """
-    #     totp = TOTP(otp_key, interval=OTP_EXPIRATION_SECONDS)
-    #
-    #     time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
-    #     if time_remaining == 0:
-    #
-    #         # send or resend
-    #
-    #         otp = cls.read_otp(otp_key)
-    #         dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
-    #         print(dev_show)
-    #     else:
-    #
-    #         # OTP has not expired, do not resend
-    #
-    #         HTTPException(
-    #             status_code=status.HTTP_400_BAD_REQUEST,
-    #             detail=f"OTP not expired. Resend available in {time_remaining} seconds."
-    #         )
-
     @staticmethod
-    def generate_otp_key():
-        return random_base32()
-
-    @staticmethod
-    def read_otp(secret: str):
-        totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
+    def get_otp():
+        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
         return totp.now()
 
     @staticmethod
-    def verify_otp(secret: str, otp_code: str):
-        totp = TOTP(secret, interval=OTP_EXPIRATION_SECONDS)
+    def verify_otp(otp_code: str):
+        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
         return totp.verify(otp_code)
+
+    @classmethod
+    def regenerate_otp(cls):
+        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+        time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
+        if time_remaining == 0:
+            # TODO  resend new otp code
+            return totp.now()
+        else:
+
+            # OTP has not expired, do not resend
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"OTP not expired. Resend available in {time_remaining} seconds.")
+
+    @staticmethod
+    def get_action(user_id) -> UserSecret:
+        return UserSecret.filter(UserSecret.user_id == user_id).first()
+
+    @staticmethod
+    def update_action(secret_id: int, action: str):
+        UserSecret.update(secret_id, otp_action=action)
