@@ -96,6 +96,28 @@ async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
     return AccountService.verify_reset_password(**payload.model_dump())
 
 
+# -------------------
+# --- OTP Routers ---
+# -------------------
+
+
+@router.post(
+    '/otp',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Resend OTP',
+    description="""Allows the user to request a new OTP (One-Time Password) for registration, password reset, 
+    or email change verification.
+
+### Usage Guidelines:
+- For **registration** and **password reset**, provide the user's **primary email address**.
+- For **email change**, provide the **primary email address** too, (not the new unverified email).     
+    """,
+
+    tags=['Authentication'])
+async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.examples())):
+    AccountService.resend_otp(**payload.model_dump())
+
+
 # ---------------------
 # --- Users Routers ---
 # ---------------------
@@ -177,20 +199,6 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn, current_user: Us
 )
 async def retrieve_user(user_id: int):
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
-
-# -------------------
-# --- OTP Routers ---
-# -------------------
-
-# @router.post(
-#     '/otp/{action}',
-#     status_code=status.HTTP_200_OK,
-#     summary='Resend OTP',
-#     description='Resend OTP for registration, password reset, or email change verification.',
-#     tags=['Authentication'])
-# async def resend_otp(action: str = Path(..., title="Action",
-#                                         description="Specify action: register, reset-password, or change-email")):
-#     ...
 
 # TODO resend otp (if expired)
 # TODO stop resend otp (if not expired).
