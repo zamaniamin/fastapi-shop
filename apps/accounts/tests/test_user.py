@@ -172,7 +172,6 @@ class TestChanges(UserTestBase):
         assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
         assert expected_user.email == user.email
         assert expected_user.is_verified_email is True
-        assert expected_user.otp_key is None
         assert expected_user.role == user.role
         assert expected_user.first_name == user.first_name
         assert expected_user.last_name == user.last_name
@@ -217,7 +216,6 @@ class TestChanges(UserTestBase):
         change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
         assert change_request.new_email == payload["new_email"]
         assert change_request.change_type == 'email'
-        assert change_request.otp_key is not None
 
         # --- expected response ---
         expected = response.json()
@@ -235,7 +233,6 @@ class TestChanges(UserTestBase):
 
         # --- set a change email request ---
         AccountService.change_email(user, new_email)
-        change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
 
         # --- request ---
         header = {
@@ -243,7 +240,7 @@ class TestChanges(UserTestBase):
             "Content-Type": "application/json"
         }
         payload = {
-            'otp': OTP.read_otp(change_request.otp_key),
+            'otp': OTP.get_otp(),
         }
 
         response = self.client.patch(self.verify_change_email_endpoint, headers=header, json=payload)
@@ -257,7 +254,6 @@ class TestChanges(UserTestBase):
         expected_user = UserManager.get_user(user.id)
         assert expected_user.email == new_email
         assert expected_user.is_verified_email is True
-        assert expected_user.otp_key is None
         assert expected_user.role == user.role
         assert expected_user.first_name == user.first_name
         assert expected_user.last_name == user.last_name
@@ -272,7 +268,6 @@ class TestChanges(UserTestBase):
         # --- expected in UserChangeRequest ---
         change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
         assert change_request.new_email is None
-        assert change_request.otp_key is None
         assert change_request.change_type is None
 
         # --- test current token is valid ---

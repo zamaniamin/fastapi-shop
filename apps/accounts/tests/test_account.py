@@ -19,6 +19,7 @@ class AccountTestBase(BaseTestCase):
     login_endpoint = "/accounts/login/"
     reset_password_endpoint = "/accounts/reset-password/"
     verify_reset_password_endpoint = "/accounts/reset-password/verify"
+    otp_endpoint = "/accounts/otp/"
 
     @classmethod
     def setup_class(cls):
@@ -58,7 +59,6 @@ class TestRegisterAccount(AccountTestBase):
 
         assert expected_user.email == payload["email"]
         assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
-        assert expected_user.otp_key is not None
 
         assert expected_user.first_name is None
         assert expected_user.last_name is None
@@ -90,6 +90,7 @@ class TestRegisterAccount(AccountTestBase):
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
+        assert OTP.verify_otp(otp) is True
         expected = response.json()
         assert expected['access_token'] is not None
         assert expected['message'] == 'Your email address has been confirmed. Account activated successfully.'
@@ -101,7 +102,6 @@ class TestRegisterAccount(AccountTestBase):
 
         assert expected_user.email == email
         assert PasswordManager.verify_password(FakeAccount.password, expected_user.password) is True
-        assert expected_user.otp_key is None
 
         assert expected_user.first_name is None
         assert expected_user.last_name is None
@@ -397,7 +397,7 @@ class TestResetPassword(AccountTestBase):
         # --- request ---
         payload = {
             'email': user.email,
-            'otp': OTP.read_otp(user.otp_key),
+            'otp': OTP.get_otp(),
             'password': FakeUser.password,
             'password_confirm': FakeUser.password
         }
@@ -410,7 +410,6 @@ class TestResetPassword(AccountTestBase):
 
         expected_user = UserManager.get_user(user.id)
         assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
-        assert expected_user.otp_key is None
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(user.updated_at)
         assert expected_user.updated_at != user.updated_at
@@ -429,6 +428,34 @@ class TestResetPassword(AccountTestBase):
 
         # TODO test resend otp on 'verify reset password' if otp is expired.
         # TODO test stop resend otp until the prev otp is still valid (not expired).
+
+
+class TestResendOTP(AccountTestBase):
+    ...
+    # def test_success_resend_otp_register(self):
+    #     """
+    #     Test successfully resending otp to email address on user registration.
+    #     """
+    #
+    #     # --- register a user ---
+    #     email, _ = FakeAccount.verified_registration()
+    #
+    #     # --- ensure the current OTP is expired ---
+    #     # assert OTP.verify_otp(user.otp_key, otp) is False
+    #
+    #     # request for resend an OTP
+    #     # --- request ---
+    #     payload = {
+    #         "action": "register",
+    #         "email": email
+    #     }
+    #
+    #     response = self.client.post(self.otp_endpoint, json=payload)
+    #     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # TODO test limit user to enter otp code for 5 time. after that user should request a new code.
+
+    # Assuming generate_otp_code is a function that generates OTP using pyotp package
 
 # TODO login with new password
 
