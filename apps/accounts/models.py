@@ -1,5 +1,3 @@
-from typing import ClassVar, Optional
-
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -23,15 +21,11 @@ class User(FastModel):
         date_joined (datetime): Timestamp indicating when the user account was created.
         updated_at (datetime, optional): Timestamp indicating when the user account was last updated. Default is None.
         last_login (datetime, optional): Timestamp indicating the user's last login time. Default is None.
-        otp_key (ClassVar[Optional[str]]): Class variable indicating the OTP (One-Time Password) key. Default is None.
         secret (relationship): Relationship attribute linking this user to related secrets (tokens management).
         change (relationship): Relationship attribute linking this user to change requests initiated by the user.
     """
 
     __tablename__ = "users"
-
-    # To solve this: (Unresolved attribute reference 'otp_key' for class 'User'). when writing codes in IDE editor
-    otp_key: ClassVar[Optional[str]] = None
 
     id = Column(Integer, primary_key=True)
     email = Column(String(256), nullable=False, unique=True)
@@ -62,7 +56,7 @@ class UserSecret(FastModel):
     Attributes:
         id (int): Unique identifier for the user secret entry.
         user_id (int): ID of the user associated with this secret.
-        otp_key (str, optional): OTP (One-Time Password) key used for token-based authentication. Default is None.
+        otp_action (str, optional): register / reset-password / change-email . Default is None.
         access_token (str, optional): Access token used for JWT authentication. Default is None.
         created_at (datetime): Timestamp indicating when this user secret entry was created.
         updated_at (datetime, optional): Timestamp indicating when this user secret entry was last updated.
@@ -75,9 +69,9 @@ class UserSecret(FastModel):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
 
-    otp_key = Column(String, nullable=True)
-    # TODO
-    # otp_for = Column(String, nullable=True)  # register / reset-password / change email
+    otp_action = Column(String, nullable=True)
+
+    # TODO change this to a reg flag `red_token = Column(Boolean, default=False)`
     access_token = Column(String, nullable=True)
 
     created_at = Column(DateTime, server_default=func.now())
@@ -95,7 +89,6 @@ class UserChangeRequest(FastModel):
         user_id (int): ID of the user who initiated the change request.
         new_email (str): New email address requested by the user.
         change_type (str): Indicates the type of change request ('email' or 'phone').
-        otp_key (str): OTP (One-Time Password) key used for email or phone number verification.
         updated_at (datetime): Timestamp indicating when the change request was created.
     """
 
@@ -106,7 +99,6 @@ class UserChangeRequest(FastModel):
     new_email = Column(String(256), nullable=True)
     # new_phone = Column(String(20), nullable=True)  # Adjust the length based on your requirements
     change_type = Column(String(10), nullable=True)
-    otp_key = Column(String, nullable=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="change")

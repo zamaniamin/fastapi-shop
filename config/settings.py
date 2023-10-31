@@ -6,14 +6,20 @@ from pathlib import Path
 
 BASE_URL = "http://127.0.0.1:8000"
 
-# ------------------------
-# --- JWT/OTP Settings ---
-# ------------------------
+# --------------------
+# --- JWT Settings ---
+# --------------------
 
 # Use this command to generate a key: openssl rand -hex 32
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-OTP_EXPIRATION_SECONDS = 90
+
+# --------------------
+# --- OTP Settings ---
+# --------------------
+
+OTP_SECRET_KEY = "67XKYPCGFC47RJLZAEMDM6PIRJFWOT2P"
+OTP_EXPIRATION_SECONDS = 360
 
 # -------------------------
 # --- Database Settings ---
