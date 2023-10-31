@@ -35,9 +35,8 @@ class FakeAccount(BaseFakeAccount):
 
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
-        otp = OTP.read_otp(user.otp_key)
 
-        return user.email, otp
+        return user.email, OTP.get_otp()
 
     @classmethod
     def verified_registration(cls):
@@ -54,8 +53,7 @@ class FakeAccount(BaseFakeAccount):
 
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
-        otp = OTP.read_otp(user.otp_key)
-        verified = AccountService.verify_registration(**{'email': user.email, 'otp': otp})
+        verified = AccountService.verify_registration(**{'email': user.email, 'otp': OTP.get_otp()})
         return user.email, verified['access_token']
 
 
@@ -72,7 +70,6 @@ class FakeUser(BaseFakeAccount):
             'password': PasswordManager.hash_password(cls.password),
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
-            'otp_key': None,
             'is_verified_email': True,
             'is_active': True,
             'is_superuser': True,
@@ -96,7 +93,6 @@ class FakeUser(BaseFakeAccount):
             'password': PasswordManager.hash_password(cls.password),
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
-            'otp_key': None,
             'is_verified_email': True,
             'is_active': True,
             'is_superuser': False,
