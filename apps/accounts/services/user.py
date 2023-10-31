@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from starlette import status
 
-from apps.accounts.models import User, UserSecret
+from apps.accounts.models import User
 from apps.core.date_time import DateTime
 
 
@@ -29,10 +29,6 @@ class UserManager:
         if user is None:
             return None
 
-        # Add the otp_key to the User object
-        # TODO add this `get_otp_key= False` then get it.
-        user.otp_key = UserSecret.filter(UserSecret.user_id == user.id).first().otp_key
-
         return user
 
     @staticmethod
@@ -45,7 +41,6 @@ class UserManager:
             if not user:
                 raise HTTPException(status_code=404, detail="User not found.")
 
-        user.otp_key = UserSecret.filter(UserSecret.user_id == user.id).first().otp_key
         return user
 
     @classmethod
@@ -53,18 +48,7 @@ class UserManager:
         """
         Update a user by their ID.
         """
-
-        # update secrets
-        otp_key = data.pop('otp_key', None)
-        if otp_key is not None:
-            cls.__update_otp_key(user_id, otp_key)
-        else:
-            cls.__remove_otp_key(user_id)
-
-        # return updated user data
-        user = User.update(user_id, **data)
-        user.otp_key = otp_key
-        return user
+        return User.update(user_id, **data)
 
     @classmethod
     def update_last_login(cls, user_id: int):
@@ -92,17 +76,7 @@ class UserManager:
 
     @classmethod
     def new_user(cls, **user_data):
-
-        # --- get otp ---
-        otp_key = user_data.pop('otp_key', None)
-
-        # -- create a new user ---
-        user = User.create(**user_data)
-
-        # --- save a new OTP key ---
-        cls.__add_otp_key(user.id, otp_key)
-
-        return user
+        return User.create(**user_data)
 
     @staticmethod
     def is_active(user: User):
@@ -115,17 +89,3 @@ class UserManager:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail="Pleas verify your email address to continue.")
         # TODO guide user to follow the steps need to verify email address.
-
-    @staticmethod
-    def __add_otp_key(user_id: int, otp_key: str):
-        UserSecret.create(user_id=user_id, otp_key=otp_key)
-
-    @staticmethod
-    def __update_otp_key(user_id: int, otp_key: str):
-        secret_id = UserSecret.filter(UserSecret.user_id == user_id).first().id
-        UserSecret.update(secret_id, otp_key=otp_key)
-
-    @staticmethod
-    def __remove_otp_key(user_id: int):
-        secret_id = UserSecret.filter(UserSecret.user_id == user_id).first().id
-        UserSecret.update(secret_id, otp_key=None)

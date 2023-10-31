@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from apps.accounts.models import User, UserChangeRequest
+from apps.accounts.models import User, UserChangeRequest, UserSecret
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import JWT, OTP
 from apps.accounts.services.user import UserManager
@@ -29,14 +29,12 @@ class AccountService:
         # hash the password
         data["password"] = PasswordManager.hash_password(data["password"])
 
-        # generate an otp code
-        data["otp_key"] = OTP.generate_otp_key()
-
         # create new user
         new_user = UserManager.new_user(**data)
+        UserSecret.create(user_id=new_user.id, otp_action='register')
 
         # send otp code to email
-        OTP.send_otp(data["otp_key"], data['email'])
+        OTP.send_otp(data['email'])
 
         return {
             'email': new_user.email,
@@ -86,14 +84,14 @@ class AccountService:
             )
 
         # --- verify otp for this user ---
-        if not OTP.verify_otp(user.otp_key, otp):
+        if not OTP.verify_otp(otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
             )
 
         # --- Update user data and activate the account ---
-        UserManager.update_user(user.id, otp_key=None, is_verified_email=True, is_active=True,
+        UserManager.update_user(user.id, is_verified_email=True, is_active=True,
                                 last_login=DateTime.now())
 
         # --- login user, generate and send authentication token to the client ---
@@ -170,8 +168,7 @@ class AccountService:
         UserManager.is_verified_email(user)
 
         # send otp code to email address
-        user = UserManager.update_user(user.id, otp_key=OTP.generate_otp_key())
-        OTP.send_otp(user.otp_key, user.email)
+        OTP.send_otp(user.email)  # TODO email.send_verification(user.email,OTP.get_otp())
 
         return {
             'message': 'Please check your email for an OTP code to confirm the password reset request.'
@@ -188,14 +185,14 @@ class AccountService:
         password = data['password']
 
         user = UserManager.get_user_or_404(email=email)
-        if not OTP.verify_otp(user.otp_key, otp):
+        if not OTP.verify_otp(otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
             )
 
         # --- Update user data and activate the account ---
-        UserManager.update_user(user.id, otp_key=None, password=PasswordManager.hash_password(password))
+        UserManager.update_user(user.id, password=PasswordManager.hash_password(password))
 
         # --- expire old token ---
         JWT.expire_current_access_token(user.id)
@@ -237,15 +234,13 @@ class AccountService:
         # Check if the new email address is not already associated with another user
         if UserManager.get_user(email=new_email) is None:
 
-            existing_change_request = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
-            otp_key = OTP.generate_otp_key()
+            existing_change_request: UserChangeRequest = UserChangeRequest.filter(
+                UserChangeRequest.user_id == user.id).first()
             try:
                 if existing_change_request:
-                    existing_change_request.update(user.id, new_email=new_email, change_type='email',
-                                                   otp_key=otp_key)
+                    existing_change_request.update(user.id, new_email=new_email, change_type='email')
                 else:
-                    UserChangeRequest.create(user_id=user.id, new_email=new_email, change_type='email',
-                                             otp_key=otp_key)
+                    UserChangeRequest.create(user_id=user.id, new_email=new_email, change_type='email')
             except Exception as e:
                 # Handle specific exceptions if possible
                 # TODO handle this in server log
@@ -255,7 +250,7 @@ class AccountService:
                 )
 
             # # send otp code to new email address
-            OTP.send_otp(otp_key, new_email)
+            OTP.send_otp(new_email)
 
         else:
             raise HTTPException(
@@ -274,16 +269,16 @@ class AccountService:
         """
 
         change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
-
+        change_request_id = change_request.id
         if change_request:
 
-            if OTP.verify_otp(change_request.otp_key, otp):
+            if OTP.verify_otp(otp):
                 if change_request.change_type == 'email':
                     # change email
                     UserManager.update_user(user.id, email=change_request.new_email)
 
                     # reset change-request data
-                    UserChangeRequest.update(change_request.id, new_email=None, otp_key=None, change_type=None)
+                    UserChangeRequest.update(change_request_id, new_email=None, change_type=None)
             else:
                 raise HTTPException(
                     status_code=status.HTTP_406_NOT_ACCEPTABLE,
@@ -296,5 +291,34 @@ class AccountService:
         return {
             'message': 'Your email is changed.'
         }
+
+    # @classmethod
+    # def resend_otp(cls, **data):
+    #     """
+    #     Resend OTP for registration, password reset, or email change verification.
+    #     """
+    #
+    #     email = data['email']
+    #     action = data['action']
+    #
+    #     user = UserManager.get_user_or_404(email=email)
+    #
+    #     # --- validate current action ---
+    #     user_secret = OTP.get_action(user.id)
+    #
+    #     if user_secret.otp_action != action:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail=f"Invalid action requested.")
+    #
+    #     # --- save new OTP ---
+    #     new_otp_key = OTP.regenerate_otp_key(user.otp_key)
+    #     if action == 'change-email':
+    #         cls.change_email(user, new_otp_key)
+    #     else:
+    #         ...
+    #
+    #     # --- resend new OTP ---
+    #     OTP.send_otp(email)
 
 # TODO add a sessions service to manage sections like telegram app (Devices).
