@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, Depends, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
-from apps.accounts.services.authenticate import AccountService, JWT
+from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.permissions import Permission
 from apps.accounts.services.user import User, UserManager
 
@@ -93,7 +93,7 @@ async def reset_password(payload: schemas.PasswordResetIn):
                 "registered email address. If the change is successful, the user will need to login again.",
     tags=['Authentication'])
 async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
-    return AccountService.verify_reset_password(**payload.model_dump())
+    return AccountService.verify_reset_password(**payload.model_dump(exclude={"password_confirm"}))
 
 
 # -------------------
@@ -101,21 +101,21 @@ async def verify_reset_password(payload: schemas.PasswordResetVerifyIn):
 # -------------------
 
 
-@router.post(
-    '/otp',
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary='Resend OTP',
-    description="""Allows the user to request a new OTP (One-Time Password) for registration, password reset, 
-    or email change verification.
-
-### Usage Guidelines:
-- For **registration** and **password reset**, provide the user's **primary email address**.
-- For **email change**, provide the **primary email address** too, (not the new unverified email).     
-    """,
-
-    tags=['Authentication'])
-async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.examples())):
-    AccountService.resend_otp(**payload.model_dump())
+# @router.post(
+#     '/otp',
+#     status_code=status.HTTP_204_NO_CONTENT,
+#     summary='Resend OTP',
+#     description="""Allows the user to request a new OTP (One-Time Password) for registration, password reset,
+#     or email change verification.
+#
+# ### Usage Guidelines:
+# - For **registration** and **password reset**, provide the user's **primary email address**.
+# - For **email change**, provide the **primary email address** too, (not the new unverified email).
+#     """,
+#
+#     tags=['Authentication'])
+# async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.examples())):
+#     AccountService.resend_otp(**payload.model_dump())
 
 
 # ---------------------
@@ -130,7 +130,7 @@ async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.e
     summary='Retrieve current user',
     description='Retrieve current user if user is active.',
     tags=['Users'])
-async def retrieve_me(current_user: User = Depends(JWT.fetch_user)):
+async def retrieve_me(current_user: User = Depends(AccountService.current_user)):
     return {'user': UserManager.to_dict(current_user)}
 
 
@@ -141,7 +141,7 @@ async def retrieve_me(current_user: User = Depends(JWT.fetch_user)):
     summary='Update current user',
     description='Update current user.',
     tags=['Users'])
-async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(JWT.fetch_user)):
+async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AccountService.current_user)):
     user = UserManager.update_user(current_user.id, **payload.model_dump())
     return {'user': UserManager.to_dict(user)}
 
@@ -155,8 +155,8 @@ async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depe
                 'need to login again.',
     tags=['Users'])
 async def change_password(payload: schemas.PasswordChangeIn = Body(**schemas.PasswordChangeIn.examples()),
-                          current_user: User = Depends(JWT.fetch_user)):
-    return AccountService.change_password(current_user, **payload.model_dump())
+                          current_user: User = Depends(AccountService.current_user)):
+    return AccountService.change_password(current_user, **payload.model_dump(exclude={"password_confirm"}))
 
 
 @router.post(
@@ -165,11 +165,11 @@ async def change_password(payload: schemas.PasswordChangeIn = Body(**schemas.Pas
     response_model=schemas.EmailChangeOut,
     summary='Change current user email',
     description="""## Change the email address for the current user.
-    
-After the new email is set, an OTP code will be sent to the new email address for verification purposes.    
+
+After the new email is set, an OTP code will be sent to the new email address for verification purposes.
 """,
     tags=['Users'])
-async def change_email(email: schemas.EmailChangeIn, current_user: User = Depends(JWT.fetch_user)):
+async def change_email(email: schemas.EmailChangeIn, current_user: User = Depends(AccountService.current_user)):
     return AccountService.change_email(current_user, **email.model_dump())
 
 
@@ -180,11 +180,12 @@ async def change_email(email: schemas.EmailChangeIn, current_user: User = Depend
     summary='Verify change current user email',
     description="""## Verify the email address change for the current user.
 
-Validating the OTP code sent to the user's new email address. If the OTP is valid, the new 
+Validating the OTP code sent to the user's new email address. If the OTP is valid, the new
 email address will be saved as the user's main email address.
 """,
     tags=['Users'])
-async def verify_change_email(otp: schemas.EmailChangeVerifyIn, current_user: User = Depends(JWT.fetch_user)):
+async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
+                              current_user: User = Depends(AccountService.current_user)):
     return AccountService.verify_change_email(current_user, **otp.model_dump())
 
 

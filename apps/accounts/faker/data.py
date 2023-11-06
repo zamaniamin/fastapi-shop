@@ -1,9 +1,8 @@
 from faker import Faker
 
-from apps.accounts.services.authenticate import AccountService, PasswordManager
-from apps.accounts.services.token import JWT, OTP
+from apps.accounts.services.authenticate import AccountService
+from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserManager
-from apps.core.date_time import DateTime
 
 
 class BaseFakeAccount:
@@ -36,7 +35,7 @@ class FakeAccount(BaseFakeAccount):
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
 
-        return user.email, OTP.get_otp()
+        return user.email, TokenService.create_otp_token()
 
     @classmethod
     def verified_registration(cls):
@@ -53,8 +52,9 @@ class FakeAccount(BaseFakeAccount):
 
         # --- read otp code ---
         user = UserManager.get_user(email=register_payload['email'])
-        verified = AccountService.verify_registration(**{'email': user.email, 'otp': OTP.get_otp()})
-        return user.email, verified['access_token']
+        verified = AccountService.verify_registration(**{'email': user.email,
+                                                         'otp': TokenService.create_otp_token()})
+        return user, verified['access_token']
 
 
 class FakeUser(BaseFakeAccount):
@@ -65,21 +65,15 @@ class FakeUser(BaseFakeAccount):
         Create an admin and generate an access token too.
         """
 
+        user, access_token = FakeAccount.verified_registration()
         user_data = {
-            'email': cls.random_email(),
-            'password': PasswordManager.hash_password(cls.password),
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
-            'is_verified_email': True,
-            'is_active': True,
             'is_superuser': True,
-            'role': 'admin',
-            'last_login': DateTime.now(),
-            'updated_at': DateTime.now()
+            'role': 'admin'
         }
 
-        user = UserManager.new_user(**user_data)
-        access_token = JWT.create_access_token(user)
+        user = UserManager.update_user(user.id, **user_data)
         return user, access_token
 
     @classmethod
@@ -88,18 +82,11 @@ class FakeUser(BaseFakeAccount):
         Create a new user and generate an access token too.
         """
 
+        user, access_token = FakeAccount.verified_registration()
         user_data = {
-            'email': cls.random_email(),
-            'password': PasswordManager.hash_password(cls.password),
             'first_name': cls.fake.first_name(),
-            'last_name': cls.fake.last_name(),
-            'is_verified_email': True,
-            'is_active': True,
-            'is_superuser': False,
-            'last_login': DateTime.now(),
-            'updated_at': DateTime.now()
+            'last_name': cls.fake.last_name()
         }
 
-        user = UserManager.new_user(**user_data)
-        access_token = JWT.create_access_token(user)
+        user = UserManager.update_user(user.id, **user_data)
         return user, access_token

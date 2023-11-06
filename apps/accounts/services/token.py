@@ -1,16 +1,42 @@
 from datetime import timedelta, datetime
 
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pyotp import TOTP
 
-from apps.accounts.models import User, UserSecret
+from apps.accounts.models import User, UserVerification
 from apps.accounts.services.user import UserManager
 from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, OTP_SECRET_KEY
 
 
-class JWT:
+class TokenService:
+    """
+    Manage "jwt-token" or "otp-token" that used for authentication.
+    """
+
+    user: User | None
+    user_id: int
+
+    ALGORITHM = "HS256"
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
+    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                          detail="Could not validate credentials.",
+                                          headers={"WWW-Authenticate": "Bearer"})
+
+    def __init__(self, user: int | User | None = None):
+        if user is not None:
+            if isinstance(user, User):
+                self.user = user
+                self.user_id = user.id
+            else:
+                self.user = None
+                self.user_id = user
+
+    # --------------------
+    # --- Access Token ---
+    # --------------------
+
     """
     Utility class for handling JWT authentication and access tokens.
 
@@ -21,41 +47,36 @@ class JWT:
     wants to log out of the system, the current token will no longer be valid.
     """
 
-    ALGORITHM = "HS256"
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
-
-    # --- set exception ---
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials.",
-        headers={"WWW-Authenticate": "Bearer"})
-
-    @classmethod
-    def create_access_token(cls, user: User) -> str:
+    def create_access_token(self) -> str:
         """
         Create a new access token for the provided user.
-
-        Args:
-            user (User): The user object for whom the access token needs to be created.
 
         Returns:
             str: Access token string.
         """
 
         # --- set data to encode ---
-        to_encode = {'user_id': user.id}
+        to_encode = {'user_id': self.user_id}
 
         # --- set expire date ---
         to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
 
         # --- generate access token ---
-        access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=cls.ALGORITHM)
+        access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=self.ALGORITHM)
 
-        cls.update_access_token(user.id, access_token)
+        self.update_access_token(access_token)
         return access_token
 
+    def update_access_token(self, token: str):
+        UserVerification.update(UserVerification.filter(UserVerification.user_id == self.user_id).first().id,
+                                active_access_token=token)
+
+    def reset_access_token(self):
+        UserVerification.update(UserVerification.filter(UserVerification.user_id == self.user_id).first().id,
+                                active_access_token=None)
+
     @classmethod
-    async def fetch_user(cls, token: str = Depends(oauth2_scheme)) -> User:
+    async def fetch_user(cls, token: str) -> User:
         """
         Retrieve the user associated with the provided JWT token.
 
@@ -83,87 +104,81 @@ class JWT:
         if user is None:
             raise cls.credentials_exception
 
-        cls.is_valid_access_token(user_id, token)
+        UserManager.is_active(user)
+
+        # --- validate access token ---
+        active_access_token = UserVerification.filter(UserVerification.user_id == user_id).first().active_access_token
+        if token != active_access_token:
+            raise cls.credentials_exception
 
         UserManager.is_active(user)
         return user
 
-    @classmethod
-    def is_valid_access_token(cls, user_id: int, current_access_token: str):
-        """
-        Check if the access-token for current user is same or not.
-
-        if not, user should be login to their account and generate new access-token.
-        """
-
-        valid_access_token = UserSecret.filter(UserSecret.user_id == user_id).first().access_token
-        if current_access_token != valid_access_token:
-            raise cls.credentials_exception
-        return True
+    # -----------------
+    # --- OTP Token ---
+    # -----------------
 
     @staticmethod
-    def update_access_token(user_id: int, access_token: str):
+    def create_otp_token():
+        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+        return totp.now()
+
+    def request_is_register(self):
         """
-        Update the valid access-token for current user (a flag for logout mechanism) and older tokens will be rejected.
+        Will be used just when a new user is registered.
         """
 
-        secret = UserSecret.filter(UserSecret.user_id == user_id).first()
-        if secret:
-            UserSecret.update(secret.id, access_token=access_token)
-        else:
-            UserSecret.create(user_id=user_id, access_token=access_token)
+        UserVerification.create(user_id=self.user_id, request_type='register')
+
+    def get_new_email(self):
+        _change: UserVerification = UserVerification.filter(UserVerification.user_id == self.user_id).first()
+        if _change.request_type == 'change-email':
+            return _change.new_email
+        return False
+
+    def request_is_change_email(self, new_email: str):
+        _change = UserVerification.filter(UserVerification.user_id == self.user_id).first().id
+        UserVerification.update(_change, new_email=new_email, request_type='change-email')
+
+    def reset_is_change_email(self):
+        _change = UserVerification.filter(UserVerification.user_id == self.user_id).first().id
+        UserVerification.update(_change, new_email=None, request_type=None)
+
+    def reset_otp_token_type(self):
+        """
+        Remove the request_type for otp token by set it to None.
+        """
+
+        _change = UserVerification.filter(UserVerification.user_id == self.user_id).first().id
+        UserVerification.update(_change, request_type=None)
 
     @staticmethod
-    def expire_current_access_token(user_id: int):
-        """
-        User's old access-token is expired by an actions like change or reset password.
-        """
-        UserSecret.update(UserSecret.filter(UserSecret.user_id == user_id).first().id, access_token=None)
-
-
-class OTP:
-
-    # TODO add to email service
-    # TODO how to ensure that email is sent and delivery?
+    def validate_otp_token(token: str):
+        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+        return totp.verify(token)
 
     @classmethod
     def send_otp(cls, email):
         """
         As a development OTP will be printed in the terminal
         """
+        # TODO add to email service
+        # TODO how to ensure that email is sent and delivery?
 
-        otp = cls.get_otp()
+        otp = cls.create_otp_token()
         dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
         print(dev_show)
 
-    @staticmethod
-    def get_otp():
-        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
-        return totp.now()
-
-    @staticmethod
-    def verify_otp(otp_code: str):
-        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
-        return totp.verify(otp_code)
-
-    @classmethod
-    def regenerate_otp(cls):
-        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
-        time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
-        if time_remaining == 0:
-            # TODO  resend new otp code
-            return totp.now()
-        else:
-
-            # OTP has not expired, do not resend
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"OTP not expired. Resend available in {time_remaining} seconds.")
-
-    @staticmethod
-    def get_action(user_id) -> UserSecret:
-        return UserSecret.filter(UserSecret.user_id == user_id).first()
-
-    @staticmethod
-    def update_action(secret_id: int, action: str):
-        UserSecret.update(secret_id, otp_action=action)
+    # @classmethod
+    # def regenerate_otp(cls):
+    #     totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+    #     time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
+    #     if time_remaining == 0:
+    #         # TODO  resend new otp code
+    #         return totp.now()
+    #     else:
+    #
+    #         # OTP has not expired, do not resend
+    #         raise HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail=f"OTP not expired. Resend available in {time_remaining} seconds.")

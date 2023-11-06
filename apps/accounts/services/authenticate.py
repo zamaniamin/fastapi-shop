@@ -1,48 +1,46 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer
 
-from apps.accounts.models import User, UserChangeRequest, UserSecret
+from apps.accounts.models import User
 from apps.accounts.services.password import PasswordManager
-from apps.accounts.services.token import JWT, OTP
+from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
 
 
 class AccountService:
 
+    @classmethod
+    async def current_user(cls, token: str = Depends(OAuth2PasswordBearer(tokenUrl="accounts/login"))) -> User:
+        user = await TokenService.fetch_user(token)
+        return user
+
     # ----------------
     # --- Register ---
     # ----------------
 
     @classmethod
-    def register(cls, **data):
+    def register(cls, email: str, password: str):
         """
         Create a new user and send an email with OTP code.
         """
 
         # check if user with the given email is exist or not.
-        if UserManager.get_user(email=data['email']):
+        if UserManager.get_user(email=email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This email has already been taken."
             )
 
-        # hash the password
-        data["password"] = PasswordManager.hash_password(data["password"])
+        new_user = UserManager.create_user(email=email, password=password)
+        TokenService(new_user.id).request_is_register()
+        TokenService.send_otp(email)
 
-        # create new user
-        new_user = UserManager.new_user(**data)
-        UserSecret.create(user_id=new_user.id, otp_action='register')
-
-        # send otp code to email
-        OTP.send_otp(data['email'])
-
-        return {
-            'email': new_user.email,
-            'message': 'Please check your email for an OTP code to confirm your email address.'
-        }
+        return {'email': new_user.email,
+                'message': 'Please check your email for an OTP code to confirm your email address.'}
 
     @classmethod
-    def verify_registration(cls, **data):
+    def verify_registration(cls, email: str, otp: str):
         """
         Verifies user registration by validating the provided OTP code.
 
@@ -54,8 +52,8 @@ class AccountService:
         Additionally, an `access_token` is sent to allow the user to "login" without being redirected to the login form.
 
         Args:
-            data['email'] (str): User's email address.
-            data['otp'] (str): One-Time Password (OTP) code for email verification.
+            email (str): User's email address.
+            otp (str): One-Time Password (OTP) code for email verification.
 
         Raises:
             HTTPException: If the user is not found, the email is already verified, or an invalid OTP is provided.
@@ -63,10 +61,6 @@ class AccountService:
         Returns:
             dict: Dictionary containing an authentication token and a success message.
         """
-
-        # --- init ---
-        email = data['email']
-        otp = data['otp']
 
         # --- get user by email ---
         user = UserManager.get_user(email=email)
@@ -83,24 +77,24 @@ class AccountService:
                 detail="This email is already verified."
             )
 
-        # --- verify otp for this user ---
-        if not OTP.verify_otp(otp):
+        # --- validate otp_token for this user ---
+        token = TokenService(user=user)
+
+        if not token.validate_otp_token(otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Invalid OTP code.Please double-check and try again."
+                detail="Invalid OTP code. Please double-check and try again."
             )
 
         # --- Update user data and activate the account ---
-        UserManager.update_user(user.id, is_verified_email=True, is_active=True,
-                                last_login=DateTime.now())
+        UserManager.update_user(user.id, is_verified_email=True, is_active=True, last_login=DateTime.now())
 
-        # --- login user, generate and send authentication token to the client ---
-        access_token = JWT.create_access_token(user)
+        token.reset_otp_token_type()
+        access_token = token.create_access_token()
+        token.update_access_token(access_token)  # TODO move this to `token.new_access_token()`
 
-        return {
-            'access_token': access_token,
-            'message': 'Your email address has been confirmed. Account activated successfully.'
-        }
+        return {'access_token': access_token,
+                'message': 'Your email address has been confirmed. Account activated successfully.'}
 
     # -------------
     # --- Login ---
@@ -112,7 +106,8 @@ class AccountService:
         Login with given email and password.
         """
 
-        user = AccountService.authenticate_user(email, password)
+        user = cls.authenticate_user(email, password)
+        token: TokenService = TokenService(user)
 
         if not user:
             raise HTTPException(
@@ -136,11 +131,11 @@ class AccountService:
             )
 
         UserManager.update_last_login(user.id)
-        response = {
-            "access_token": JWT.create_access_token(user),
-            "token_type": "bearer"
-        }
-        return response
+
+        access_token = token.create_access_token()
+        token.update_access_token(access_token)
+
+        return {"access_token": access_token, "token_type": "bearer"}
 
     @classmethod
     def authenticate_user(cls, email: str, password: str):
@@ -168,62 +163,43 @@ class AccountService:
         UserManager.is_verified_email(user)
 
         # send otp code to email address
-        OTP.send_otp(user.email)  # TODO email.send_verification(user.email,OTP.get_otp())
+        TokenService.send_otp(user.email)  # TODO email.send_verification(user.email,OTP.get_otp())
 
-        return {
-            'message': 'Please check your email for an OTP code to confirm the password reset request.'
-        }
+        return {'message': 'Please check your email for an OTP code to confirm the password reset request.'}
 
     @classmethod
-    def verify_reset_password(cls, **data):
+    def verify_reset_password(cls, email: str, password: str, otp: str):
         """
         Verify the request for reset password and if otp is valid then current access-token will expire.
         """
 
-        email = data['email']
-        otp = data['otp']
-        password = data['password']
-
         user = UserManager.get_user_or_404(email=email)
-        if not OTP.verify_otp(otp):
+
+        if not TokenService.validate_otp_token(otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
             )
 
-        # --- Update user data and activate the account ---
-        UserManager.update_user(user.id, password=PasswordManager.hash_password(password))
-
-        # --- expire old token ---
-        JWT.expire_current_access_token(user.id)
-
+        UserManager.update_user(user.id, password=password)
+        TokenService(user.id).reset_access_token()
         # TODO send an email and notice user the password is changed.
 
-        return {
-            'message': 'Your password has been changed.'
-        }
+        return {'message': 'Your password has been changed.'}
 
     @classmethod
-    def change_password(cls, user: User, **data):
+    def change_password(cls, user: User, current_password: str, password: str):
         """
         Change password for current user, and then current access-token will be expired.
         """
 
-        current_password = data['current_password']
-        password = data['password']
-
         if not PasswordManager.verify_password(current_password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password.")
 
-        # if ok, hash pass and update user and set new pass
-        UserManager.update_user(user.id, password=PasswordManager.hash_password(password))
+        UserManager.update_user(user.id, password=password)
+        TokenService(user.id).reset_access_token()
 
-        # --- expire old token ---
-        JWT.expire_current_access_token(user.id)
-
-        return {
-            'message': 'Your password has been changed.'
-        }
+        return {'message': 'Your password has been changed.'}
 
     @classmethod
     def change_email(cls, user, new_email):
@@ -234,33 +210,14 @@ class AccountService:
         # Check if the new email address is not already associated with another user
         if UserManager.get_user(email=new_email) is None:
 
-            existing_change_request: UserChangeRequest = UserChangeRequest.filter(
-                UserChangeRequest.user_id == user.id).first()
-            try:
-                if existing_change_request:
-                    existing_change_request.update(user.id, new_email=new_email, change_type='email')
-                else:
-                    UserChangeRequest.create(user_id=user.id, new_email=new_email, change_type='email')
-            except Exception as e:
-                # Handle specific exceptions if possible
-                # TODO handle this in server log
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to update/create change request: {str(e)}"
-                )
-
-            # # send otp code to new email address
-            OTP.send_otp(new_email)
+            TokenService(user.id).request_is_change_email(new_email)
+            TokenService.send_otp(new_email)
 
         else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This email has already been taken."
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This email has already been taken.")
 
         return {
-            'message': f'Please check your email "{new_email}" for an OTP code to confirm the change email request.'
-        }
+            'message': f'Please check your email "{new_email}" for an OTP code to confirm the change email request.'}
 
     @classmethod
     def verify_change_email(cls, user, otp):
@@ -268,29 +225,24 @@ class AccountService:
         Verify change password for current user.
         """
 
-        change_request: UserChangeRequest = UserChangeRequest.filter(UserChangeRequest.user_id == user.id).first()
-        change_request_id = change_request.id
-        if change_request:
+        token = TokenService(user.id)
 
-            if OTP.verify_otp(otp):
-                if change_request.change_type == 'email':
-                    # change email
-                    UserManager.update_user(user.id, email=change_request.new_email)
+        if token.validate_otp_token(otp):
+            new_email = token.get_new_email()
 
-                    # reset change-request data
-                    UserChangeRequest.update(change_request_id, new_email=None, change_type=None)
+            if new_email:
+                UserManager.update_user(user.id, email=new_email)
+                token.reset_is_change_email()
             else:
                 raise HTTPException(
-                    status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                    detail="Invalid OTP code. Please double-check and try again.")
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid request for email verification.")
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid request try it again later.")
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="Invalid OTP code. Please double-check and try again.")
 
-        return {
-            'message': 'Your email is changed.'
-        }
+        return {'message': 'Your email is changed.'}
 
     # @classmethod
     # def resend_otp(cls, **data):
