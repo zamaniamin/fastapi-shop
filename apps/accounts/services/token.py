@@ -144,6 +144,10 @@ class TokenService:
         _change = UserVerification.filter(UserVerification.user_id == self.user_id).first().id
         UserVerification.update(_change, new_email=None, request_type=None)
 
+    def reset_is_reset_password(self):
+        _change = UserVerification.filter(UserVerification.user_id == self.user_id).first().id
+        UserVerification.update(_change, request_type='reset-password')
+
     def reset_otp_token_type(self):
         """
         Remove the request_type for otp token by set it to None.
@@ -177,7 +181,6 @@ class TokenService:
         totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
         time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
         if time_remaining != 0:
-
             # OTP has not expired, do not resend
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

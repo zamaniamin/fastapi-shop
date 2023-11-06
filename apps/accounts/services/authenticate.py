@@ -162,8 +162,10 @@ class AccountService:
         UserManager.is_active(user)
         UserManager.is_verified_email(user)
 
-        # send otp code to email address
-        TokenService.send_otp(user.email)  # TODO email.send_verification(user.email,OTP.get_otp())
+        token = TokenService(user.id)
+        token.reset_is_reset_password()
+
+        token.send_otp(user.email)  # TODO email.send_verification(user.email,OTP.get_otp())
 
         return {'message': 'Please check your email for an OTP code to confirm the password reset request.'}
 
@@ -174,15 +176,17 @@ class AccountService:
         """
 
         user = UserManager.get_user_or_404(email=email)
+        token = TokenService(user.id)
 
-        if not TokenService.validate_otp_token(otp):
+        if not token.validate_otp_token(otp):
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Invalid OTP code.Please double-check and try again."
             )
 
         UserManager.update_user(user.id, password=password)
-        TokenService(user.id).reset_access_token()
+        token.reset_otp_token_type()
+        token.reset_access_token()
         # TODO send an email and notice user the password is changed.
 
         return {'message': 'Your password has been changed.'}
@@ -254,10 +258,14 @@ class AccountService:
         token = TokenService(user.id)
 
         # --- validate current request type ---
-        if token.get_otp_request_type() != request_type:
+        current_request_type = token.get_otp_request_type()
+        if current_request_type != request_type:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Current requested type is invalid.")
+
+        if current_request_type == 'change_email':
+            email = token.get_new_email()
 
         # --- resend new OTP ---
         token.check_time_remaining()
