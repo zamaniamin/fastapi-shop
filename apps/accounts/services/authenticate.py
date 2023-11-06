@@ -244,33 +244,23 @@ class AccountService:
 
         return {'message': 'Your email is changed.'}
 
-    # @classmethod
-    # def resend_otp(cls, **data):
-    #     """
-    #     Resend OTP for registration, password reset, or email change verification.
-    #     """
-    #
-    #     email = data['email']
-    #     action = data['action']
-    #
-    #     user = UserManager.get_user_or_404(email=email)
-    #
-    #     # --- validate current action ---
-    #     user_secret = OTP.get_action(user.id)
-    #
-    #     if user_secret.otp_action != action:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_400_BAD_REQUEST,
-    #             detail=f"Invalid action requested.")
-    #
-    #     # --- save new OTP ---
-    #     new_otp_key = OTP.regenerate_otp_key(user.otp_key)
-    #     if action == 'change-email':
-    #         cls.change_email(user, new_otp_key)
-    #     else:
-    #         ...
-    #
-    #     # --- resend new OTP ---
-    #     OTP.send_otp(email)
+    @classmethod
+    def resend_otp(cls, request_type: str, email: str):
+        """
+        Resend OTP for registration, password reset, or email change verification.
+        """
+
+        user = UserManager.get_user_or_404(email=email)
+        token = TokenService(user.id)
+
+        # --- validate current request type ---
+        if token.get_otp_request_type() != request_type:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Current requested type is invalid.")
+
+        # --- resend new OTP ---
+        token.check_time_remaining()
+        TokenService.send_otp(email)
 
 # TODO add a sessions service to manage sections like telegram app (Devices).

@@ -145,16 +145,16 @@ class PasswordChangeOut(BaseModel):
 # -------------------
 
 class OTPResendIn(BaseModel):
-    action: str
+    request_type: str
     email: EmailStr
 
-    @field_validator("action")
-    def validate_action(cls, value):
-        allowed_actions = {"register", "reset-password", "change-email"}
-        if value not in allowed_actions:
+    @field_validator("request_type")
+    def validate_request_type(cls, value):
+        allowed_request_types = {"register", "reset-password", "change-email"}
+        if value not in allowed_request_types:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid action. Allowed values are 'register', 'reset-password', 'change-email'.")
+                detail="Invalid request type. Allowed values are 'register', 'reset-password', 'change-email'.")
         return value
 
     @staticmethod
@@ -164,33 +164,33 @@ class OTPResendIn(BaseModel):
                 "default": {
                     "summary": "Default",
                     "description": """
-- `action`: Specifies the purpose of the OTP request. Allowed values are "register", "reset-password", 
+- `request_type`: Specifies the purpose of the OTP request. Allowed values are "register", "reset-password", 
   or "change-email".
 - `email`: The user's primary email address.
 """,
                     "value": {
-                        "action": "string",
+                        "request_type": "string",
                         "email": "user@example.com"
                     },
                 },
                 "register": {
                     "summary": "Resend OTP for User Registration",
                     "value": {
-                        "action": "register",
+                        "request_type": "register",
                         "email": "user@example.com"
                     },
                 },
                 "reset-password": {
                     "summary": "Resend OTP for Password Reset",
                     "value": {
-                        "action": "reset-password",
+                        "request_type": "reset-password",
                         "email": "user@example.com"
                     },
                 },
                 "change-email": {
                     "summary": "Resend OTP for Email Change",
                     "value": {
-                        "action": "change-email",
+                        "request_type": "change-email",
                         "email": "user@example.com"
                     },
                 },

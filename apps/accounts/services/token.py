@@ -152,6 +152,9 @@ class TokenService:
         _change = UserVerification.filter(UserVerification.user_id == self.user_id).first().id
         UserVerification.update(_change, request_type=None)
 
+    def get_otp_request_type(self):
+        return UserVerification.filter(UserVerification.user_id == self.user_id).first().request_type
+
     @staticmethod
     def validate_otp_token(token: str):
         totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
@@ -169,16 +172,13 @@ class TokenService:
         dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
         print(dev_show)
 
-    # @classmethod
-    # def regenerate_otp(cls):
-    #     totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
-    #     time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
-    #     if time_remaining == 0:
-    #         # TODO  resend new otp code
-    #         return totp.now()
-    #     else:
-    #
-    #         # OTP has not expired, do not resend
-    #         raise HTTPException(
-    #             status_code=status.HTTP_400_BAD_REQUEST,
-    #             detail=f"OTP not expired. Resend available in {time_remaining} seconds.")
+    @classmethod
+    def check_time_remaining(cls):
+        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+        time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
+        if time_remaining != 0:
+
+            # OTP has not expired, do not resend
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"OTP not expired. Resend available in {time_remaining} seconds.")
