@@ -21,7 +21,6 @@ class User(FastModel):
         date_joined (datetime): Timestamp indicating when the user account was created.
         updated_at (datetime, optional): Timestamp indicating when the user account was last updated. Default is None.
         last_login (datetime, optional): Timestamp indicating the user's last login time. Default is None.
-        secret (relationship): Relationship attribute linking this user to related secrets (tokens management).
         change (relationship): Relationship attribute linking this user to change requests initiated by the user.
     """
 
@@ -45,60 +44,36 @@ class User(FastModel):
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
     last_login = Column(DateTime, nullable=True)
 
-    secret = relationship("UserSecret", back_populates="user", cascade="all, delete-orphan")
-    change = relationship("UserChangeRequest", back_populates="user", cascade="all, delete-orphan")
+    change = relationship("UserVerification", back_populates="user", cascade="all, delete-orphan")
 
 
-class UserSecret(FastModel):
+class UserVerification(FastModel):
     """
-    UserSecret contains temporary information for token management, including JWT and OTP tokens.
+    UserVerification represents change requests initiated by users, such as email or phone number changes,
+    that require OTP verification.
 
     Attributes:
-        id (int): Unique identifier for the user secret entry.
-        user_id (int): ID of the user associated with this secret.
-        otp_action (str, optional): register / reset-password / change-email . Default is None.
-        access_token (str, optional): Access token used for JWT authentication. Default is None.
-        created_at (datetime): Timestamp indicating when this user secret entry was created.
-        updated_at (datetime, optional): Timestamp indicating when this user secret entry was last updated.
-        Default is None.
-        user (User): Relationship attribute linking this user secret entry to the associated user.
-    """
-
-    __tablename__ = "users_secrets"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-
-    otp_action = Column(String, nullable=True)
-
-    # TODO change this to a reg flag `red_token = Column(Boolean, default=False)`
-    access_token = Column(String, nullable=True)
-
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, nullable=True, onupdate=func.now())
-
-    user = relationship("User", back_populates="secret")
-
-
-class UserChangeRequest(FastModel):
-    """
-    UserChangeRequest represents change requests initiated by users, such as email or phone number changes.
-
-    Attributes:
-        id (int): Unique identifier for the change request.
-        user_id (int): ID of the user who initiated the change request.
+        id (int): Unique identifier for the verification request.
+        user_id (int): ID of the user who initiated the verification request.
+        request_type (str): Indicates the type of verification request (register /reset-password /change-email
+        /change-phone).
         new_email (str): New email address requested by the user.
-        change_type (str): Indicates the type of change request ('email' or 'phone').
-        updated_at (datetime): Timestamp indicating when the change request was created.
+        new_phone (str): New phone number requested by the user.
+        active_access_token (str, optional): Last valid access token used for JWT authentication. Default is None.
+        created_at (datetime): Timestamp indicating when the verification request was created.
+        updated_at (datetime): Timestamp indicating when the verification request was last updated.
     """
 
-    __tablename__ = "users_changes_requests"
+    __tablename__ = "users_verifications"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
-    new_email = Column(String(256), nullable=True)
-    # new_phone = Column(String(20), nullable=True)  # Adjust the length based on your requirements
-    change_type = Column(String(10), nullable=True)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
+    request_type = Column(String, nullable=True)
+    new_email = Column(String(256), nullable=True)
+    new_phone = Column(String(256), nullable=True)
+    active_access_token = Column(String, nullable=True)
+
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     user = relationship("User", back_populates="change")
