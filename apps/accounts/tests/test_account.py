@@ -428,35 +428,52 @@ class TestResetPassword(AccountTestBase):
         assert result.status_code == status.HTTP_401_UNAUTHORIZED
 
         # TODO test resend otp on 'verify reset password' if otp is expired.
-        # TODO test stop resend otp until the prev otp is still valid (not expired).
 
 
 class TestResendOTP(AccountTestBase):
-    ...
-    # def test_success_resend_otp_register(self):
-    #     """
-    #     Test successfully resending otp to email address on user registration.
-    #     """
-    #
-    #     # --- register a user ---
-    #     email, _ = FakeAccount.verified_registration()
-    #
-    #     # --- ensure the current OTP is expired ---
-    #     # assert OTP.verify_otp(user.otp_key, otp) is False
-    #
-    #     # request for resend an OTP
-    #     # --- request ---
-    #     payload = {
-    #         "action": "register",
-    #         "email": email
-    #     }
-    #
-    #     response = self.client.post(self.otp_endpoint, json=payload)
-    #     assert response.status_code == status.HTTP_204_NO_CONTENT
+    def test_stop_resend_on_register(self):
+        """
+        Test stop resending otp to email address on user registration if OTP is still valid.
+        """
+
+        # --- register a user ---
+        email, _ = FakeAccount.register_unverified()
+
+        # --- request for resend an OTP ---
+        payload = {
+            "request_type": "register",
+            "email": email
+        }
+        response = self.client.post(self.otp_endpoint, json=payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "OTP not expired. Resend available in " in response.json().get("detail")
+
+    @pytest.mark.parametrize("invalid_request_type", ['change-email', 'reset-password'])
+    def test_resend_on_register_invalid_request_type(self, invalid_request_type):
+        """
+        Test resending otp to email address on user registration with unrelated value for request type.
+        """
+
+        # --- register a user ---
+        email, _ = FakeAccount.register_unverified()
+
+        # --- request for resend an OTP ---
+        payload = {
+            "request_type": invalid_request_type,
+            "email": email
+        }
+        response = self.client.post(self.otp_endpoint, json=payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json().get("detail") == "Current requested type is invalid."
+
+    # ---------------------
+    # --- Test Payloads ---
+    # ---------------------
+
+    # TODO test resend otp on change-email with unrelated value for `request_type`: register / reset-password
+    # TODO test resend otp on reset-password with unrelated value for `request_type`: register / change-email
 
     # TODO test limit user to enter otp code for 5 time. after that user should request a new code.
-
-    # Assuming generate_otp_code is a function that generates OTP using pyotp package
 
 # TODO login with new password
 
