@@ -266,7 +266,7 @@ class TestChanges(UserTestBase):
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.last_login)
 
-        # --- expected in UserChangeRequest ---
+        # --- expected in UserVerification ---
         change_request: UserVerification = UserVerification.filter(UserVerification.user_id == user.id).first()
         assert change_request.new_email is None
         assert change_request.request_type is None
