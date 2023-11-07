@@ -559,7 +559,7 @@ class TestResendOTP(AccountTestBase):
     # ---------------------
 
     # TODO test limit user to enter otp code for 5 time. after that user should request a new code.
-    
+
 # TODO add issue on github for mock the expire time of tokens OTP and JWT
 # TODO login with new password
 
