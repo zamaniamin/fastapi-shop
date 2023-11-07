@@ -90,10 +90,8 @@ class AccountService:
         UserManager.update_user(user.id, is_verified_email=True, is_active=True, last_login=DateTime.now())
 
         token.reset_otp_token_type()
-        access_token = token.create_access_token()
-        token.update_access_token(access_token)  # TODO move this to `token.new_access_token()`
 
-        return {'access_token': access_token,
+        return {'access_token': token.create_access_token(),
                 'message': 'Your email address has been confirmed. Account activated successfully.'}
 
     # -------------
@@ -131,11 +129,7 @@ class AccountService:
             )
 
         UserManager.update_last_login(user.id)
-
-        access_token = token.create_access_token()
-        token.update_access_token(access_token)
-
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": token.create_access_token(), "token_type": "bearer"}
 
     @classmethod
     def authenticate_user(cls, email: str, password: str):
