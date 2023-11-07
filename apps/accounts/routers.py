@@ -212,6 +212,5 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
 async def retrieve_user(user_id: int):
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
-# TODO logout (expire token)
 # TODO DELETE /accounts/me
 # TODO add docs and examples to endpoints
