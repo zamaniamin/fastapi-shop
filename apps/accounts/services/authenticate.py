@@ -271,4 +271,8 @@ class AccountService:
         token.check_time_remaining()
         TokenService.send_otp(email)
 
+    @classmethod
+    def logout(cls, current_user):
+        TokenService(current_user).reset_access_token()
+
 # TODO add a sessions service to manage sections like telegram app (Devices).

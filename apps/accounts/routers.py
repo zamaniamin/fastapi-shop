@@ -67,6 +67,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return AccountService.login(form_data.username, form_data.password)
 
 
+@router.post(
+    '/logout',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Logout user',
+    description="Logout the currently authenticated user. "
+                "Revokes the user's access token and invalidates the session.",
+    tags=['Authentication'])
+async def logout(current_user: User = Depends(AccountService.current_user)):
+    AccountService.logout(current_user)
+
+
 # ------------------------
 # --- Password Routers ---
 # ------------------------
@@ -201,12 +212,6 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
 async def retrieve_user(user_id: int):
     return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
 
-# TODO resend otp (if expired)
-# TODO stop resend otp (if not expired).
-
-
 # TODO logout (expire token)
 # TODO DELETE /accounts/me
-
-# TODO add all tests for all endpoints
 # TODO add docs and examples to endpoints
