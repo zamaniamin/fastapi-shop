@@ -17,6 +17,7 @@ class AccountTestBase(BaseTestCase):
     register_endpoint = "/accounts/register/"
     register_verify_endpoint = "/accounts/register/verify/"
     login_endpoint = "/accounts/login/"
+    logout_endpoint = "/accounts/logout/"
     reset_password_endpoint = "/accounts/reset-password/"
     verify_reset_password_endpoint = "/accounts/reset-password/verify"
     otp_endpoint = "/accounts/otp/"
@@ -117,9 +118,6 @@ class TestRegisterAccount(AccountTestBase):
         self.assert_datetime_format(expected_user.last_login)
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)
-
-        # TODO test resend otp on 'verify registration' if otp is expired.
-        # TODO test stop resend otp until the prev otp is still valid (not expired).
 
     def test_register_existing_verified_email(self):
         """
@@ -344,6 +342,21 @@ class TestLoginAccount(AccountTestBase):
         response = self.client.post(self.login_endpoint, data=payload)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    def test_logout(self):
+        """
+        Test logout from account of authenticated user.
+        """
+
+        # --- create a user ---
+        user, access_token = FakeUser.populate_user()
+        header = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        response = self.client.post(self.logout_endpoint, headers=header)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
@@ -541,16 +554,13 @@ class TestResendOTP(AccountTestBase):
         response = self.client.post(self.otp_endpoint, json=payload)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json().get("detail") == "Current requested type is invalid."
-
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
 
-    # TODO test resend otp on change-email with unrelated value for `request_type`: register / reset-password
-    # TODO test resend otp on reset-password with unrelated value for `request_type`: register / change-email
-
     # TODO test limit user to enter otp code for 5 time. after that user should request a new code.
-
+    
+# TODO add issue on github for mock the expire time of tokens OTP and JWT
 # TODO login with new password
 
 # TODO test match password on register
