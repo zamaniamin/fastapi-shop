@@ -357,6 +357,70 @@ class TestLoginAccount(AccountTestBase):
         response = self.client.post(self.logout_endpoint, headers=header)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
+    def test_login_after_password_change(self):
+        """
+        Test login to account after password is changed.
+        """
+
+        # --- create a user ---
+        user, access_token = FakeUser.populate_user()
+
+        # --- request ---
+        passwords = {
+            'old_password': FakeUser.password,
+            'new_password': FakeUser.password + "test"
+        }
+
+        AccountService.change_password(user=user, current_password=passwords['old_password'],
+                                       password=passwords['new_password'])
+
+        # --- login with old password ---
+        old_password = {
+            'username': user.email,
+            'password': passwords['old_password']
+        }
+        response = self.client.post(self.login_endpoint, data=old_password)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+        # --- login with new password ---
+        new_password = {
+            'username': user.email,
+            'password': passwords['new_password']
+        }
+        response = self.client.post(self.login_endpoint, data=new_password)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_login_after_password_reset(self):
+        """
+        Test login to account after password reset.
+        """
+
+        # --- create a user ---
+        user, access_token = FakeUser.populate_user()
+
+        # --- request ---
+        new_password = FakeUser.password + "test"
+
+        AccountService.reset_password(email=user.email)
+        AccountService.verify_reset_password(email=user.email, password=new_password,
+                                             otp=TokenService.create_otp_token())
+
+        # --- login with old password ---
+        old_password = {
+            'username': user.email,
+            'password': FakeUser.password
+        }
+        response = self.client.post(self.login_endpoint, data=old_password)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+        # --- login with new password ---
+        new_password = {
+            'username': user.email,
+            'password': new_password
+        }
+        response = self.client.post(self.login_endpoint, data=new_password)
+        assert response.status_code == status.HTTP_200_OK
+
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
@@ -561,7 +625,6 @@ class TestResendOTP(AccountTestBase):
     # TODO test limit user to enter otp code for 5 time. after that user should request a new code.
 
 # TODO add issue on github for mock the expire time of tokens OTP and JWT
-# TODO login with new password
 
 # TODO test match password on register
 # TODO test match password on reset password
