@@ -176,8 +176,6 @@ class TestRegisterAccount(AccountTestBase):
         response = self.client.patch(self.register_verify_endpoint, json=verify_payload)
         assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
 
-    # TODO test OTP email is sent on register
-
     # ---------------------
     # --- Test Payloads ---
     # ---------------------
@@ -512,8 +510,6 @@ class TestResetPassword(AccountTestBase):
         result = self.client.get("/accounts/me", headers=header)
         assert result.status_code == status.HTTP_401_UNAUTHORIZED
 
-        # TODO test resend otp on 'verify reset password' if otp is expired.
-
 
 class TestResendOTP(AccountTestBase):
     def test_stop_resend_on_register(self):
@@ -532,8 +528,6 @@ class TestResendOTP(AccountTestBase):
         response = self.client.post(self.otp_endpoint, json=payload)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "OTP not expired. Resend available in " in response.json().get("detail")
-
-    # TODO test successful resend otp on register / reset-password / change-email
 
     def test_stop_resend_on_change_email(self):
         """
@@ -622,17 +616,16 @@ class TestResendOTP(AccountTestBase):
     # --- Test Payloads ---
     # ---------------------
 
-    # TODO test limit user to enter otp code for 5 time. after that user should request a new code.
-
+# TODO test limit user to enter otp code for 5 time. after that user should request a new code.
 # TODO add issue on github for mock the expire time of tokens OTP and JWT
 
-# TODO test match password on register
-# TODO test match password on reset password
-# TODO test match password on change password
+# TODO test OTP verification email is sent on:
+#  (to ensure that email is sent and delivery)
+#  1. register
+#  2. change email
+#  3. reset password
+#  4. resend-otp (register, reset-password, change-email)
 
-# TODO test strong password on register
-# TODO test strong password on reset password
-# TODO test strong password on change password
-
-# TODO test login for `swagger Authorize`
-# TODO test JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
+# TODO tests needs to expired time:
+#  1. JWT `ACCESS_TOKEN_EXPIRE_MINUTES`
+#  2. resend-otp (register, reset-password, change-email)
