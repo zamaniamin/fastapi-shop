@@ -165,18 +165,6 @@ class TokenService:
         return totp.verify(token)
 
     @classmethod
-    def send_otp(cls, email):
-        """
-        As a development OTP will be printed in the terminal
-        """
-        # TODO add to email service
-        # TODO how to ensure that email is sent and delivery?
-
-        otp = cls.create_otp_token()
-        dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
-        print(dev_show)
-
-    @classmethod
     def check_time_remaining(cls):
         totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
         time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)

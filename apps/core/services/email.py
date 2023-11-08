@@ -3,7 +3,7 @@ from apps.accounts.services.token import TokenService
 
 class EmailService:
     @classmethod
-    def send_otp(cls, email):
+    def send_verification_email(cls, email):
         """
         As a development OTP will be printed in the terminal
         """

@@ -6,6 +6,7 @@ from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
+from apps.core.services.email import EmailService
 
 
 class AccountService:
@@ -34,7 +35,7 @@ class AccountService:
 
         new_user = UserManager.create_user(email=email, password=password)
         TokenService(new_user.id).request_is_register()
-        TokenService.send_otp(email)
+        EmailService.send_verification_email(email)
 
         return {'email': new_user.email,
                 'message': 'Please check your email for an OTP code to confirm your email address.'}
@@ -159,7 +160,7 @@ class AccountService:
         token = TokenService(user.id)
         token.reset_is_reset_password()
 
-        token.send_otp(user.email)  # TODO email.send_verification(user.email,OTP.get_otp())
+        EmailService.send_verification_email(user.email)
 
         return {'message': 'Please check your email for an OTP code to confirm the password reset request.'}
 
@@ -209,7 +210,7 @@ class AccountService:
         if UserManager.get_user(email=new_email) is None:
 
             TokenService(user.id).request_is_change_email(new_email)
-            TokenService.send_otp(new_email)
+            EmailService.send_verification_email(new_email)
 
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This email has already been taken.")
@@ -263,7 +264,7 @@ class AccountService:
 
         # --- resend new OTP ---
         token.check_time_remaining()
-        TokenService.send_otp(email)
+        EmailService.send_verification_email(email)
 
     @classmethod
     def logout(cls, current_user):
