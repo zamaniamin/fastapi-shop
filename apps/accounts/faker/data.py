@@ -60,6 +60,34 @@ class FakeAccount(BaseFakeAccount):
 class FakeUser(BaseFakeAccount):
 
     @classmethod
+    def populate_members(cls):
+        """
+        Create an admin and a user.
+        """
+
+        # --- admin ---
+        user, access_token = FakeAccount.verified_registration()
+        user_data = {
+            'email': 'admin@example.com',
+            'first_name': cls.fake.first_name(),
+            'last_name': cls.fake.last_name(),
+            'is_superuser': True,
+            'role': 'admin'
+        }
+
+        UserManager.update_user(user.id, **user_data)
+
+        # --- user ---
+        user, access_token = FakeAccount.verified_registration()
+        user_data = {
+            'email': 'user@example.com',
+            'first_name': cls.fake.first_name(),
+            'last_name': cls.fake.last_name()
+        }
+
+        UserManager.update_user(user.id, **user_data)
+
+    @classmethod
     def populate_admin(cls):
         """
         Create an admin and generate an access token too.

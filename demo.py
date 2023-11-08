@@ -1,5 +1,6 @@
 import asyncio
 
+from apps.accounts.faker.data import FakeUser
 from apps.products.faker.data import FakeProduct
 
 if __name__ == "__main__":
@@ -17,7 +18,8 @@ if __name__ == "__main__":
     # init routers
     RouterManager(app).import_routers()
 
-    # TODO --- Demo Users ---
+    # --- Demo Users ---
+    FakeUser.populate_members()
 
     # --- Demo Products ---
     asyncio.run(FakeProduct.populate_30_products())
