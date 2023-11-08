@@ -7,7 +7,6 @@ class EmailService:
         """
         As a development OTP will be printed in the terminal
         """
-        # TODO how to ensure that email is sent and delivery?
 
         otp = TokenService.create_otp_token()
         dev_show = f"""\n\n--- Testing OTP: {otp} ---"""
