@@ -150,7 +150,7 @@ class AccountService:
         """
         Reset password by user email address.
         """
-
+        # TODO stop resend email until current otp not expired
         user: User | None
 
         user = UserManager.get_user_or_404(email=email)
