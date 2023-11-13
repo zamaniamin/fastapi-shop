@@ -2,17 +2,20 @@
 
 ## Overview
 
-This is an eCommerce project built using **FastAPI**, **SQLAlchemy** and **Pydantic**. The project is designed to serve as a starting point for building a modern, efficient, and highly customizable eCommerce web application.
+This is an eCommerce project built using **FastAPI**, **SQLAlchemy** and **Pydantic**. The project is designed to serve
+as a starting point for building a modern, efficient, and highly customizable eCommerce web application.
 
 ## Features
 
 - **RESTful API:** Utilizes FastAPI to provide a RESTful API for managing products, orders, users, and more.
 
-- **Database Integration:** Integrates SQLAlchemy for database operations, allowing you to use various database systems like PostgreSQL, MySQL, SQLite, or others.
+- **Database Integration:** Integrates SQLAlchemy for database operations, allowing you to use various database systems
+  like PostgreSQL, MySQL, SQLite, or others.
 
 - **Data Validation:** Pydantic is used for request and response data validation, ensuring data integrity and security.
 
-- **Authentication and Authorization:** Provides user authentication and authorization mechanisms to secure the application.
+- **Authentication and Authorization:** Provides user authentication and authorization mechanisms to secure the
+  application.
 
 - **Product Management:** Allows for the management of products, including adding, updating, and deleting products.
 
@@ -59,7 +62,13 @@ This is an eCommerce project built using **FastAPI**, **SQLAlchemy** and **Pydan
 
 ### Configuration
 
-...
+To configure your FastAPI project, create a `.env` file by copying the `.env.template` file and filling in the actual
+values. Here's an example:
+
+1. Copy `.env.template` to `.env`.
+2. Open `.env` in a text editor.
+3. Replace the placeholder values with your actual configuration details.
+4. Save the file.
 
 ### Usage
 
@@ -69,11 +78,13 @@ This is an eCommerce project built using **FastAPI**, **SQLAlchemy** and **Pydan
     uvicorn apps.main:app --reload
     ```
 
-2. Access the API documentation at `http://localhost:8000/docs` to explore and interact with the API endpoints using the Swagger UI.
+2. Access the API documentation at `http://localhost:8000/docs` to explore and interact with the API endpoints using the
+   Swagger UI.
 
 ## Customization
 
-This project is designed to be highly customizable to suit your eCommerce needs. You can extend and modify the project by:
+This project is designed to be highly customizable to suit your eCommerce needs. You can extend and modify the project
+by:
 
 - Adding new API endpoints to handle additional features.
 - Customizing the database models in `models.py` to reflect your product catalog, user profiles, and more.
@@ -81,7 +92,8 @@ This project is designed to be highly customizable to suit your eCommerce needs.
 
 ## Deployment
 
-For deployment, consider using popular cloud platforms like AWS, Google Cloud, or Heroku. Ensure you set up proper security measures and scalability options.
+For deployment, consider using popular cloud platforms like AWS, Google Cloud, or Heroku. Ensure you set up proper
+security measures and scalability options.
 
 ## Contributing
 
