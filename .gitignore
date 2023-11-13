@@ -123,7 +123,9 @@ celerybeat.pid
 # Environments
 .idea
 idea/
-media/
+
+# Ignore all content under the 'media' folder
+/media/
 .env
 .venv
 env/

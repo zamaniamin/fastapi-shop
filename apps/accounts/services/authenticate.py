@@ -6,7 +6,7 @@ from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserManager
 from apps.core.date_time import DateTime
-from apps.core.services.email import EmailService
+from apps.core.services.email_manager import EmailService
 
 
 class AccountService:
@@ -35,7 +35,7 @@ class AccountService:
 
         new_user = UserManager.create_user(email=email, password=password)
         TokenService(new_user.id).request_is_register()
-        EmailService.send_verification_email(email)
+        EmailService.register_send_verification_email(new_user.email)
 
         return {'email': new_user.email,
                 'message': 'Please check your email for an OTP code to confirm your email address.'}
@@ -160,7 +160,7 @@ class AccountService:
         token = TokenService(user.id)
         token.reset_is_reset_password()
 
-        EmailService.send_verification_email(user.email)
+        EmailService.reset_password_send_verification_email(user.email)
 
         return {'message': 'Please check your email for an OTP code to confirm the password reset request.'}
 
@@ -210,7 +210,7 @@ class AccountService:
         if UserManager.get_user(email=new_email) is None:
 
             TokenService(user.id).request_is_change_email(new_email)
-            EmailService.send_verification_email(new_email)
+            EmailService.change_email_send_verification_email(new_email)
 
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This email has already been taken.")
@@ -264,7 +264,13 @@ class AccountService:
 
         # --- resend new OTP ---
         token.check_time_remaining()
-        EmailService.send_verification_email(email)
+        match request_type:
+            case 'register':
+                EmailService.register_send_verification_email(email)
+            case 'change-email':
+                EmailService.change_email_send_verification_email(email)
+            case 'reset-password':
+                EmailService.reset_password_send_verification_email(email)
 
     @classmethod
     def logout(cls, current_user):
