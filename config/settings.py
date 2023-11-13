@@ -45,7 +45,7 @@ class EmailServiceConfig:
         smtp_port=int(os.getenv("SMTP_PORT")),
         smtp_username=os.getenv("SMTP_USERNAME"),
         smtp_password=os.getenv("SMTP_PASSWORD"),
-        use_local_fallback=bool(os.getenv("USE_LOCAL_FALLBACK", "False"))
+        use_local_fallback=os.getenv("USE_LOCAL_FALLBACK", "False").lower() == "true"
     )
 
     @classmethod
@@ -61,7 +61,7 @@ class EmailServiceConfig:
 # --- URL Settings ---
 # --------------------
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8000"  # TODO solve this
 
 # --------------------
 # --- JWT Settings ---

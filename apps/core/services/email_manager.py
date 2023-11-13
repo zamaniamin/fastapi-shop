@@ -23,9 +23,10 @@ class EmailService:
 
             # Connect to the SMTP server
             with smtplib.SMTP_SSL(cls.config.smtp_server, cls.config.smtp_port) as server:
+                # server.set_debuglevel(1)
                 server.login(cls.config.smtp_username, cls.config.smtp_password)
                 server.sendmail(cls.config.smtp_username, to_address, message.as_string())
-                server.quit()
+                # server.quit()
         except Exception as e:
             print(f"An error occurred while sending email: {e}")
 
