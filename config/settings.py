@@ -1,13 +1,60 @@
+import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, EmailStr
 
+load_dotenv()  # Load variables from .env file
 
-class EmailServiceConfig(BaseModel):
-    smtp_server: str
-    smtp_port: int
-    smtp_username: EmailStr
-    smtp_password: str
+
+class AppConfig:
+    """
+    App Configuration.
+    """
+
+    class _AppConfig(BaseModel):
+        app_name: str
+
+    config = _AppConfig(
+        app_name=os.getenv("APP_NAME"),
+    )
+
+    @classmethod
+    def get_config(cls) -> _AppConfig:
+        """
+        Get the App configuration.
+        """
+
+        return cls.config
+
+
+class EmailServiceConfig:
+    """
+    SMTP Configuration.
+    """
+
+    class _SMTPConfig(BaseModel):
+        smtp_server: str
+        smtp_port: int
+        smtp_username: EmailStr
+        smtp_password: str
+        use_local_fallback: bool
+
+    config = _SMTPConfig(
+        smtp_server=os.getenv("SMTP_SERVER"),
+        smtp_port=int(os.getenv("SMTP_PORT")),
+        smtp_username=os.getenv("SMTP_USERNAME"),
+        smtp_password=os.getenv("SMTP_PASSWORD"),
+        use_local_fallback=bool(os.getenv("USE_LOCAL_FALLBACK", "False"))
+    )
+
+    @classmethod
+    def get_config(cls) -> _SMTPConfig:
+        """
+        Get the SMTP configuration
+        """
+
+        return cls.config
 
 
 # --------------------
