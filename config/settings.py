@@ -1,5 +1,15 @@
 from pathlib import Path
 
+from pydantic import BaseModel, EmailStr
+
+
+class EmailServiceConfig(BaseModel):
+    smtp_server: str
+    smtp_port: int
+    smtp_username: EmailStr
+    smtp_password: str
+
+
 # --------------------
 # --- URL Settings ---
 # --------------------
