@@ -7,7 +7,7 @@ from pyotp import TOTP
 
 from apps.accounts.models import User, UserVerification
 from apps.accounts.services.user import UserManager
-from config.settings import OTP_EXPIRATION_SECONDS, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, OTP_SECRET_KEY
+from config.settings import AppConfig
 
 
 class TokenService:
@@ -17,6 +17,8 @@ class TokenService:
 
     user: User | None
     user_id: int
+
+    app_config = AppConfig.get_config()
 
     ALGORITHM = "HS256"
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="accounts/login")
@@ -59,10 +61,10 @@ class TokenService:
         to_encode = {'user_id': self.user_id}
 
         # --- set expire date ---
-        to_encode.update({"exp": datetime.utcnow() + timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)})
+        to_encode.update({"exp": datetime.utcnow() + timedelta(self.app_config.access_token_expire_minutes)})
 
         # --- generate access token ---
-        access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=self.ALGORITHM)
+        access_token = jwt.encode(to_encode, self.app_config.secret_key, algorithm=self.ALGORITHM)
 
         self.update_access_token(access_token)
         return access_token
@@ -89,7 +91,7 @@ class TokenService:
 
         # --- validate token ---
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[cls.ALGORITHM])
+            payload = jwt.decode(token, cls.app_config.secret_key, algorithms=[cls.ALGORITHM])
         except JWTError as e:
             raise cls.credentials_exception
 
@@ -118,9 +120,9 @@ class TokenService:
     # --- OTP Token ---
     # -----------------
 
-    @staticmethod
-    def create_otp_token():
-        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+    @classmethod
+    def create_otp_token(cls):
+        totp = TOTP(cls.app_config.otp_secret_key, interval=cls.app_config.otp_expire_seconds)
         return totp.now()
 
     def request_is_register(self):
@@ -159,14 +161,14 @@ class TokenService:
     def get_otp_request_type(self):
         return UserVerification.filter(UserVerification.user_id == self.user_id).first().request_type
 
-    @staticmethod
-    def validate_otp_token(token: str):
-        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+    @classmethod
+    def validate_otp_token(cls, token: str):
+        totp = TOTP(cls.app_config.otp_secret_key, interval=cls.app_config.otp_expire_seconds)
         return totp.verify(token)
 
     @classmethod
     def check_time_remaining(cls):
-        totp = TOTP(OTP_SECRET_KEY, interval=OTP_EXPIRATION_SECONDS)
+        totp = TOTP(cls.app_config.otp_secret_key, interval=cls.app_config.otp_expire_seconds)
         time_remaining = int(totp.interval - datetime.now().timestamp() % totp.interval)
         if time_remaining != 0:
             # OTP has not expired, do not resend
