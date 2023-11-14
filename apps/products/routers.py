@@ -39,11 +39,10 @@ router = APIRouter(
     prefix="/products"
 )
 
-"""
----------------------------------------
------------ Product Routers -----------
----------------------------------------
-"""
+
+# -----------------------
+# --- Product Routers ---
+# -----------------------
 
 
 @router.post(
@@ -126,11 +125,9 @@ async def delete_product(product_id: int):
     ProductService.delete_product(product_id)
 
 
-"""
----------------------------------------
--------- Product-Variant Routers --------
----------------------------------------
-"""
+# -------------------------------
+# --- Product-Variant Routers ---
+# -------------------------------
 
 
 @router.put(
@@ -175,11 +172,10 @@ async def list_variants(product_id: int):
     return {'variants': ProductService.retrieve_variants(product_id)}
 
 
+# -----------------------------
+# --- Product-Media Routers ---
+# -----------------------------
 """
----------------------------------------
--------- Product-Media Routers --------
----------------------------------------
-
 when updating a product, actions on product's images are:
 - add new images to product: mean attach new images to an existing product, this is the same as `create_product_media()`
 - delete some images for product: mean unattached images from a product
