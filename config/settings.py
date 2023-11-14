@@ -76,10 +76,10 @@ BASE_URL = "http://127.0.0.1:8000"  # TODO solve this
 
 # DATABASES = {
 #     "drivername": "postgresql",
-#     "username": "postgres",
-#     "password": "admin",
+#     "username": "",
+#     "password": "",
 #     "host": "localhost",
-#     "database": "fast_store",
+#     "database": "",
 #     "port": 5432
 # }
 DATABASES = {
