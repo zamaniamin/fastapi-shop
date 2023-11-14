@@ -94,6 +94,9 @@ DATABASES = {
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_DIR = BASE_DIR / "media"
 
+# Ensure the "media" directory exists
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+
 # int number as MB
 MAX_FILE_SIZE = 5
 products_list_limit = 12
