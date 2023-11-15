@@ -64,12 +64,6 @@ class EmailServiceConfig:
         return cls.config
 
 
-# --------------------
-# --- URL Settings ---
-# --------------------
-
-BASE_URL = "http://127.0.0.1:8000"  # TODO solve this
-
 # -------------------------
 # --- Database Settings ---
 # -------------------------

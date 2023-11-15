@@ -29,6 +29,7 @@ attached to it.
 """
 
 from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Query, Path
+from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from apps.core.services.media import MediaService
@@ -52,8 +53,8 @@ router = APIRouter(
     summary='Create a new product',
     description='Create a new product.',
     tags=["Product"])
-async def create_product(product: schemas.CreateProductIn):
-    return {'product': ProductService.create_product(product.model_dump())}
+async def create_product(request: Request, product: schemas.CreateProductIn):
+    return {'product': ProductService(request).create_product(product.model_dump())}
 
 
 @router.get(
@@ -63,9 +64,9 @@ async def create_product(product: schemas.CreateProductIn):
     summary='Retrieve a single product',
     description="Retrieve a single product.",
     tags=["Product"])
-async def retrieve_product(product_id: int):
+async def retrieve_product(request: Request, product_id: int):
     # TODO user can retrieve products with status of (active , archived)
-    product = ProductService.retrieve_product(product_id)
+    product = ProductService(request).retrieve_product(product_id)
     return {"product": product}
 
 
@@ -76,12 +77,12 @@ async def retrieve_product(product_id: int):
     summary='Retrieve a list of products',
     description='Retrieve a list of products.',
     tags=["Product"])
-async def list_produces():
+async def list_produces(request: Request):
     # TODO permission: admin users (admin, is_admin), none-admin users
     # TODO as none-admin permission, list products that they status is `active`.
     # TODO as none-admin, dont list the product with the status of `archived` and `draft`.
     # TODO only admin can list products with status `draft`.
-    products = ProductService.list_products()
+    products = ProductService(request).list_products()
     if products:
         return {'products': products}
     return JSONResponse(
@@ -97,7 +98,7 @@ async def list_produces():
     summary='Updates a product',
     description='Updates a product.',
     tags=["Product"])
-async def update_product(product_id: int, payload: schemas.UpdateProductIn):
+async def update_product(request: Request, product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO update a product with media
 
@@ -109,7 +110,7 @@ async def update_product(product_id: int, payload: schemas.UpdateProductIn):
             updated_product_data[key] = value
 
     try:
-        updated_product = ProductService.update_product(product_id, **updated_product_data)
+        updated_product = ProductService(request).update_product(product_id, **updated_product_data)
         return {'product': updated_product}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -189,14 +190,14 @@ when updating a product, actions on product's images are:
     summary="Create a new product image",
     description="Create a new product image.",
     tags=['Product Image'])
-async def create_product_media(x_files: list[UploadFile] = File(), product_id: int = Path(),
+async def create_product_media(request: Request, x_files: list[UploadFile] = File(), product_id: int = Path(),
                                alt: str | None = Form(None)):
     # check the file size and type
     for file in x_files:
         MediaService.is_allowed_extension(file)
         await MediaService.is_allowed_file_size(file)
 
-    media = ProductService.create_media(product_id=product_id, alt=alt, files=x_files)
+    media = ProductService(request).create_media(product_id=product_id, alt=alt, files=x_files)
     return {'media': media}
 
 
@@ -207,8 +208,8 @@ async def create_product_media(x_files: list[UploadFile] = File(), product_id: i
     summary='Retrieve a single product image',
     description='Get a single product image by id.',
     tags=['Product Image'])
-async def retrieve_single_media(media_id: int):
-    return {'media': ProductService.retrieve_single_media(media_id)}
+async def retrieve_single_media(request: Request, media_id: int):
+    return {'media': ProductService(request).retrieve_single_media(media_id)}
 
 
 @router.get(
@@ -218,8 +219,8 @@ async def retrieve_single_media(media_id: int):
     summary="Receive a list of all Product Images",
     description="Receive a list of all Product Images.",
     tags=['Product Image'])
-async def list_product_media(product_id: int):
-    media = ProductService.retrieve_media_list(product_id=product_id)
+async def list_product_media(request: Request, product_id: int):
+    media = ProductService(request).retrieve_media_list(product_id=product_id)
     if media:
         return {'media': media}
     return JSONResponse(
@@ -235,7 +236,7 @@ async def list_product_media(product_id: int):
     summary='Updates an existing image',
     description='Updates an existing image.',
     tags=['Product Image'])
-async def update_media(media_id: int, file: UploadFile = File(), alt: str | None = Form(None)):
+async def update_media(request: Request, media_id: int, file: UploadFile = File(), alt: str | None = Form(None)):
     update_data = {}
 
     if file is not None:
@@ -245,7 +246,7 @@ async def update_media(media_id: int, file: UploadFile = File(), alt: str | None
         update_data['alt'] = alt
 
     try:
-        updated_media = ProductService.update_media(media_id, **update_data)
+        updated_media = ProductService(request).update_media(media_id, **update_data)
         return {'media': updated_media}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

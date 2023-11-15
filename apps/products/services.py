@@ -1,5 +1,6 @@
 from itertools import product as options_combination
 
+from fastapi import Request
 from sqlalchemy import select, and_, or_
 
 from apps.core.date_time import DateTime
@@ -7,10 +8,10 @@ from apps.core.services.media import MediaService
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
 from config import settings
 from config.database import DatabaseManager
-from config.settings import BASE_URL
 
 
 class ProductService:
+    request: Request | None = None
     product = None
     price: int | float
     stock: int
@@ -18,6 +19,10 @@ class ProductService:
     options_data: list = []
     variants: list = []
     media: list | None = None
+
+    @classmethod
+    def __init__(cls, request: Request | None = None):
+        cls.request = request
 
     @classmethod
     def create_product(cls, data: dict, get_obj: bool = False):
@@ -310,6 +315,7 @@ class ProductService:
         """
         Get all media of a product.
         """
+
         media_list = []
         product_media: list[ProductMedia] = ProductMedia.filter(ProductMedia.product_id == product_id).all()
         for media in product_media:
@@ -318,7 +324,7 @@ class ProductService:
                     "media_id": media.id,
                     "product_id": media.product_id,
                     "alt": media.alt,
-                    "src": cls.get_media_url(media.product_id, media.src),
+                    "src": cls.__get_media_url(media.product_id, media.src),
                     "type": media.type,
                     "created_at": DateTime.string(media.created_at),
                     "updated_at": DateTime.string(media.updated_at)
@@ -333,13 +339,14 @@ class ProductService:
         """
         Get a media by id.
         """
+
         media_obj = ProductMedia.filter(ProductMedia.id == media_id).first()
         if media_obj:
             media = {
                 "media_id": media_obj.id,
                 "product_id": media_obj.product_id,
                 "alt": media_obj.alt,
-                "src": cls.get_media_url(media_obj.product_id, media_obj.src),
+                "src": cls.__get_media_url(media_obj.product_id, media_obj.src),
                 "type": media_obj.type,
                 "created_at": DateTime.string(media_obj.created_at),
                 "updated_at": DateTime.string(media_obj.updated_at)
@@ -348,9 +355,14 @@ class ProductService:
         else:
             return None
 
-    @staticmethod
-    def get_media_url(product_id, file_name: str):
-        return f"{BASE_URL}/media/products/{product_id}/{file_name}" if file_name is not None else None
+    @classmethod
+    def __get_media_url(cls, product_id, file_name: str):
+        if cls.request is None:
+            base_url = "http://127.0.0.1:8000"
+        else:
+            base_url = str(cls.request.base_url)
+
+        return f"{base_url}/media/products/{product_id}/{file_name}" if file_name is not None else None
 
     @classmethod
     def update_media(cls, media_id, **kwargs):
