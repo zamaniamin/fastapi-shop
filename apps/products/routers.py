@@ -28,10 +28,11 @@ Every time we create product, the media should be None, because the Media after 
 attached to it.
 """
 
-from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Query, Path
+from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Query, Path, Depends
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from apps.accounts.services.permissions import Permission
 from apps.core.services.media import MediaService
 from apps.products import schemas
 from apps.products.services import ProductService
@@ -52,7 +53,8 @@ router = APIRouter(
     response_model=schemas.CreateProductOut,
     summary='Create a new product',
     description='Create a new product.',
-    tags=["Product"])
+    tags=["Product"],
+    dependencies=[Depends(Permission.is_admin)])
 async def create_product(request: Request, product: schemas.CreateProductIn):
     return {'product': ProductService(request).create_product(product.model_dump())}
 
@@ -66,6 +68,7 @@ async def create_product(request: Request, product: schemas.CreateProductIn):
     tags=["Product"])
 async def retrieve_product(request: Request, product_id: int):
     # TODO user can retrieve products with status of (active , archived)
+    # TODO fix bug if there are not product in database
     product = ProductService(request).retrieve_product(product_id)
     return {"product": product}
 
@@ -97,7 +100,8 @@ async def list_produces(request: Request):
     response_model=schemas.UpdateProductOut,
     summary='Updates a product',
     description='Updates a product.',
-    tags=["Product"])
+    tags=["Product"],
+    dependencies=[Depends(Permission.is_admin)])
 async def update_product(request: Request, product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO update a product with media
@@ -121,7 +125,8 @@ async def update_product(request: Request, product_id: int, payload: schemas.Upd
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Deletes an existing product',
     description='Deletes an existing product.',
-    tags=['Product'])
+    tags=['Product'],
+    dependencies=[Depends(Permission.is_admin)])
 async def delete_product(product_id: int):
     ProductService.delete_product(product_id)
 
@@ -137,7 +142,8 @@ async def delete_product(product_id: int):
     response_model=schemas.UpdateVariantOut,
     summary='Updates an existing product variant',
     description='Modify an existing Product Variant.',
-    tags=['Product Variant'])
+    tags=['Product Variant'],
+    dependencies=[Depends(Permission.is_admin)])
 async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
     update_data = {}
 
@@ -189,7 +195,8 @@ when updating a product, actions on product's images are:
     response_model=schemas.CreateProductMediaOut,
     summary="Create a new product image",
     description="Create a new product image.",
-    tags=['Product Image'])
+    tags=['Product Image'],
+    dependencies=[Depends(Permission.is_admin)])
 async def create_product_media(request: Request, x_files: list[UploadFile] = File(), product_id: int = Path(),
                                alt: str | None = Form(None)):
     # check the file size and type
@@ -235,7 +242,8 @@ async def list_product_media(request: Request, product_id: int):
     response_model=schemas.UpdateMediaOut,
     summary='Updates an existing image',
     description='Updates an existing image.',
-    tags=['Product Image'])
+    tags=['Product Image'],
+    dependencies=[Depends(Permission.is_admin)])
 async def update_media(request: Request, media_id: int, file: UploadFile = File(), alt: str | None = Form(None)):
     update_data = {}
 
@@ -257,7 +265,8 @@ async def update_media(request: Request, media_id: int, file: UploadFile = File(
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Delete image from a product',
     description='Delete image from a product.',
-    tags=['Product Image'])
+    tags=['Product Image'],
+    dependencies=[Depends(Permission.is_admin)])
 async def delete_product_media(product_id: int, media_ids: str = Query(...)):
     media_ids_list = list(map(int, media_ids.split(',')))
     ProductService.delete_product_media(product_id, media_ids_list)
@@ -268,6 +277,7 @@ async def delete_product_media(product_id: int, media_ids: str = Query(...)):
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Delete a media file',
     description='Delete a media file.',
-    tags=['Product Image'])
+    tags=['Product Image'],
+    dependencies=[Depends(Permission.is_admin)])
 async def delete_media_file(media_id: int):
     ProductService.delete_media_file(media_id)
