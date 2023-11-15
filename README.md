@@ -1,29 +1,31 @@
-# FastAPI eCommerce Project
+# FastAPI Shop
 
 ## Overview
 
-This is an eCommerce project built using **FastAPI**, **SQLAlchemy** and **Pydantic**. The project is designed to serve
-as a starting point for building a modern, efficient, and highly customizable eCommerce web application.
+FastAPI Shop is your go-to starting point for building a modern, efficient, and highly customizable online shop. This
+project, powered by **FastAPI**, **SQLAlchemy**, and **Pydantic**, provides a solid foundation for launching or
+enhancing your venture with a feature-rich online shopping experience.
 
 ## Features
 
-- **RESTful API:** Utilizes FastAPI to provide a RESTful API for managing products, orders, users, and more.
+- **RESTful API:** Utilizes FastAPI to deliver a RESTful API for managing products, orders, users, and more.
 
-- **Database Integration:** Integrates SQLAlchemy for database operations, allowing you to use various database systems
-  like PostgreSQL, MySQL, SQLite, or others.
+- **Database Integration:** Integrates SQLAlchemy for database operations, supporting various systems like PostgreSQL,
+  MySQL, SQLite, or others.
 
-- **Data Validation:** Pydantic is used for request and response data validation, ensuring data integrity and security.
+- **Data Validation:** Leverages Pydantic for request and response data validation, ensuring data integrity and
+  security.
 
-- **Authentication and Authorization:** Provides user authentication and authorization mechanisms to secure the
+- **Authentication and Authorization:** Implements user authentication and authorization mechanisms to secure the
   application.
 
-- **Product Management:** Allows for the management of products, including adding, updating, and deleting products.
+- **Product Management:** Facilitates the management of products, including adding, updating, and deleting.
 
 - **Order Management:** Supports order creation, tracking, and management.
 
 - **User Management:** Provides user registration, login, and profile management functionalities.
 
-- **Customization:** Easily customize the project to fit your specific eCommerce requirements and branding.
+- **Customization:** Easily tailor the project to fit your specific eCommerce requirements and branding.
 
 ## Getting Started
 
@@ -35,26 +37,26 @@ as a starting point for building a modern, efficient, and highly customizable eC
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
 
     ```shell
-    git clone https://github.com/zamaniamin/fast-store.git
+    git clone https://github.com/zamaniamin/fastapi-shop.git
     ```
 
-2. Navigate to the project directory:
+2. **Navigate to the project directory:**
 
     ```shell
-    cd fast-store
+    cd fastapi-shop
     ```
 
-3. Create and activate a virtual environment (recommended):
+3. **Create and activate a virtual environment (recommended):**
 
     ```shell
     virtualenv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
-4. Install project dependencies:
+4. **Install project dependencies:**
 
     ```shell
     pip install -r requirements.txt
@@ -62,8 +64,8 @@ as a starting point for building a modern, efficient, and highly customizable eC
 
 ### Configuration
 
-To configure your FastAPI project, create a `.env` file by copying the `.env.template` file and filling in the actual
-values. Here's an example:
+To configure your FastAPI Shop project, create a `.env` file by copying the `.env.template` file and filling in the
+actual values. Here's an example:
 
 1. Copy `.env.template` to `.env`.
 2. Open `.env` in a text editor.
@@ -72,18 +74,18 @@ values. Here's an example:
 
 ### Usage
 
-1. Start the FastAPI server:
+1. **Start the FastAPI server:**
 
     ```shell
     uvicorn apps.main:app --reload
     ```
 
-2. Access the API documentation at `http://localhost:8000/docs` to explore and interact with the API endpoints using the
-   Swagger UI.
+2. **Access the API documentation at** `http://localhost:8000/docs` **to explore and interact with the API endpoints
+   using the Swagger UI.**
 
 ## Customization
 
-This project is designed to be highly customizable to suit your eCommerce needs. You can extend and modify the project
+FastAPI Shop is designed to be highly customizable to suit your eCommerce needs. You can extend and modify the project
 by:
 
 - Adding new API endpoints to handle additional features.
