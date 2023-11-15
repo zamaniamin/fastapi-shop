@@ -83,6 +83,23 @@ actual values. Here's an example:
 2. **Access the API documentation at** `http://localhost:8000/docs` **to explore and interact with the API endpoints
    using the Swagger UI.**
 
+3. **Add Demo Data:**
+
+    - **Step 1 (Optional):** You can skip this step if you don't want to add your own demo images. The project includes
+      existing demo images located at `apps/demo/media/products/{product_id}`.
+
+    - **Step 2:** To prevent conflicts during development, remove your database tables. For development, I recommend
+      using SQLite.
+
+    - **Step 3:** Run the following command to create demo data, including fake products with images, a fake admin, and
+      a fake user:
+
+    ```bash
+    python demo.py
+    ```
+
+   This will populate your database with a variety of demo data for testing and development purposes.
+
 ## Customization
 
 FastAPI Shop is designed to be highly customizable to suit your eCommerce needs. You can extend and modify the project
