@@ -5,6 +5,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeUser
+from apps.accounts.models import User
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
@@ -15,11 +16,20 @@ from config.database import DatabaseManager
 class ProductTestBase(BaseTestCase):
     product_endpoint = '/products/'
 
+    # --- members ---
+    admin: User | None = None
+    admin_authorization = {}
+
     @classmethod
     def setup_class(cls):
         cls.client = TestClient(app)
+
         # Initialize the test database and session before the test class starts
         DatabaseManager.create_test_database()
+
+        # --- create an admin ---
+        cls.admin, access_token = FakeUser.populate_admin()
+        cls.admin_authorization = {"Authorization": f"Bearer {access_token}"}
 
     @classmethod
     def teardown_class(cls):
@@ -50,13 +60,9 @@ class TestCreateProduct(ProductTestBase):
           attached to it.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- request ---
         payload = FakeProduct.get_payload()
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
         # --- response data ---
@@ -99,13 +105,9 @@ class TestCreateProduct(ProductTestBase):
           attached to it.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- request ---
         payload = FakeProduct.get_payload_with_options()
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
         # --- response data ---
@@ -156,15 +158,11 @@ class TestCreateProduct(ProductTestBase):
         Test create a product just with required fields in product payload.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- request ---
         payload = {
             'product_name': 'Test Product'
         }
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
         # --- response data ---
@@ -204,10 +202,6 @@ class TestCreateProduct(ProductTestBase):
         Test create a product just with required fields in options.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- request ---
         payload = {
             "product_name": "Test Product",
@@ -218,7 +212,7 @@ class TestCreateProduct(ProductTestBase):
                 }
             ]
         }
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
         # --- response data ---
@@ -275,11 +269,7 @@ class TestCreateProduct(ProductTestBase):
         Test create a product with empty payload.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
-        response = self.client.post(self.product_endpoint, json={}, headers=header)
+        response = self.client.post(self.product_endpoint, json={}, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_payload_product_name_max_length(self):
@@ -287,15 +277,11 @@ class TestCreateProduct(ProductTestBase):
         Test create a product with a name more than `max_length=255` character.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         payload = {
             'product_name': 'T' * 256
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("name", ["", None])
@@ -304,15 +290,11 @@ class TestCreateProduct(ProductTestBase):
         Test with empty product name.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         payload = {
             'product_name': name
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_payload_without_product_name(self):
@@ -320,15 +302,11 @@ class TestCreateProduct(ProductTestBase):
         Test if product-name don't exist in payload.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         payload = {
             'description': 'blob'
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("status_value", ["", None, "blob", 1, False, 'active', 'archived', 'draft'])
@@ -338,10 +316,6 @@ class TestCreateProduct(ProductTestBase):
         Test set product `status` to 'draft' by default.
         Test if `status` not set, or it is not one of (active, draft, archive) then set it value to 'draft'.
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         payload = {
             'product_name': 'Test Product',
@@ -355,7 +329,7 @@ class TestCreateProduct(ProductTestBase):
             expected_status = status_value
 
         # --- request ---
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
 
         # --- expected ---
         if isinstance(status_value, str | None):
@@ -385,16 +359,12 @@ class TestCreateProduct(ProductTestBase):
         - invalid option-item in payload
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         payload = {
             'product_name': 'Test Product',
             'options': options_value
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("price_value", [-10, None, ""])
@@ -403,16 +373,12 @@ class TestCreateProduct(ProductTestBase):
         Test create a product with invalid price.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         payload = {
             'product_name': 'Test Product',
             'price': price_value
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize("stock_value", [-10, None, "", 1.3])
@@ -421,16 +387,12 @@ class TestCreateProduct(ProductTestBase):
         Test create a product with invalid stock.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         payload = {
             'product_name': 'Test Product',
             'stock': stock_value
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_payload_with_duplicate_options(self):
@@ -439,10 +401,6 @@ class TestCreateProduct(ProductTestBase):
 
         **Duplicate options should not be saved in a product**
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         payload = {
             "product_name": 'blob',
@@ -461,7 +419,7 @@ class TestCreateProduct(ProductTestBase):
                 }
             ]
         }
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_payload_with_duplicate_items_in_options(self):
@@ -470,10 +428,6 @@ class TestCreateProduct(ProductTestBase):
 
         **Duplicate items should not be saved in an option**
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         payload = {
             "product_name": "blob",
@@ -488,17 +442,13 @@ class TestCreateProduct(ProductTestBase):
                 }
             ]
         }
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_payload_with_max_3_options(self):
         """
         Test create a product with more than three options.
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         payload = {
             "product_name": "blob",
@@ -522,7 +472,7 @@ class TestCreateProduct(ProductTestBase):
             ]
         }
 
-        response = self.client.post(self.product_endpoint, json=payload, headers=header)
+        response = self.client.post(self.product_endpoint, json=payload, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
@@ -833,14 +783,11 @@ class TestUpdateProduct(ProductTestBase):
         Test update a product, only update fields that are there in request body and leave other fields unchanging.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create product ---
         payload, product = FakeProduct.populate_product()
 
-        response = self.client.put(f"{self.product_endpoint}{product.id}", json=update_payload, headers=header)
+        response = self.client.put(f"{self.product_endpoint}{product.id}", json=update_payload,
+                                   headers=self.admin_authorization)
         assert response.status_code == status.HTTP_200_OK
 
         expected = response.json().get('product')
@@ -906,15 +853,11 @@ class TestDestroyProduct(ProductTestBase):
         - delete variant
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product ---
         _, product = FakeProduct.populate_product()
 
         # --- request ---
-        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=header)
+        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=self.admin_authorization)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---
@@ -933,15 +876,11 @@ class TestDestroyProduct(ProductTestBase):
         - delete media (not the files, just remove from database)
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product with media ---
         _, product = await FakeProduct.populate_product_with_media()
 
         # --- request ---
-        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=header)
+        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=self.admin_authorization)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---
@@ -962,15 +901,11 @@ class TestDestroyProduct(ProductTestBase):
         - delete options and option-items for this product
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product with options ---
         _, product = FakeProduct.populate_product_with_options()
 
         # --- request ---
-        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=header)
+        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=self.admin_authorization)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---
@@ -993,15 +928,11 @@ class TestDestroyProduct(ProductTestBase):
         - delete media (not the files, just remove from database)
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product with options and media ---
         _, product = await FakeProduct.populate_product_with_options_media()
 
         # --- request ---
-        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=header)
+        response = self.client.delete(f"{self.product_endpoint}{product.id}", headers=self.admin_authorization)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---

@@ -5,6 +5,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeUser
+from apps.accounts.models import User
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct, FakeMedia
@@ -16,10 +17,18 @@ class ProductMediaTestBase(BaseTestCase):
     product_endpoint = '/products/'
     product_media_endpoint = '/products/media/'
 
+    # --- members ---
+    admin: User | None = None
+    admin_authorization = {}
+
     @classmethod
     def setup_class(cls):
         cls.client = TestClient(app)
         DatabaseManager.create_test_database()
+
+        # --- create an admin ---
+        cls.admin, access_token = FakeUser.populate_admin()
+        cls.admin_authorization = {"Authorization": f"Bearer {access_token}"}
 
     @classmethod
     def teardown_class(cls):
@@ -37,10 +46,6 @@ class TestCreateProductMedia(ProductMediaTestBase):
         Test the File "type, size and url".
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product ---
         product_payload, product = FakeProduct.populate_product()
 
@@ -53,7 +58,7 @@ class TestCreateProductMedia(ProductMediaTestBase):
 
         # --- request ---
         response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files,
-                                    headers=header)
+                                    headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
         # --- response data ---
@@ -154,10 +159,6 @@ class TestUpdateProductMedia(ProductMediaTestBase):
         Update one media in each request by `media_id`.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create product ---
         payload, product = await FakeProduct.populate_product_with_media()
 
@@ -174,7 +175,7 @@ class TestUpdateProductMedia(ProductMediaTestBase):
 
         # --- request ---
         response = self.client.put(f"{self.product_media_endpoint}{media['media_id']}", data=update_payload,
-                                   files={"file": file}, headers=header)
+                                   files={"file": file}, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_200_OK
 
         # --- expected ---
@@ -201,10 +202,6 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         Test delete media from a product.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create product with media ---
         payload, product = await FakeProduct.populate_product_with_media()
 
@@ -219,7 +216,7 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         url = f"{self.product_endpoint}{product.id}/media/?media_ids={','.join(map(str, media_ids))}"
 
         # --- request ---
-        response = self.client.delete(url, headers=header)
+        response = self.client.delete(url, headers=self.admin_authorization)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---
@@ -234,10 +231,6 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         Test delete a media file.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product with media ---
         _, product = await FakeProduct.populate_product_with_media()
 
@@ -245,7 +238,7 @@ class TestDestroyProductMedia(ProductMediaTestBase):
         media = ProductService.retrieve_media_list(product.id)[0]
         media_id = media['media_id']
         # --- request ---
-        response = self.client.delete(f"{self.product_media_endpoint}{media_id}", headers=header)
+        response = self.client.delete(f"{self.product_media_endpoint}{media_id}", headers=self.admin_authorization)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # --- expected ---
@@ -269,10 +262,6 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         Test crete media with no `alt` or empty `alt` field.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product ---
         product_payload, product = FakeProduct.populate_product()
 
@@ -285,7 +274,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
 
         # --- request ---
         response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files,
-                                    headers=header)
+                                    headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
         expected = response.json().get('media')[0]
@@ -296,10 +285,6 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         Test crete media with empty payload.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
-
         # --- create a product ---
         product_payload, product = FakeProduct.populate_product()
 
@@ -308,17 +293,14 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         files = [("x_files", open(file_path, "rb")) for file_path in file_paths]
 
         # --- request ---
-        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data={}, files=files, headers=header)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data={}, files=files,
+                                    headers=self.admin_authorization)
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_create_media_with_no_file(self):
         """
         Test create media without files
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         # --- create a product ---
         product_payload, product = FakeProduct.populate_product()
@@ -329,17 +311,14 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
         }
 
         # --- request ---
-        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, headers=header)
+        response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload,
+                                    headers=self.admin_authorization)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_create_media_with_invalid_file_type(self):
         """
         Test create media with invalid file type.
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         # --- create a product ---
         product_payload, product = FakeProduct.populate_product()
@@ -353,17 +332,13 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
 
         # --- request ---
         response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files,
-                                    headers=header)
+                                    headers=self.admin_authorization)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_media_with_max_size_limit(self):
         """
         Test create media with limit of max size.
         """
-
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {"Authorization": f"Bearer {access_token}"}
 
         # --- create a product ---
         product_payload, product = FakeProduct.populate_product()
@@ -377,7 +352,7 @@ class TestProductMediaPayloadFields(ProductMediaTestBase):
 
         # --- request ---
         response = self.client.post(f"{self.product_endpoint}{product.id}/media/", data=media_payload, files=files,
-                                    headers=header)
+                                    headers=self.admin_authorization)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 # TODO test permissions for CRUD on product routers

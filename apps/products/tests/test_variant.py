@@ -3,6 +3,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from apps.accounts.faker.data import FakeUser
+from apps.accounts.models import User
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
@@ -13,10 +14,18 @@ from config.database import DatabaseManager
 class VariantTestBase(BaseTestCase):
     variants_endpoint = '/products/variants/'
 
+    # --- members ---
+    admin: User | None = None
+    admin_authorization = {}
+
     @classmethod
     def setup_class(cls):
         cls.client = TestClient(app)
         DatabaseManager.create_test_database()
+
+        # --- create an admin ---
+        cls.admin, access_token = FakeUser.populate_admin()
+        cls.admin_authorization = {"Authorization": f"Bearer {access_token}"}
 
     @classmethod
     def teardown_class(cls):
@@ -99,19 +108,13 @@ class TestUpdateVariants(VariantTestBase):
         Test update a variant, only update fields that are there in request body and leave other fields unchanging.
         """
 
-        # --- create an admin ---
-        admin, access_token = FakeUser.populate_admin()
-        header = {
-            "Authorization": f"Bearer {access_token}"
-        }
-
         # --- create product ---
         _, product = FakeProduct.populate_product_with_options()
         variants = ProductService.retrieve_variants(product.id)
         before_update = ProductService.retrieve_variant(variants[0]['variant_id'])
 
         response = self.client.put(f"{self.variants_endpoint}{before_update['variant_id']}", json=payload,
-                                   headers=header)
+                                   headers=self.admin_authorization)
         assert response.status_code == status.HTTP_200_OK
 
         after_update = response.json().get('variant')
