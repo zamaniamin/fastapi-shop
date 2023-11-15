@@ -358,11 +358,11 @@ class ProductService:
     @classmethod
     def __get_media_url(cls, product_id, file_name: str):
         if cls.request is None:
-            base_url = "http://127.0.0.1:8000"
+            base_url = "http://127.0.0.1:8000/"
         else:
             base_url = str(cls.request.base_url)
 
-        return f"{base_url}/media/products/{product_id}/{file_name}" if file_name is not None else None
+        return f"{base_url}media/products/{product_id}/{file_name}" if file_name is not None else None
 
     @classmethod
     def update_media(cls, media_id, **kwargs):
