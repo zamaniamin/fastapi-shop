@@ -25,6 +25,8 @@ class Product(FastModel):
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     media = relationship("ProductMedia", back_populates="product", cascade="all, delete-orphan")
 
+    # TODO add user_id to track which user added this product
+
 
 class ProductOption(FastModel):
     __tablename__ = "product_options"
