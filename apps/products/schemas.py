@@ -3,11 +3,10 @@ from typing import Annotated, List
 from fastapi import Query, UploadFile
 from pydantic import BaseModel, constr, field_validator, model_validator
 
-"""
----------------------------------------
---------------- Variant ---------------
----------------------------------------
-"""
+
+# ---------------
+# --- Variant ---
+# ---------------
 
 
 class VariantSchema(BaseModel):
@@ -39,11 +38,9 @@ class ListVariantsOut(BaseModel):
     variants: list[VariantSchema]
 
 
-"""
----------------------------------------
---------------- Options ---------------
----------------------------------------
-"""
+# ---------------
+# --- Options ---
+# ---------------
 
 
 class OptionItemOut(BaseModel):
@@ -68,11 +65,9 @@ class OptionIn(BaseModel):
         return value
 
 
-"""
----------------------------------------
----------------- Media ----------------
----------------------------------------
-"""
+# -------------
+# --- Media ---
+# -------------
 
 
 class ProductMediaSchema(BaseModel):
@@ -118,11 +113,9 @@ class RetrieveMediaOut(BaseModel):
     media: ProductMediaSchema
 
 
-"""
----------------------------------------
---------------- Product ---------------
----------------------------------------
-"""
+# ---------------
+# --- Product ---
+# ---------------
 
 
 class ProductSchema(BaseModel):
