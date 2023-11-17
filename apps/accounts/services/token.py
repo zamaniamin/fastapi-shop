@@ -112,8 +112,6 @@ class TokenService:
         active_access_token = UserVerification.filter(UserVerification.user_id == user_id).first().active_access_token
         if token != active_access_token:
             raise cls.credentials_exception
-
-        UserManager.is_active(user)
         return user
 
     # -----------------

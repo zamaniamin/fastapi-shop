@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 
 from apps.accounts.models import User
@@ -12,9 +12,47 @@ from apps.core.services.email_manager import EmailService
 class AccountService:
 
     @classmethod
-    async def current_user(cls, token: str = Depends(OAuth2PasswordBearer(tokenUrl="accounts/login"))) -> User:
+    async def require_login(cls, token: str = Depends(OAuth2PasswordBearer(tokenUrl="accounts/login"))) -> User:
+        """
+        Validates the provided OAuth2 token and returns the associated user.
+
+        Parameters:
+        - `token` (str): The OAuth2 token obtained during the login process.
+
+        Returns:
+        - User: The user associated with the provided token.
+
+        Raises:
+        - HTTPException: If the token is invalid or expired, or if the user cannot be retrieved.
+        """
+
         user = await TokenService.fetch_user(token)
         return user
+
+    @classmethod
+    async def current_user(cls, request: Request) -> User | None:
+        """
+        Retrieves the user associated with the provided Authorization token in the request header.
+
+        Parameters:
+        - `request` (Request): The FastAPI Request object containing the incoming HTTP request.
+
+        Returns:
+        - User: The user associated with the provided Authorization token, or None if the token is missing or invalid.
+        
+        Raises:
+        - HTTPException: If the token is invalid or if there are issues fetching the user.
+        """
+
+        authorization_header = request.headers.get('Authorization')
+
+        if authorization_header and authorization_header.startswith('Bearer '):
+            token = authorization_header.split('Bearer ')[1]
+            user = await TokenService.fetch_user(token)
+            return user
+
+        # guest user or invalid Authorization header
+        return None
 
     # ----------------
     # --- Register ---
