@@ -202,6 +202,7 @@ class ProductService:
 
     @classmethod
     def retrieve_product(cls, product_id):
+        # TODO add user access permission 
         cls.product = Product.get_or_404(product_id)
 
         if cls.user is None or cls.user.role == 'user':
