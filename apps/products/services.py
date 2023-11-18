@@ -1,8 +1,9 @@
 from itertools import product as options_combination
 
-from fastapi import Request
+from fastapi import Request, HTTPException
 from sqlalchemy import select, and_, or_
 
+from apps.accounts.models import User
 from apps.core.date_time import DateTime
 from apps.core.services.media import MediaService
 from apps.products.models import Product, ProductOption, ProductOptionItem, ProductVariant, ProductMedia
@@ -12,6 +13,7 @@ from config.database import DatabaseManager
 
 class ProductService:
     request: Request | None = None
+    user: User | None = None
     product = None
     price: int | float
     stock: int
@@ -21,8 +23,9 @@ class ProductService:
     media: list | None = None
 
     @classmethod
-    def __init__(cls, request: Request | None = None):
+    def __init__(cls, request: Request | None = None, user: User | None = None):
         cls.request = request
+        cls.user = user
 
     @classmethod
     def create_product(cls, data: dict, get_obj: bool = False):
@@ -200,6 +203,17 @@ class ProductService:
     @classmethod
     def retrieve_product(cls, product_id):
         cls.product = Product.get_or_404(product_id)
+
+        if cls.user is None or cls.user.role == 'user':
+            if cls.product.status != 'draft':
+                return cls.__retrieve_product(product_id)
+        elif cls.user.role == 'admin':
+
+            return cls.__retrieve_product(product_id)
+        raise HTTPException(status_code=404, detail=f"Product not found")
+
+    @classmethod
+    def __retrieve_product(cls, product_id):
         cls.options = cls.retrieve_options(product_id)
         cls.variants = cls.retrieve_variants(product_id)
         cls.media = cls.retrieve_media_list(product_id)

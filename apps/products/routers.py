@@ -32,6 +32,7 @@ from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Qu
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.permissions import Permission
 from apps.core.services.media import MediaService
 from apps.products import schemas
@@ -64,12 +65,12 @@ async def create_product(request: Request, product: schemas.CreateProductIn):
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductOut,
     summary='Retrieve a single product',
-    description="Retrieve a single product.",
+    description="""Retrieve a single product. If the user doesn't have an admin role, they can't retrieve products 
+    with a status of "draft"; otherwise, a 404 response will be returned.""",
+
     tags=["Product"])
-async def retrieve_product(request: Request, product_id: int):
-    # TODO user can retrieve products with status of (active , archived)
-    # TODO fix bug if there are not product in database
-    product = ProductService(request).retrieve_product(product_id)
+async def retrieve_product(request: Request, product_id: int, user=Depends(AccountService.current_user)):
+    product = ProductService(request, user).retrieve_product(product_id)
     return {"product": product}
 
 
