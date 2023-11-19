@@ -9,6 +9,7 @@ from apps.core.date_time import DateTime
 from apps.core.services.email_manager import EmailService
 
 
+# TODO rename `AccountService` to `Account`
 class AccountService:
 
     @classmethod
