@@ -36,7 +36,7 @@ from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.permissions import Permission
 from apps.core.services.media import MediaService
 from apps.products import schemas
-from apps.products.services import ProductService
+from apps.products.services.product import ProductService
 
 router = APIRouter(
     prefix="/products"

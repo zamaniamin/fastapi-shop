@@ -11,6 +11,7 @@ from config import settings
 from config.database import DatabaseManager
 
 
+# TODO rename `ProductService` to `Product`
 class ProductService:
     request: Request | None = None
     user: User | None = None
@@ -204,6 +205,11 @@ class ProductService:
     def retrieve_product(cls, product_id):
         # TODO add user access permission 
         cls.product = Product.get_or_404(product_id)
+
+        # if not ProductPermission.has_perm_view(cls.user, cls.product.status):
+        #     return cls.__retrieve_single_product(product_id)
+        # else:
+        #     raise HTTPException(status_code=404, detail=f"Product not found")
 
         if cls.user is None or cls.user.role == 'user':
             if cls.product.status != 'draft':

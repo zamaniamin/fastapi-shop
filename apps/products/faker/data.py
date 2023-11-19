@@ -7,7 +7,7 @@ from fastapi import UploadFile
 
 from apps.demo.settings import DEMO_PRODUCTS_MEDIA_DIR, DEMO_DOCS_DIR, DEMO_LARGE_DIR
 from apps.products.models import Product
-from apps.products.services import ProductService
+from apps.products.services.product import ProductService
 
 
 class FakeProduct:
