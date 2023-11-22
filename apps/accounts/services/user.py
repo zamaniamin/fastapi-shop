@@ -1,8 +1,9 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from starlette import status
 
 from apps.accounts.models import User
 from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.token import TokenService
 from apps.core.date_time import DateTime
 
 
@@ -143,3 +144,28 @@ class UserManager:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail="Pleas verify your email address to continue.")
         # TODO guide user to follow the steps need to verify email address.
+
+    @classmethod
+    async def current_user(cls, request: Request) -> User | None:
+        """
+        Retrieves the user associated with the provided Authorization token in the request header.
+
+        Parameters:
+        - `request` (Request): The FastAPI Request object containing the incoming HTTP request.
+
+        Returns:
+        - User: The user associated with the provided Authorization token, or None if the token is missing or invalid.
+
+        Raises:
+        - HTTPException: If the token is invalid or if there are issues fetching the user.
+        """
+
+        authorization_header = request.headers.get('Authorization')
+
+        if authorization_header and authorization_header.startswith('Bearer '):
+            token = authorization_header.split('Bearer ')[1]
+            user = await TokenService.fetch_user(token)
+            return user
+
+        # guest user or invalid Authorization header
+        return None
