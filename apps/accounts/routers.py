@@ -74,7 +74,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     description="Logout the currently authenticated user. "
                 "Revokes the user's access token and invalidates the session.",
     tags=['Authentication'])
-async def logout(current_user: User = Depends(AccountService.current_user)):
+async def logout(current_user: User = Depends(AccountService.require_login)):
     AccountService.logout(current_user)
 
 
@@ -141,7 +141,7 @@ async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.e
     summary='Retrieve current user',
     description='Retrieve current user if user is active.',
     tags=['Users'])
-async def retrieve_me(current_user: User = Depends(AccountService.current_user)):
+async def retrieve_me(current_user: User = Depends(AccountService.require_login)):
     return {'user': UserManager.to_dict(current_user)}
 
 
@@ -152,7 +152,7 @@ async def retrieve_me(current_user: User = Depends(AccountService.current_user))
     summary='Update current user',
     description='Update current user.',
     tags=['Users'])
-async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AccountService.current_user)):
+async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AccountService.require_login)):
     user = UserManager.update_user(current_user.id, **payload.model_dump())
     return {'user': UserManager.to_dict(user)}
 
@@ -166,7 +166,7 @@ async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depe
                 'need to login again.',
     tags=['Users'])
 async def change_password(payload: schemas.PasswordChangeIn = Body(**schemas.PasswordChangeIn.examples()),
-                          current_user: User = Depends(AccountService.current_user)):
+                          current_user: User = Depends(AccountService.require_login)):
     return AccountService.change_password(current_user, **payload.model_dump(exclude={"password_confirm"}))
 
 
@@ -180,7 +180,7 @@ async def change_password(payload: schemas.PasswordChangeIn = Body(**schemas.Pas
 After the new email is set, an OTP code will be sent to the new email address for verification purposes.
 """,
     tags=['Users'])
-async def change_email(email: schemas.EmailChangeIn, current_user: User = Depends(AccountService.current_user)):
+async def change_email(email: schemas.EmailChangeIn, current_user: User = Depends(AccountService.require_login)):
     return AccountService.change_email(current_user, **email.model_dump())
 
 
@@ -196,7 +196,7 @@ email address will be saved as the user's main email address.
 """,
     tags=['Users'])
 async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
-                              current_user: User = Depends(AccountService.current_user)):
+                              current_user: User = Depends(AccountService.require_login)):
     return AccountService.verify_change_email(current_user, **otp.model_dump())
 
 

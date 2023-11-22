@@ -12,7 +12,20 @@ from apps.core.services.email_manager import EmailService
 class AccountService:
 
     @classmethod
-    async def current_user(cls, token: str = Depends(OAuth2PasswordBearer(tokenUrl="accounts/login"))) -> User:
+    async def require_login(cls, token: str = Depends(OAuth2PasswordBearer(tokenUrl="accounts/login"))) -> User:
+        """
+        Validates the provided OAuth2 token and returns the associated user.
+
+        Parameters:
+        - `token` (str): The OAuth2 token obtained during the login process.
+
+        Returns:
+        - User: The user associated with the provided token.
+
+        Raises:
+        - HTTPException: If the token is invalid or expired, or if the user cannot be retrieved.
+        """
+
         user = await TokenService.fetch_user(token)
         return user
 
