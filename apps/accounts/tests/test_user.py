@@ -6,7 +6,7 @@ from apps.accounts.models import UserVerification
 from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import TokenService
-from apps.accounts.services.user import UserManager
+from apps.accounts.services.user import UserService
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from config.database import DatabaseManager
@@ -168,7 +168,7 @@ class TestChanges(UserTestBase):
         assert expected['message'] == 'Your password has been changed.'
 
         # --- expected user data, ensure other info wasn't changed ---
-        expected_user = UserManager.get_user(user.id)
+        expected_user = UserService.get_user(user.id)
         assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
         assert expected_user.email == user.email
         assert expected_user.is_verified_email is True
@@ -252,7 +252,7 @@ class TestChanges(UserTestBase):
         assert expected['message'] == 'Your email is changed.'
 
         # --- expected user data, ensure other info wasn't changed ---
-        expected_user = UserManager.get_user(user.id)
+        expected_user = UserService.get_user(user.id)
         assert expected_user.email == new_email
         assert expected_user.is_verified_email is True
         assert expected_user.role == user.role

@@ -3,11 +3,10 @@ from starlette import status
 
 from apps.accounts.models import User
 from apps.accounts.services.password import PasswordManager
-from apps.accounts.services.token import TokenService
 from apps.core.date_time import DateTime
 
 
-class UserManager:
+class UserService:
 
     @classmethod
     def create_user(cls, email: str, password: str, first_name: str | None = None, last_name: str | None = None,
@@ -147,6 +146,8 @@ class UserManager:
 
     @classmethod
     async def current_user(cls, request: Request) -> User | None:
+        from apps.accounts.services.token import TokenService
+        
         """
         Retrieves the user associated with the provided Authorization token in the request header.
 

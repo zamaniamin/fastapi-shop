@@ -7,7 +7,7 @@ from apps.accounts.models import UserVerification
 from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import TokenService
-from apps.accounts.services.user import UserManager
+from apps.accounts.services.user import UserService
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from config.database import DatabaseManager
@@ -54,7 +54,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected['email'] == payload['email']
         assert expected['message'] == 'Please check your email for an OTP code to confirm your email address.'
 
-        expected_user = UserManager.get_user(email=payload['email'])
+        expected_user = UserService.get_user(email=payload['email'])
         assert expected_user is not None
         assert expected_user.id > 0
 
@@ -96,7 +96,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected['access_token'] is not None
         assert expected['message'] == 'Your email address has been confirmed. Account activated successfully.'
 
-        expected_user = UserManager.get_user(email=email)
+        expected_user = UserService.get_user(email=email)
 
         assert expected_user is not None
         assert expected_user.id > 0
@@ -289,7 +289,7 @@ class TestLoginAccount(AccountTestBase):
         assert expected_login['access_token'] is not None
         assert expected_login['token_type'] == 'bearer'
 
-        expected_user = UserManager.get_user(email=user.email)
+        expected_user = UserService.get_user(email=user.email)
         self.assert_datetime_format(expected_user.last_login)
 
     def test_login_with_incorrect_password(self):
@@ -470,7 +470,7 @@ class TestResetPassword(AccountTestBase):
 
         # --- set a reset request ---
         AccountService.reset_password(fake_user.email)
-        user = UserManager.get_user(fake_user.id)
+        user = UserService.get_user(fake_user.id)
         old_password = user.password
 
         # --- request ---
@@ -487,7 +487,7 @@ class TestResetPassword(AccountTestBase):
         expected = response.json()
         assert expected['message'] == 'Your password has been changed.'
 
-        expected_user = UserManager.get_user(user.id)
+        expected_user = UserService.get_user(user.id)
         assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(user.updated_at)

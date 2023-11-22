@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from apps.accounts import schemas
 from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.permissions import Permission
-from apps.accounts.services.user import User, UserManager
+from apps.accounts.services.user import User, UserService
 
 router = APIRouter(
     prefix='/accounts'
@@ -142,7 +142,7 @@ async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.e
     description='Retrieve current user if user is active.',
     tags=['Users'])
 async def retrieve_me(current_user: User = Depends(AccountService.require_login)):
-    return {'user': UserManager.to_dict(current_user)}
+    return {'user': UserService.to_dict(current_user)}
 
 
 @router.put(
@@ -153,8 +153,8 @@ async def retrieve_me(current_user: User = Depends(AccountService.require_login)
     description='Update current user.',
     tags=['Users'])
 async def update_me(payload: schemas.UpdateUserSchema, current_user: User = Depends(AccountService.require_login)):
-    user = UserManager.update_user(current_user.id, **payload.model_dump())
-    return {'user': UserManager.to_dict(user)}
+    user = UserService.update_user(current_user.id, **payload.model_dump())
+    return {'user': UserService.to_dict(user)}
 
 
 @router.patch(
@@ -210,7 +210,7 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
     dependencies=[Depends(Permission.is_admin)]
 )
 async def retrieve_user(user_id: int):
-    return {'user': UserManager.to_dict(UserManager.get_user(user_id))}
+    return {'user': UserService.to_dict(UserService.get_user(user_id))}
 
 # TODO DELETE /accounts/me
 # TODO add docs and examples to endpoints

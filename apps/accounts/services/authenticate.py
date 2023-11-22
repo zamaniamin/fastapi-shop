@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 from apps.accounts.models import User
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import TokenService
-from apps.accounts.services.user import UserManager
+from apps.accounts.services.user import UserService
 from apps.core.date_time import DateTime
 from apps.core.services.email_manager import EmailService
 
@@ -40,13 +40,13 @@ class AccountService:
         """
 
         # check if user with the given email is exist or not.
-        if UserManager.get_user(email=email):
+        if UserService.get_user(email=email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This email has already been taken."
             )
 
-        new_user = UserManager.create_user(email=email, password=password)
+        new_user = UserService.create_user(email=email, password=password)
         TokenService(new_user.id).request_is_register()
         EmailService.register_send_verification_email(new_user.email)
 
@@ -77,7 +77,7 @@ class AccountService:
         """
 
         # --- get user by email ---
-        user = UserManager.get_user(email=email)
+        user = UserService.get_user(email=email)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -101,7 +101,7 @@ class AccountService:
             )
 
         # --- Update user data and activate the account ---
-        UserManager.update_user(user.id, is_verified_email=True, is_active=True, last_login=DateTime.now())
+        UserService.update_user(user.id, is_verified_email=True, is_active=True, last_login=DateTime.now())
 
         token.reset_otp_token_type()
 
@@ -142,12 +142,12 @@ class AccountService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        UserManager.update_last_login(user.id)
+        UserService.update_last_login(user.id)
         return {"access_token": token.create_access_token(), "token_type": "bearer"}
 
     @classmethod
     def authenticate_user(cls, email: str, password: str):
-        user = UserManager.get_user(email=email)
+        user = UserService.get_user(email=email)
         if not user:
             return False
         if not PasswordManager.verify_password(password, user.password):
@@ -166,9 +166,9 @@ class AccountService:
         # TODO stop resend email until current otp not expired
         user: User | None
 
-        user = UserManager.get_user_or_404(email=email)
-        UserManager.is_active(user)
-        UserManager.is_verified_email(user)
+        user = UserService.get_user_or_404(email=email)
+        UserService.is_active(user)
+        UserService.is_verified_email(user)
 
         token = TokenService(user.id)
         token.reset_is_reset_password()
@@ -183,7 +183,7 @@ class AccountService:
         Verify the request for reset password and if otp is valid then current access-token will expire.
         """
 
-        user = UserManager.get_user_or_404(email=email)
+        user = UserService.get_user_or_404(email=email)
         token = TokenService(user.id)
 
         if not token.validate_otp_token(otp):
@@ -192,7 +192,7 @@ class AccountService:
                 detail="Invalid OTP code.Please double-check and try again."
             )
 
-        UserManager.update_user(user.id, password=password)
+        UserService.update_user(user.id, password=password)
         token.reset_otp_token_type()
         token.reset_access_token()
         # TODO send an email and notice user the password is changed.
@@ -208,7 +208,7 @@ class AccountService:
         if not PasswordManager.verify_password(current_password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password.")
 
-        UserManager.update_user(user.id, password=password)
+        UserService.update_user(user.id, password=password)
         TokenService(user.id).reset_access_token()
 
         return {'message': 'Your password has been changed.'}
@@ -220,7 +220,7 @@ class AccountService:
         """
 
         # Check if the new email address is not already associated with another user
-        if UserManager.get_user(email=new_email) is None:
+        if UserService.get_user(email=new_email) is None:
 
             TokenService(user.id).request_is_change_email(new_email)
             EmailService.change_email_send_verification_email(new_email)
@@ -243,7 +243,7 @@ class AccountService:
             new_email = token.get_new_email()
 
             if new_email:
-                UserManager.update_user(user.id, email=new_email)
+                UserService.update_user(user.id, email=new_email)
                 token.reset_is_change_email()
             else:
                 raise HTTPException(
@@ -262,7 +262,7 @@ class AccountService:
         Resend OTP for registration, password reset, or email change verification.
         """
 
-        user = UserManager.get_user_or_404(email=email)
+        user = UserService.get_user_or_404(email=email)
         token = TokenService(user.id)
 
         # --- validate current request type ---

@@ -2,7 +2,7 @@ from faker import Faker
 
 from apps.accounts.services.authenticate import AccountService
 from apps.accounts.services.token import TokenService
-from apps.accounts.services.user import UserManager
+from apps.accounts.services.user import UserService
 
 
 class BaseFakeAccount:
@@ -33,7 +33,7 @@ class FakeAccount(BaseFakeAccount):
         AccountService.register(**register_payload)
 
         # --- read otp code ---
-        user = UserManager.get_user(email=register_payload['email'])
+        user = UserService.get_user(email=register_payload['email'])
 
         return user.email, TokenService.create_otp_token()
 
@@ -51,7 +51,7 @@ class FakeAccount(BaseFakeAccount):
         AccountService.register(**register_payload)
 
         # --- read otp code ---
-        user = UserManager.get_user(email=register_payload['email'])
+        user = UserService.get_user(email=register_payload['email'])
         verified = AccountService.verify_registration(**{'email': user.email,
                                                          'otp': TokenService.create_otp_token()})
         return user, verified['access_token']
@@ -75,7 +75,7 @@ class FakeUser(BaseFakeAccount):
             'role': 'admin'
         }
 
-        UserManager.update_user(user.id, **user_data)
+        UserService.update_user(user.id, **user_data)
 
         # --- user ---
         user, access_token = FakeAccount.verified_registration()
@@ -85,7 +85,7 @@ class FakeUser(BaseFakeAccount):
             'last_name': cls.fake.last_name()
         }
 
-        UserManager.update_user(user.id, **user_data)
+        UserService.update_user(user.id, **user_data)
 
     @classmethod
     def populate_admin(cls):
@@ -101,7 +101,7 @@ class FakeUser(BaseFakeAccount):
             'role': 'admin'
         }
 
-        user = UserManager.update_user(user.id, **user_data)
+        user = UserService.update_user(user.id, **user_data)
         return user, access_token
 
     @classmethod
@@ -116,5 +116,5 @@ class FakeUser(BaseFakeAccount):
             'last_name': cls.fake.last_name()
         }
 
-        user = UserManager.update_user(user.id, **user_data)
+        user = UserService.update_user(user.id, **user_data)
         return user, access_token

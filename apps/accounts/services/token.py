@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from pyotp import TOTP
 
 from apps.accounts.models import User, UserVerification
-from apps.accounts.services.user import UserManager
+from apps.accounts.services.user import UserService
 from config.settings import AppConfig
 
 
@@ -102,18 +102,18 @@ class TokenService:
 
         # --- get user ---
         # TODO move user data to token and dont fetch them from database
-        user = UserManager.get_user(user_id)
+        user = UserService.get_user(user_id)
         if user is None:
             raise cls.credentials_exception
 
-        UserManager.is_active(user)
+        UserService.is_active(user)
 
         # --- validate access token ---
         active_access_token = UserVerification.filter(UserVerification.user_id == user_id).first().active_access_token
         if token != active_access_token:
             raise cls.credentials_exception
 
-        UserManager.is_active(user)
+        UserService.is_active(user)
         return user
 
     # -----------------
