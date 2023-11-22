@@ -7,7 +7,7 @@ from apps.accounts.models import User
 from apps.core.base_test_case import BaseTestCase
 from apps.main import app
 from apps.products.faker.data import FakeProduct
-from apps.products.services.services import ProductService
+from apps.products.services.product import ProductService
 from config.database import DatabaseManager
 
 
