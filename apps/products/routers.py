@@ -64,11 +64,11 @@ async def create_product(request: Request, product: schemas.CreateProductIn):
     status_code=status.HTTP_200_OK,
     response_model=schemas.RetrieveProductOut,
     summary='Retrieve a single product',
-    description="Retrieve a single product.",
+    description="""Retrieve a single product. If the user doesn't have an admin role, they can't retrieve products 
+    with a status of "draft"; otherwise, a 404 response will be returned.""",
     tags=["Product"])
 async def retrieve_product(request: Request, product_id: int):
     # TODO user can retrieve products with status of (active , archived)
-    # TODO fix bug if there are not product in database
     product = ProductService(request).retrieve_product(product_id)
     return {"product": product}
 
