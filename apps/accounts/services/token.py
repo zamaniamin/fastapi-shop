@@ -113,7 +113,6 @@ class TokenService:
         if token != active_access_token:
             raise cls.credentials_exception
 
-        UserService.is_active(user)
         return user
 
     # -----------------
