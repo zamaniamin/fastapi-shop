@@ -112,27 +112,6 @@ class UserService:
         User.update(user_id, last_login=DateTime.now())
 
     @staticmethod
-    def to_dict(user: User):
-        """
-        Convert a User object to a dictionary.
-        """
-        _dict = {
-            'user_id': user.id,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'is_verified_email': user.is_verified_email,
-            'date_joined': DateTime.string(user.date_joined),
-            'updated_at': DateTime.string(user.updated_at),
-            'last_login': DateTime.string(user.last_login)
-        }
-        return _dict
-
-    @classmethod
-    def new_user(cls, **user_data):
-        return User.create(**user_data)
-
-    @staticmethod
     def is_active(user: User):
         if not user.is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user.")
@@ -147,7 +126,7 @@ class UserService:
     @classmethod
     async def current_user(cls, request: Request) -> User | None:
         from apps.accounts.services.token import TokenService
-        
+
         """
         Retrieves the user associated with the provided Authorization token in the request header.
 
@@ -170,3 +149,25 @@ class UserService:
 
         # guest user or invalid Authorization header
         return None
+
+    # -------------
+    # --- Utils ---
+    # -------------
+
+    @staticmethod
+    def to_dict(user: User):
+        """
+        Convert a User object to a dictionary.
+        """
+
+        _dict = {
+            'user_id': user.id,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_verified_email': user.is_verified_email,
+            'date_joined': DateTime.string(user.date_joined),
+            'updated_at': DateTime.string(user.updated_at),
+            'last_login': DateTime.string(user.last_login)
+        }
+        return _dict
