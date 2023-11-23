@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserVerification
 from apps.accounts.services.password import PasswordManager
 from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserService
@@ -25,9 +25,17 @@ class AccountService:
         Raises:
         - HTTPException: If the token is invalid or expired, or if the user cannot be retrieved.
         """
+        user_id: int = TokenService.fetch_user(token)
 
-        user = await TokenService.fetch_user(token)
-        return user
+        user = UserService.get_user_or_404(user_id)
+        UserService.is_active(user)
+
+        # --- validate access token ---
+        verification_record = UserVerification.filter(UserVerification.user_id == user_id).first()
+        if verification_record and token == verification_record.active_access_token:
+            return user
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials.",
+                            headers={"WWW-Authenticate": "Bearer"})
 
     # ----------------
     # --- Register ---
