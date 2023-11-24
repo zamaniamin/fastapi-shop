@@ -44,7 +44,9 @@ class User(FastModel):
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
     last_login = Column(DateTime, nullable=True)
 
+    # TODO rename this to verification
     change = relationship("UserVerification", back_populates="user", cascade="all, delete-orphan")
+    # user_role = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserVerification(FastModel):
@@ -77,3 +79,43 @@ class UserVerification(FastModel):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     user = relationship("User", back_populates="change")
+
+# class UserRole(FastModel):
+#     __tablename__ = 'users_roles'
+#
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     role_id = Column(Integer, ForeignKey("roles.id"))
+#
+#     created_at = Column(DateTime, server_default=func.now())
+#     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+#
+#     user = relationship("User", back_populates="user_role")
+#     role = relationship("Role", back_populates="user_role")
+
+
+# class Role(FastModel):
+#     __tablename__ = 'roles'
+#
+#     id = Column(Integer, primary_key=True, index=True)
+#     name = Column(String, unique=True)
+#
+#     created_at = Column(DateTime, server_default=func.now())
+#     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+#
+#     user_role = relationship('UserRole', back_populates='role', cascade="all, delete-orphan")
+#     permission = relationship('RolePermission', back_populates='role', cascade="all, delete-orphan")
+
+
+# class RolePermission(FastModel):
+#     __tablename__ = 'role_permissions'
+#
+#     id = Column(Integer, primary_key=True, index=True)
+#     role_id = Column(Integer, ForeignKey('roles.id'))
+#     codename = Column(String, unique=True)
+#     description = Column(String)
+#
+#     created_at = Column(DateTime, server_default=func.now())
+#     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+#
+#     role = relationship('Role', back_populates='permission')
