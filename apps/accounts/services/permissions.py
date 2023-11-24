@@ -20,8 +20,10 @@ class Permission:
     # def __init__(self, user: User | None = None):
     #     self.user = user
 
+    # TODO call this from UserService
     @classmethod
     async def is_admin(cls, current_user: User = Depends(AccountService.require_login)):
+        # TODO on fastapi run event, create a user as (superuser) and assign the default data to it, like permissions
         if current_user.role != 'admin':
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
