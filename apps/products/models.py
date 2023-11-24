@@ -68,10 +68,6 @@ class ProductVariant(FastModel):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
-    # option1 = relationship("ProductOptionItem", foreign_keys=[option1_id])
-    # option2 = relationship("ProductOptionItem", foreign_keys=[option2_id])
-    # option3 = relationship("ProductOptionItem", foreign_keys=[option3_id])
-
     product = relationship("Product", back_populates="variants")
 
 
