@@ -86,12 +86,13 @@ class FakeProduct:
         return payload.copy()
 
     @classmethod
-    def populate_product(cls) -> tuple[dict[str, str | int], Product]:
+    def populate_product(cls, status='active') -> tuple[dict[str, str | int], Product]:
         """
         Crete a product without options.
         """
 
         product_data = cls.get_payload()
+        product_data['status'] = status
         return product_data.copy(), ProductService.create_product(product_data, get_obj=True)
 
     @classmethod

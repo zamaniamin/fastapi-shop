@@ -18,7 +18,9 @@ class ProductTestBase(BaseTestCase):
 
     # --- members ---
     admin: User | None = None
+    user: User | None = None
     admin_authorization = {}
+    user_authorization = {}
 
     @classmethod
     def setup_class(cls):
@@ -30,6 +32,10 @@ class ProductTestBase(BaseTestCase):
         # --- create an admin ---
         cls.admin, access_token = FakeUser.populate_admin()
         cls.admin_authorization = {"Authorization": f"Bearer {access_token}"}
+
+        # --- create a user ---
+        cls.user, user_access_token = FakeUser.populate_user()
+        cls.user_authorization = {"Authorization": f"Bearer {user_access_token}"}
 
     @classmethod
     def teardown_class(cls):
@@ -715,6 +721,59 @@ class TestRetrieveProduct(ProductTestBase):
         """
         response = self.client.get(f"{self.product_endpoint}{999999999}")
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize("status_value", ['active', 'archived', 'draft'])
+    def test_retrieve_product_by_admin(self, status_value):
+        """
+        Test an admin can retrieve products with status of (active, archived, draft).
+        - test for a single product.
+        - test for a list of products.
+        """
+
+        # --- create a product ---
+        _, product = FakeProduct.populate_product(status=status_value)
+
+        # --- retrieve product ---
+        response = self.client.get(f'{self.product_endpoint}{product.id}', headers=self.admin_authorization)
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize("status_value", ['active', 'archived', 'draft'])
+    def test_retrieve_product_by_user(self, status_value):
+        """
+        Test a user can retrieve products with status of (active , archived).
+        Test a user can't retrieve products with status of (draft).
+        - test for a single product.
+        - test for a list of products.
+        """
+
+        # --- create a product ---
+        _, product = FakeProduct.populate_product(status=status_value)
+
+        # --- retrieve product ---
+        response = self.client.get(f'{self.product_endpoint}{product.id}', headers=self.user_authorization)
+        if status_value == 'draft':
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+        else:
+            assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize("status_value", ['active', 'archived', 'draft'])
+    def test_retrieve_product_by_guest(self, status_value):
+        """
+        Test a guest can retrieve products with status of (active , archived).
+        Test a guest can't retrieve products with status of (draft).
+        - test for a single product.
+        - test for a list of products.
+        """
+
+        # --- create a product ---
+        _, product = FakeProduct.populate_product(status=status_value)
+
+        # --- retrieve product ---
+        response = self.client.get(f'{self.product_endpoint}{product.id}')
+        if status_value == 'draft':
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+        else:
+            assert response.status_code == status.HTTP_200_OK
 
     # ---------------------
     # --- Test Payloads ---
