@@ -33,6 +33,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from apps.accounts.services.permissions import Permission
+from apps.accounts.services.user import UserService
 from apps.core.services.media import MediaService
 from apps.products import schemas
 from apps.products.services.product import ProductService
@@ -67,9 +68,9 @@ async def create_product(request: Request, product: schemas.CreateProductIn):
     description="""Retrieve a single product. If the user doesn't have an admin role, they can't retrieve products 
     with a status of "draft"; otherwise, a 404 response will be returned.""",
     tags=["Product"])
-async def retrieve_product(request: Request, product_id: int):
+async def retrieve_product(request: Request, product_id: int, user=Depends(UserService.current_user)):
     # TODO user can retrieve products with status of (active , archived)
-    product = ProductService(request).retrieve_product(product_id)
+    product = ProductService(request, user).retrieve_product(product_id)
     return {"product": product}
 
 
