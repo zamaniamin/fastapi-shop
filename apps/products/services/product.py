@@ -204,6 +204,11 @@ class ProductService:
         # TODO add user access permission
         self.product = Product.get_or_404(product_id)
 
+        # if not ProductPermission.has_perm_view(cls.user, cls.product.status):
+        #     return cls.__retrieve_single_product(product_id)
+        # else:
+        #     raise HTTPException(status_code=404, detail=f"Product not found")
+
         if self.user is None or self.user.role == 'user':
             if self.product.status != 'draft':
                 return self.__retrieve_product(product_id)
