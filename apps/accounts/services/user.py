@@ -1,12 +1,17 @@
 from fastapi import HTTPException, Request
 from starlette import status
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserVerification
 from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.token import TokenService
 from apps.core.date_time import DateTime
 
 
 class UserService:
+
+    # ------------
+    # --- CRUD ---
+    # ------------
 
     @classmethod
     def create_user(cls, email: str, password: str, first_name: str | None = None, last_name: str | None = None,
@@ -104,12 +109,9 @@ class UserService:
 
         return User.update(user_id, **user_data)
 
-    @classmethod
-    def update_last_login(cls, user_id: int):
-        """
-        Update user's last login.
-        """
-        User.update(user_id, last_login=DateTime.now())
+    # ---------------------
+    # --- Authorization ---
+    # ---------------------
 
     @staticmethod
     def is_active(user: User):
@@ -124,8 +126,22 @@ class UserService:
         # TODO guide user to follow the steps need to verify email address.
 
     @classmethod
+    def is_authenticated(cls, token: str):
+        user_id: int = TokenService.fetch_user(token)
+        user = cls.get_user_or_404(user_id)
+        cls.is_active(user)
+        verification_record = UserVerification.filter(UserVerification.user_id == user_id).first()
+        if verification_record and token == verification_record.active_access_token:
+            return user
+
+        return False
+
+    # -------------
+    # --- Utils ---
+    # -------------
+
+    @classmethod
     async def current_user(cls, request: Request) -> User | None:
-        from apps.accounts.services.token import TokenService
 
         """
         Retrieves the user associated with the provided Authorization token in the request header.
@@ -144,15 +160,12 @@ class UserService:
 
         if authorization_header and authorization_header.startswith('Bearer '):
             token = authorization_header.split('Bearer ')[1]
-            user = await TokenService.fetch_user(token)
-            return user
+            user = cls.is_authenticated(token)
+            if user:
+                return user
 
         # guest user or invalid Authorization header
         return None
-
-    # -------------
-    # --- Utils ---
-    # -------------
 
     @staticmethod
     def to_dict(user: User):
