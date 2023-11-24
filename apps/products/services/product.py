@@ -201,6 +201,7 @@ class ProductService:
         return item_ids_by_option
 
     def retrieve_product(self, product_id):
+        # TODO add user access permission
         self.product = Product.get_or_404(product_id)
 
         if self.user is None or self.user.role == 'user':
