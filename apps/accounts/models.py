@@ -21,10 +21,11 @@ class User(FastModel):
         date_joined (datetime): Timestamp indicating when the user account was created.
         updated_at (datetime, optional): Timestamp indicating when the user account was last updated. Default is None.
         last_login (datetime, optional): Timestamp indicating the user's last login time. Default is None.
-        change (relationship): Relationship attribute linking this user to change requests initiated by the user.
+        user_verification (relationship): Relationship attribute linking this user to verification requests initiated by the user.
+        user_role (relationship): Relationship attribute linking this user to role requests initiated by the user.
     """
-    # TODO rename table name to 'accounts_users'
-    __tablename__ = "users"
+
+    __tablename__ = "accounts_users"
 
     id = Column(Integer, primary_key=True)
     email = Column(String(256), nullable=False, unique=True)
@@ -44,8 +45,7 @@ class User(FastModel):
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
     last_login = Column(DateTime, nullable=True)
 
-    # TODO rename this to verification
-    change = relationship("UserVerification", back_populates="user", cascade="all, delete-orphan")
+    user_verification = relationship("UserVerification", back_populates="user", cascade="all, delete-orphan")
     user_role = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -66,11 +66,10 @@ class UserVerification(FastModel):
         updated_at (datetime): Timestamp indicating when the verification request was last updated.
     """
 
-    # TODO rename table name to 'accounts_users_verifications'
-    __tablename__ = "users_verifications"
+    __tablename__ = "accounts_users_verifications"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    user_id = Column(Integer, ForeignKey("accounts_users.id"), unique=True)
 
     request_type = Column(String, nullable=True)
     new_email = Column(String(256), nullable=True)
@@ -79,14 +78,14 @@ class UserVerification(FastModel):
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    user = relationship("User", back_populates="change")
+    user = relationship("User", back_populates="user_verification")
 
 
 class UserRole(FastModel):
     __tablename__ = 'accounts_users_roles'
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("accounts_users.id"))
     role_id = Column(Integer, ForeignKey("accounts_roles.id"))
 
     created_at = Column(DateTime, server_default=func.now())
