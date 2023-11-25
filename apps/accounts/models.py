@@ -23,7 +23,7 @@ class User(FastModel):
         last_login (datetime, optional): Timestamp indicating the user's last login time. Default is None.
         change (relationship): Relationship attribute linking this user to change requests initiated by the user.
     """
-
+    # TODO rename table name to 'accounts_users'
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
@@ -46,7 +46,7 @@ class User(FastModel):
 
     # TODO rename this to verification
     change = relationship("UserVerification", back_populates="user", cascade="all, delete-orphan")
-    # user_role = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+    user_role = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserVerification(FastModel):
@@ -66,6 +66,7 @@ class UserVerification(FastModel):
         updated_at (datetime): Timestamp indicating when the verification request was last updated.
     """
 
+    # TODO rename table name to 'accounts_users_verifications'
     __tablename__ = "users_verifications"
 
     id = Column(Integer, primary_key=True)
@@ -80,42 +81,43 @@ class UserVerification(FastModel):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     user = relationship("User", back_populates="change")
 
-# class UserRole(FastModel):
-#     __tablename__ = 'users_roles'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     user_id = Column(Integer, ForeignKey("users.id"))
-#     role_id = Column(Integer, ForeignKey("roles.id"))
-#
-#     created_at = Column(DateTime, server_default=func.now())
-#     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-#
-#     user = relationship("User", back_populates="user_role")
-#     role = relationship("Role", back_populates="user_role")
+
+class UserRole(FastModel):
+    __tablename__ = 'accounts_users_roles'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    role_id = Column(Integer, ForeignKey("accounts_roles.id"))
+
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user = relationship("User", back_populates="user_role")
+    role = relationship("Role", back_populates="user_role")
 
 
-# class Role(FastModel):
-#     __tablename__ = 'roles'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     name = Column(String, unique=True)
-#
-#     created_at = Column(DateTime, server_default=func.now())
-#     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-#
-#     user_role = relationship('UserRole', back_populates='role', cascade="all, delete-orphan")
-#     permission = relationship('RolePermission', back_populates='role', cascade="all, delete-orphan")
+class Role(FastModel):
+    __tablename__ = 'accounts_roles'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user_role = relationship('UserRole', back_populates='role', cascade="all, delete-orphan")
+    permission = relationship('Permission', back_populates='role', cascade="all, delete-orphan")
 
 
-# class RolePermission(FastModel):
-#     __tablename__ = 'role_permissions'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     role_id = Column(Integer, ForeignKey('roles.id'))
-#     codename = Column(String, unique=True)
-#     description = Column(String)
-#
-#     created_at = Column(DateTime, server_default=func.now())
-#     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-#
-#     role = relationship('Role', back_populates='permission')
+class Permission(FastModel):
+    __tablename__ = 'accounts_permissions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey('accounts_roles.id'))
+    name = Column(String)
+    codename = Column(String, unique=True)
+
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    role = relationship('Role', back_populates='permission')
