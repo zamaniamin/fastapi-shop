@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
 from apps.accounts.services.authenticate import AccountService
-from apps.accounts.services.permissions import Permission
+from apps.accounts.services.permissions import PermissionService
 from apps.accounts.services.user import User, UserService
 
 router = APIRouter(
@@ -215,7 +215,7 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
     summary='Retrieve a single user',
     description='Retrieve a single user by ID. Only admins can read the users data.',
     tags=['Users'],
-    dependencies=[Depends(Permission.is_admin)]
+    dependencies=[Depends(PermissionService.is_admin)]
 )
 async def retrieve_user(user_id: int):
     return {'user': UserService.to_dict(UserService.get_user(user_id))}

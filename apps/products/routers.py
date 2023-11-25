@@ -32,7 +32,7 @@ from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Qu
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from apps.accounts.services.permissions import Permission
+from apps.accounts.services.permissions import PermissionService
 from apps.accounts.services.user import UserService
 from apps.core.services.media import MediaService
 from apps.products import schemas
@@ -55,7 +55,7 @@ router = APIRouter(
     summary='Create a new product',
     description='Create a new product.',
     tags=["Product"],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def create_product(request: Request, product: schemas.CreateProductIn):
     return {'product': ProductService(request).create_product(product.model_dump())}
 
@@ -102,7 +102,7 @@ async def list_produces(request: Request):
     summary='Updates a product',
     description='Updates a product.',
     tags=["Product"],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def update_product(request: Request, product_id: int, payload: schemas.UpdateProductIn):
     # TODO permission: only admin
     # TODO update a product with media
@@ -127,7 +127,7 @@ async def update_product(request: Request, product_id: int, payload: schemas.Upd
     summary='Deletes an existing product',
     description='Deletes an existing product.',
     tags=['Product'],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def delete_product(product_id: int):
     ProductService.delete_product(product_id)
 
@@ -144,7 +144,7 @@ async def delete_product(product_id: int):
     summary='Updates an existing product variant',
     description='Modify an existing Product Variant.',
     tags=['Product Variant'],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def update_variant(variant_id: int, payload: schemas.UpdateVariantIn):
     update_data = {}
 
@@ -197,7 +197,7 @@ when updating a product, actions on product's images are:
     summary="Create a new product image",
     description="Create a new product image.",
     tags=['Product Image'],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def create_product_media(request: Request, x_files: list[UploadFile] = File(), product_id: int = Path(),
                                alt: str | None = Form(None)):
     # check the file size and type
@@ -244,7 +244,7 @@ async def list_product_media(request: Request, product_id: int):
     summary='Updates an existing image',
     description='Updates an existing image.',
     tags=['Product Image'],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def update_media(request: Request, media_id: int, file: UploadFile = File(), alt: str | None = Form(None)):
     update_data = {}
 
@@ -267,7 +267,7 @@ async def update_media(request: Request, media_id: int, file: UploadFile = File(
     summary='Delete image from a product',
     description='Delete image from a product.',
     tags=['Product Image'],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def delete_product_media(product_id: int, media_ids: str = Query(...)):
     media_ids_list = list(map(int, media_ids.split(',')))
     ProductService.delete_product_media(product_id, media_ids_list)
@@ -279,6 +279,6 @@ async def delete_product_media(product_id: int, media_ids: str = Query(...)):
     summary='Delete a media file',
     description='Delete a media file.',
     tags=['Product Image'],
-    dependencies=[Depends(Permission.is_admin)])
+    dependencies=[Depends(PermissionService.is_admin)])
 async def delete_media_file(media_id: int):
     ProductService.delete_media_file(media_id)

@@ -1,8 +1,8 @@
 from apps.accounts.models import User
-from apps.accounts.services.permissions import Permission
+from apps.accounts.services.permissions import PermissionService
 
 
-class ProductPermission(Permission):
+class ProductPermission(PermissionService):
     # TODO create a script to fill this roles for accounts on FastAPI startup event:
     #  sellers
     #  customers

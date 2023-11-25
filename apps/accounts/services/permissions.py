@@ -4,7 +4,7 @@ from apps.accounts.models import User
 from apps.accounts.services.authenticate import AccountService
 
 
-class Permission:
+class PermissionService:
     # TODO create a script to fill this roles for accounts on FastAPI startup event:
     #  super_admin
     #  member
