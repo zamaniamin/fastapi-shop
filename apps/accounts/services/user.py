@@ -136,6 +136,13 @@ class UserService:
 
         return False
 
+    # -----------------------------
+    # --- Roles and Permissions ---
+    # -----------------------------
+
+    def has_perm(self):
+        ...
+
     # -------------
     # --- Utils ---
     # -------------
