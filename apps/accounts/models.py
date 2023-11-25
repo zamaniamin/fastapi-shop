@@ -38,8 +38,8 @@ class User(FastModel):
     is_active = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
 
-    # TODO add unittest and check the default role is 'user', also move role to permissions table
-    role = Column(String(5), default="user")
+    # TODO add unittest and check the default role is 'member'
+    role = Column(String(5), default="user")  # change default role to 'member'
 
     date_joined = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
