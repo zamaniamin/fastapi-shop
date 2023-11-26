@@ -1,4 +1,6 @@
 import importlib
+import inspect
+import logging
 import os
 from operator import and_
 from pathlib import Path
@@ -109,21 +111,50 @@ class DatabaseManager:
         Returns:
             None
         """
+
         script_directory = os.path.dirname(os.path.abspath(__file__))
         project_root = Path(script_directory).parent
         apps_directory = project_root / "apps"
 
+        # First, handle the 'core' app
+        cls.__create_core_tables(apps_directory)
+
+        # Then, handle other apps
         for app_dir in apps_directory.iterdir():
-            if app_dir.is_dir():
-                models_file = app_dir / "models.py"
-                if models_file.exists():
-                    module_name = f"apps.{app_dir.name}.models"
-                    try:
-                        module = importlib.import_module(module_name)
-                        if hasattr(module, "FastModel") and hasattr(module.FastModel, "metadata"):
-                            module.FastModel.metadata.create_all(bind=cls.engine)
-                    except ImportError:
-                        pass
+            if app_dir.name != 'core':
+                if app_dir.is_dir():
+                    models_file = app_dir / "models.py"
+                    if models_file.exists():
+                        module_name = f"apps.{app_dir.name}.models"
+                        try:
+                            module = importlib.import_module(module_name)
+                            if hasattr(module, "FastModel") and hasattr(module.FastModel, "metadata"):
+                                module.FastModel.metadata.create_all(bind=cls.engine)
+                                cls.__add_models_to_content_type(module, app_dir.name)
+                        except ImportError as e:
+                            logging.error(f"Error importing {module_name}: {e}")
+
+    @classmethod
+    def __create_core_tables(cls, apps_directory):
+        core_dir = apps_directory / "core"
+        if core_dir.is_dir():
+            core_models_file = core_dir / "models.py"
+            if core_models_file.exists():
+                core_module_name = f"apps.core.models"
+                try:
+                    core_module = importlib.import_module(core_module_name)
+                    if hasattr(core_module, "FastModel") and hasattr(core_module.FastModel, "metadata"):
+                        core_module.FastModel.metadata.create_all(bind=cls.engine)
+                except ImportError as e:
+                    logging.error(f"Error importing {core_module_name}: {e}")
+
+    @classmethod
+    def __add_models_to_content_type(cls, module, app_name):
+        from apps.core.models import FastAPIContentType
+
+        for name, obj in inspect.getmembers(module):
+            if inspect.isclass(obj) and issubclass(obj, FastModel) and obj != FastModel:
+                FastAPIContentType.create_if_not_exist(app_name=app_name, model=obj.__name__)
 
     @classmethod
     def get_testing_mode(cls):
@@ -192,6 +223,31 @@ class FastModel(DeclarativeBase):
         finally:
             session.close()
         return instance
+
+    @classmethod
+    def create_if_not_exist(cls, **kwargs):
+        """
+        Create a new instance of the model if it does not already exist, add it to the database, and commit the
+        transaction.
+
+        Args:
+            **kwargs: Keyword arguments representing model attributes.
+
+        Returns:
+            The newly created model instance or the existing instance if it already exists.
+        """
+
+        filter_conditions = [getattr(cls, key) == value for key, value in kwargs.items()]
+        condition = and_(*filter_conditions) if filter_conditions else True
+
+        existing_instance = cls.filter(condition).first()
+
+        if existing_instance:
+            # Existing instance, not created
+            return existing_instance, False
+
+        # If no existing instance, create a new one
+        return cls.create(**kwargs), True
 
     @classmethod
     def filter(cls, condition):
