@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from config.database import FastModel
@@ -88,11 +88,10 @@ class UserRole(FastModel):
     user_id = Column(Integer, ForeignKey("accounts_users.id"))
     role_id = Column(Integer, ForeignKey("accounts_roles.id"))
 
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
     user = relationship("User", back_populates="user_role")
     role = relationship("Role", back_populates="user_role")
+
+    __table_args__ = (UniqueConstraint('user_id', 'role_id'),)
 
 
 class Role(FastModel):
@@ -100,9 +99,6 @@ class Role(FastModel):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
-
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     user_role = relationship('UserRole', back_populates='role', cascade="all, delete-orphan")
     role_permission = relationship('RolePermissions', back_populates='role', cascade="all, delete-orphan")
@@ -117,15 +113,15 @@ class RolePermissions(FastModel):
 
     role = relationship("Role", back_populates="role_permission")
 
+    __table_args__ = (UniqueConstraint('role_id', 'permission_id'),)
+
 
 class Permission(FastModel):
     __tablename__ = 'accounts_permissions'
 
     id = Column(Integer, primary_key=True, index=True)
     content_type_id = Column(Integer, ForeignKey('fastapi_content_type.id'))
-
-    name = Column(String)
     codename = Column(String, unique=True)
+    name = Column(String)
 
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    __table_args__ = (UniqueConstraint('content_type_id', 'codename'),)
