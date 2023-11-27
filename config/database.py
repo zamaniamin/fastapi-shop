@@ -150,6 +150,9 @@ class DatabaseManager:
 
     @classmethod
     def __add_models_to_content_type(cls, module, app_name):
+
+        # TODO just add the resources tha we need to access them and edit or view them
+        #  for example, we dont need to add `accounts_users_verification` to the `fastapi_content_type`
         from apps.core.models import FastAPIContentType
 
         for name, obj in inspect.getmembers(module):

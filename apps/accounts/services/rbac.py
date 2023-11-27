@@ -10,6 +10,20 @@ class RoleService:
     #  - member
     #  (don't create them if they are exist)
 
+    # TODO Pseudocode:
+    #  - first of all create default roles and permissions on startup (crete CRUD routes):
+    #  ---- roles: (super_admin, member)
+    #  ---- permissions: (super_admin full access to CRUDs, members read products(status=active) and edit their profile)
+    #  ---- make default role 'member' for users who are registered or who lost their roles on system
+    #  - create CRUD for manage users roles and permissions by admin
+    #  - get user role from `UserRole` model by user ID (then remove role field from `User` model)
+    #  - update tests and classes base in the new code for get the user role
+    #  - check `has_permission()` just by user ID (RBAC system manager by admin panel) and dont check it manual.
+    #  - permissions are not customizable and users cant create custom permissions, they will be generated when models
+    #    are added to the `fastapi_content_type`
+    #  - the permissions are in `accounts_permissions` will be should add to it when we create a new model with CRUD
+    #  - users with admin permission can edit the permission name but not the permission codename
+
     def add_role(self, name: str):
         ...
 
