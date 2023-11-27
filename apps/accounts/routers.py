@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.accounts import schemas
 from apps.accounts.services.authenticate import AccountService
-from apps.accounts.services.permissions import PermissionService
+from apps.accounts.services.rbac import PermissionService
 from apps.accounts.services.user import User, UserService
 
 router = APIRouter(

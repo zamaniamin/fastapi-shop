@@ -1,5 +1,5 @@
 from apps.accounts.models import User
-from apps.accounts.services.permissions import PermissionService
+from apps.accounts.services.rbac import PermissionService
 
 
 class ProductPermission(PermissionService):

@@ -32,7 +32,7 @@ from fastapi import APIRouter, status, Form, UploadFile, File, HTTPException, Qu
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from apps.accounts.services.permissions import PermissionService
+from apps.accounts.services.rbac import PermissionService
 from apps.accounts.services.user import UserService
 from apps.core.services.media import MediaService
 from apps.products import schemas
