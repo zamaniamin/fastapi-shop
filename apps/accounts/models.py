@@ -105,18 +105,27 @@ class Role(FastModel):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     user_role = relationship('UserRole', back_populates='role', cascade="all, delete-orphan")
-    permission = relationship('Permission', back_populates='role', cascade="all, delete-orphan")
+    role_permission = relationship('RolePermissions', back_populates='role', cascade="all, delete-orphan")
+
+
+class RolePermissions(FastModel):
+    __tablename__ = 'accounts_roles_permissions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey("accounts_roles.id"))
+    permission_id = Column(Integer, ForeignKey("accounts_permissions.id"))
+
+    role = relationship("Role", back_populates="role_permission")
 
 
 class Permission(FastModel):
     __tablename__ = 'accounts_permissions'
 
     id = Column(Integer, primary_key=True, index=True)
-    role_id = Column(Integer, ForeignKey('accounts_roles.id'))
+    content_type_id = Column(Integer, ForeignKey('fastapi_content_type.id'))
+
     name = Column(String)
     codename = Column(String, unique=True)
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    role = relationship('Role', back_populates='permission')
