@@ -2,7 +2,7 @@ from fastapi import HTTPException, Request
 from starlette import status
 
 from apps.accounts.models import User, UserVerification
-from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.password import PasswordService
 from apps.accounts.services.token import TokenService
 from apps.core.date_time import DateTime
 
@@ -19,7 +19,7 @@ class UserService:
                     role: str = 'user', updated_at: DateTime = None, last_login: DateTime = None):
         user_data = {
             "email": email,
-            "password": PasswordManager.hash_password(password),
+            "password": PasswordService.hash_password(password),
             "first_name": first_name,
             "last_name": last_name,
             "is_verified_email": is_verified_email,
@@ -90,7 +90,7 @@ class UserService:
             user_data["email"] = email
 
         if password is not None:
-            user_data["password"] = PasswordManager.hash_password(password)
+            user_data["password"] = PasswordService.hash_password(password)
 
         if is_verified_email is not None:
             user_data["is_verified_email"] = is_verified_email

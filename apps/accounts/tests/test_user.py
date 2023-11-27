@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from apps.accounts.faker.data import FakeUser
 from apps.accounts.models import UserVerification
 from apps.accounts.services.authenticate import AccountService
-from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.password import PasswordService
 from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserService
 from apps.core.base_test_case import BaseTestCase
@@ -169,7 +169,7 @@ class TestChanges(UserTestBase):
 
         # --- expected user data, ensure other info wasn't changed ---
         expected_user = UserService.get_user(user.id)
-        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
+        assert PasswordService.verify_password(payload['password'], expected_user.password) is True
         assert expected_user.email == user.email
         assert expected_user.is_verified_email is True
         assert expected_user.role == user.role

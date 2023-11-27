@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from starlette import status
 
 
-class PasswordManager:
+class PasswordService:
     password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     min_length: int = 8
     max_length: int = 24

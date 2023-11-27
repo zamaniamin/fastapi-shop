@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from apps.accounts.faker.data import FakeAccount, FakeUser
 from apps.accounts.models import UserVerification
 from apps.accounts.services.authenticate import AccountService
-from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.password import PasswordService
 from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserService
 from apps.core.base_test_case import BaseTestCase
@@ -59,7 +59,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.id > 0
 
         assert expected_user.email == payload["email"]
-        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
+        assert PasswordService.verify_password(payload['password'], expected_user.password) is True
 
         assert expected_user.first_name is None
         assert expected_user.last_name is None
@@ -102,7 +102,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected_user.id > 0
 
         assert expected_user.email == email
-        assert PasswordManager.verify_password(FakeAccount.password, expected_user.password) is True
+        assert PasswordService.verify_password(FakeAccount.password, expected_user.password) is True
 
         assert expected_user.first_name is None
         assert expected_user.last_name is None
@@ -488,7 +488,7 @@ class TestResetPassword(AccountTestBase):
         assert expected['message'] == 'Your password has been changed.'
 
         expected_user = UserService.get_user(user.id)
-        assert PasswordManager.verify_password(payload['password'], expected_user.password) is True
+        assert PasswordService.verify_password(payload['password'], expected_user.password) is True
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(user.updated_at)
         # assert expected_user.updated_at != user.updated_at

@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 
 from apps.accounts.models import User
-from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.password import PasswordService
 from apps.accounts.services.token import TokenService
 from apps.accounts.services.user import UserService
 from apps.core.date_time import DateTime
@@ -153,7 +153,7 @@ class AccountService:
         user = UserService.get_user(email=email)
         if not user:
             return False
-        if not PasswordManager.verify_password(password, user.password):
+        if not PasswordService.verify_password(password, user.password):
             return False
         return user
 
@@ -208,7 +208,7 @@ class AccountService:
         Change password for current user, and then current access-token will be expired.
         """
 
-        if not PasswordManager.verify_password(current_password, user.password):
+        if not PasswordService.verify_password(current_password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password.")
 
         UserService.update_user(user.id, password=password)

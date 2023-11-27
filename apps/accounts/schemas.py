@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
-from apps.accounts.services.password import PasswordManager
+from apps.accounts.services.password import PasswordService
 
 
 class ValidatePasswordInSchema(BaseModel):
@@ -10,7 +10,7 @@ class ValidatePasswordInSchema(BaseModel):
 
     @field_validator("password")
     def validate_password(cls, password: str):
-        return PasswordManager.validate_password_strength(password=password, has_special_char=False)
+        return PasswordService.validate_password_strength(password=password, has_special_char=False)
 
     @model_validator(mode="after")
     def passwords_match(self):
