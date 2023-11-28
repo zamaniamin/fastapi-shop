@@ -7,7 +7,7 @@ from apps.accounts.services.user import UserService
 
 class BaseFakeAccount:
     fake = Faker()
-    password = 'Test_1234'
+    password = 'Demo_1234'
 
     @classmethod
     def random_email(cls):
@@ -68,7 +68,7 @@ class FakeUser(BaseFakeAccount):
         # --- admin ---
         user, access_token = FakeAccount.verified_registration()
         user_data = {
-            'email': 'admin@example.com',
+            'email': 'superuser@example.com',
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name(),
             'is_superuser': True,
@@ -80,7 +80,7 @@ class FakeUser(BaseFakeAccount):
         # --- user ---
         user, access_token = FakeAccount.verified_registration()
         user_data = {
-            'email': 'user@example.com',
+            'email': 'member@example.com',
             'first_name': cls.fake.first_name(),
             'last_name': cls.fake.last_name()
         }

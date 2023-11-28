@@ -100,6 +100,17 @@ actual values. Here's an example:
 
    This will populate your database with a variety of demo data for testing and development purposes.
 
+   Now after running the demo script, you can login as a "`superuser`" with the following credentials:
+   ```bash
+   username: superuser@example.com
+   password: Demo_1234
+   ```
+   or you can login as a "`member`" with these credentials:
+   ```bash
+   username: member@example.com
+   password: Demo_1234
+   ```
+
 ## Customization
 
 FastAPI Shop is designed to be highly customizable to suit your eCommerce needs. You can extend and modify the project
