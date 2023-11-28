@@ -1,7 +1,75 @@
+import re
+
 from fastapi import HTTPException, status, Depends
 
 from apps.accounts.models import User, Role
 from apps.accounts.services.authenticate import AccountService
+
+
+# TODO update Faker and tests to the new RBAC
+class RBAC:
+
+    @classmethod
+    def setup(cls):
+        """
+        Fill RBAC data on database after all models are created.
+        """
+
+        cls.__set_permissions()
+        cls.__set_superuser_roles()
+
+    @staticmethod
+    def __set_permissions():
+        """
+        Set default permissions for each FastAPIContentType.
+
+        For each FastAPIContentType in the database, this method creates the default
+        permissions 'add', 'change', 'delete', and 'view' if they do not already exist.
+
+        Permissions are created based on the model name and associated with the content type.
+        """
+
+        from apps.accounts.models import Permission
+        from apps.core.models import FastAPIContentType
+        actions = ['add', 'change', 'delete', 'view']
+
+        def separate_words_with_upper_case(input_string):
+            words = re.findall(r'[A-Z][a-z]*', input_string)
+            return ' '.join(words).lower()
+
+        content_type = FastAPIContentType.all()
+        content: FastAPIContentType
+
+        for content in content_type:
+
+            for action in actions:
+                perm_name = f'can {action} {separate_words_with_upper_case(content.model)}'
+                codename = f'{action}_{content.model.lower()}'
+                permission = Permission.filter_by(content_type_id=content.id, codename=codename).first()
+
+                if permission is None:
+                    Permission.create(content_type_id=content.id, codename=codename, name=perm_name)
+
+    @classmethod
+    def __set_superuser_roles(cls):
+        """
+        Set superuser role and permissions.
+        """
+
+        from apps.accounts.models import Permission, RolePermissions
+
+        role = RoleService.add_role('superuser')
+
+        permissions = Permission.all()
+        a_permission: Permission
+
+        for a_permission in permissions:
+            _ = RolePermissions.filter_by(role_id=role.id, permission_id=a_permission.id).first()
+            if _ is None:
+                RolePermissions.create(role_id=role.id, permission_id=a_permission.id)
+
+    # TODO add member roles
+    #  member_role = RoleService.add_role('member')
 
 
 class RoleService:

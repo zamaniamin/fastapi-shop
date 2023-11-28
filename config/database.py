@@ -2,7 +2,6 @@ import importlib
 import inspect
 import logging
 import os
-import re
 from operator import and_
 from pathlib import Path
 
@@ -113,6 +112,8 @@ class DatabaseManager:
             None
         """
 
+        from apps.accounts.services.rbac import RBAC
+
         script_directory = os.path.dirname(os.path.abspath(__file__))
         project_root = Path(script_directory).parent
         apps_directory = project_root / "apps"
@@ -135,10 +136,8 @@ class DatabaseManager:
                         except ImportError as e:
                             logging.error(f"Error importing {module_name}: {e}")
 
-        # now fill RBAC data on database after all models are created
-        cls.__set_permissions()
-        # TODO add new permissions to super_user after all tables are created
-        cls.__set_superuser_role_and_permissions()
+        # setup Role-base Access Control
+        RBAC.setup()
 
         # TODO (0.13.0-alpha) create a superuser like Django with terminal
         #  (username, email[optional], password, password_confirm )
@@ -169,56 +168,6 @@ class DatabaseManager:
 
         # TODO just add the resources tha we need to access them and edit or view them
         #  for example, we dont need to add `accounts_users_verification` to the `fastapi_content_type`
-
-    @staticmethod
-    def __set_permissions():
-        """
-        Set default permissions for each FastAPIContentType.
-
-        For each FastAPIContentType in the database, this method creates the default
-        permissions 'add', 'change', 'delete', and 'view' if they do not already exist.
-
-        Permissions are created based on the model name and associated with the content type.
-        """
-
-        from apps.accounts.models import Permission
-        from apps.core.models import FastAPIContentType
-        actions = ['add', 'change', 'delete', 'view']
-
-        def separate_words_with_upper_case(input_string):
-            words = re.findall(r'[A-Z][a-z]*', input_string)
-            return ' '.join(words).lower()
-
-        content_type = FastAPIContentType.all()
-        content: FastAPIContentType
-
-        for content in content_type:
-
-            for action in actions:
-                perm_name = f'can {action} {separate_words_with_upper_case(content.model)}'
-                codename = f'{action}_{content.model.lower()}'
-                permission = Permission.filter_by(content_type_id=content.id, codename=codename).first()
-
-                if permission is None:
-                    Permission.create(content_type_id=content.id, codename=codename, name=perm_name)
-
-    @classmethod
-    def __set_superuser_role_and_permissions(cls):
-        """
-        Set superuser role and permissions.
-        """
-
-        from apps.accounts.services.rbac import RoleService
-        from apps.accounts.models import Permission, RolePermissions
-
-        role = RoleService.add_role('superuser')
-        permissions = Permission.all()
-        a_permission: Permission
-
-        for a_permission in permissions:
-            _ = RolePermissions.filter_by(role_id=role.id, permission_id=a_permission.id).first()
-            if _ is None:
-                RolePermissions.create(role_id=role.id, permission_id=a_permission.id)
 
     @classmethod
     def get_testing_mode(cls):
