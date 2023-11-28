@@ -1,6 +1,7 @@
 import re
 
 from fastapi import HTTPException, status, Depends
+from sqlalchemy import or_
 
 from apps.accounts.models import User, Role
 from apps.accounts.services.authenticate import AccountService
@@ -12,11 +13,17 @@ class RBAC:
     @classmethod
     def setup(cls):
         """
-        Fill RBAC data on database after all models are created.
+        Set up Role-Based Access Control (RBAC) data in the database after all models are created.
+
+        By default, two roles are created: "superuser" and "member". Superusers have unrestricted access to all actions,
+        while members are limited in their actions. Superusers have the ability to control and manage members.
+
+        Note: This method is intended to be called after all models are created to ensure proper setup of RBAC data.
         """
 
         cls.__set_permissions()
         cls.__set_superuser_roles()
+        cls.__set_member_roles()
 
     @staticmethod
     def __set_permissions():
@@ -68,8 +75,25 @@ class RBAC:
             if _ is None:
                 RolePermissions.create(role_id=role.id, permission_id=a_permission.id)
 
-    # TODO add member roles
-    #  member_role = RoleService.add_role('member')
+    @classmethod
+    def __set_member_roles(cls):
+        """
+        Set member role and permissions. admins can edit this base on their needs.
+        """
+
+        from apps.accounts.models import Permission, RolePermissions
+
+        role = RoleService.add_role('member')
+        member_permission = ['view_product', 'view_productmedia', 'view_productoption', 'view_productoptionitem',
+                             'view_productvariant']
+        filter_condition = or_(*[Permission.codename == codename for codename in member_permission])
+        permissions_set = Permission.filter(filter_condition).all()
+        perm: Permission
+
+        for perm in permissions_set:
+            _ = RolePermissions.filter_by(role_id=role.id, permission_id=perm.id).first()
+            if _ is None:
+                RolePermissions.create(role_id=role.id, permission_id=perm.id)
 
 
 class RoleService:
