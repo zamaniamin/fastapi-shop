@@ -2,6 +2,7 @@ import importlib
 import inspect
 import logging
 import os
+import re
 from operator import and_
 from pathlib import Path
 
@@ -134,6 +135,8 @@ class DatabaseManager:
                         except ImportError as e:
                             logging.error(f"Error importing {module_name}: {e}")
 
+        # now fill database after all models are created
+
     @classmethod
     def __create_core_tables(cls, apps_directory):
         core_dir = apps_directory / "core"
@@ -150,14 +153,37 @@ class DatabaseManager:
 
     @classmethod
     def __add_models_to_content_type(cls, module, app_name):
-
-        # TODO just add the resources tha we need to access them and edit or view them
-        #  for example, we dont need to add `accounts_users_verification` to the `fastapi_content_type`
         from apps.core.models import FastAPIContentType
 
         for name, obj in inspect.getmembers(module):
             if inspect.isclass(obj) and issubclass(obj, FastModel) and obj != FastModel:
-                FastAPIContentType.create_if_not_exist(app_name=app_name, model=obj.__name__)
+                content_type = FastAPIContentType.filter_by(app_name=app_name, model=obj.__name__).first()
+                if content_type is None:
+                    FastAPIContentType.create(app_name=app_name, model=obj.__name__)
+
+        # TODO just add the resources tha we need to access them and edit or view them
+        #  for example, we dont need to add `accounts_users_verification` to the `fastapi_content_type`
+
+        # TODO add codename for each permission
+        # cls.__set_permissions(content_type.id, obj.__name__)
+
+    # TODO add new permissions to super_user after all tables are created
+
+    @classmethod
+    def __set_permissions(cls, content_type_id: int, model_name: str):
+        from apps.accounts.models import Permission
+        actions = ['add', 'change', 'delete', 'view']
+
+        def separate_words_with_upper_case(input_string):
+            words = re.findall(r'[A-Z][a-z]*', input_string)
+            return ' '.join(words).lower()
+
+        for action in actions:
+            perm_name = f'can {action} {separate_words_with_upper_case(model_name)}'
+            codename = f'{action}_{model_name.lower()}'
+            permission = Permission.filter_by(content_type_id=content_type_id, codename=codename).first()
+            if permission is None:
+                Permission.create(content_type_id=content_type_id, codename=codename, name=perm_name)
 
     @classmethod
     def get_testing_mode(cls):
@@ -228,32 +254,7 @@ class FastModel(DeclarativeBase):
         return instance
 
     @classmethod
-    def create_if_not_exist(cls, **kwargs):
-        """
-        Create a new instance of the model if it does not already exist, add it to the database, and commit the
-        transaction.
-
-        Args:
-            **kwargs: Keyword arguments representing model attributes.
-
-        Returns:
-            The newly created model instance or the existing instance if it already exists.
-        """
-
-        filter_conditions = [getattr(cls, key) == value for key, value in kwargs.items()]
-        condition = and_(*filter_conditions) if filter_conditions else True
-
-        existing_instance = cls.filter(condition).first()
-
-        if existing_instance:
-            # Existing instance, not created
-            return existing_instance, False
-
-        # If no existing instance, create a new one
-        return cls.create(**kwargs), True
-
-    @classmethod
-    def filter(cls, condition):
+    def filter(cls, *condition):
         """
         Retrieve records from the database based on a given filter condition.
 
@@ -265,7 +266,13 @@ class FastModel(DeclarativeBase):
         """
 
         with DatabaseManager.session as session:
-            query: Query = session.query(cls).filter(condition)
+            query: Query = session.query(cls).filter(*condition)
+        return query
+
+    @classmethod
+    def filter_by(cls, **kwargs):
+        with DatabaseManager.session as session:
+            query: Query = session.query(cls).filter_by(**kwargs)
         return query
 
     @classmethod
