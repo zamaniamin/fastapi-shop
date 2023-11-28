@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status, Depends
 
-from apps.accounts.models import User
+from apps.accounts.models import User, Role
 from apps.accounts.services.authenticate import AccountService
 
 
@@ -24,8 +24,12 @@ class RoleService:
     #  - the permissions are in `accounts_permissions` will be should add to it when we create a new model with CRUD
     #  - users with admin permission can edit the permission name but not the permission codename
 
-    def add_role(self, name: str):
-        ...
+    @staticmethod
+    def add_role(name: str):
+        role = Role.filter(Role.name == name).first()
+        if role is None:
+            role = Role.create(name=name)
+        return role
 
     def get_role(self, role_id: int):
         ...
