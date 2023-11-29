@@ -133,8 +133,7 @@ async def resend_otp(payload: schemas.OTPResendIn = Body(**schemas.OTPResendIn.e
 # --- Permission Routers ---
 # --------------------------
 
-# TODO add CRUD for permissions
-# TODO add default permissions for admin or super user
+# TODO add CRUD for roles and permissions
 
 
 # ---------------------

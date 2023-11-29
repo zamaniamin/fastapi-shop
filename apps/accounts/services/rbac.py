@@ -97,14 +97,9 @@ class RBAC:
 
 
 class RoleService:
-    # TODO create a script to fill this roles for accounts on FastAPI startup event:
-    #  - super_user
-    #  - member
-    #  (don't create them if they are exist)
 
     # TODO Pseudocode:
     #  - first of all create default roles and permissions on startup (crete CRUD routes):
-    #  ---- roles: (super_admin, member)
     #  ---- permissions: (super_admin full access to CRUDs, members read products(status=active) and edit their profile)
     #  ---- make default role 'member' for users who are registered or who lost their roles on system
     #  - create CRUD for manage users roles and permissions by admin
@@ -135,13 +130,6 @@ class RoleService:
 
 class PermissionService:
 
-    # TODO create a script to fill this codename permissions for accounts on FastAPI startup event:
-    #  - add_user
-    #  - update_user
-    #  - delete_user
-    #  - view_user
-    #  (don't create them if they are exist)
-
     # def __init__(self, user: User | None = None):
     #     self.user = user
 
@@ -163,7 +151,7 @@ class PermissionService:
     # TODO call this from UserService
     @classmethod
     async def is_admin(cls, current_user: User = Depends(AccountService.require_login)):
-        # TODO on fastapi run event, create a user as (superuser) and assign the default data to it, like permissions
+        # TODO like Django, create a user as (superuser) and assign the default data to it, like permissions
         if current_user.role != 'admin':
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
