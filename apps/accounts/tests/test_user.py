@@ -74,7 +74,7 @@ class TestRetrieveUser(UserTestBase):
         """
 
         # --- create an admin with access-token ---
-        admin, access_token = FakeUser.populate_admin()
+        admin, access_token = FakeUser.populate_superuser()
         user, _ = FakeUser.populate_user()
         headers = {
             "Authorization": f"Bearer {access_token}"
@@ -149,6 +149,7 @@ class TestChanges(UserTestBase):
 
         # --- create a user ---
         user, access_token = FakeUser.populate_user()
+        user_role = UserService.get_user_roles(user.id)
         header = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
@@ -169,10 +170,11 @@ class TestChanges(UserTestBase):
 
         # --- expected user data, ensure other info wasn't changed ---
         expected_user = UserService.get_user(user.id)
+        expected_user_role = UserService.get_user_roles(expected_user.id)
+        assert sorted(expected_user_role) == sorted(user_role)
         assert PasswordService.verify_password(payload['password'], expected_user.password) is True
         assert expected_user.email == user.email
         assert expected_user.is_verified_email is True
-        assert expected_user.role == user.role
         assert expected_user.first_name == user.first_name
         assert expected_user.last_name == user.last_name
         # assert expected_user.updated_at != user.updated_at
@@ -231,6 +233,7 @@ class TestChanges(UserTestBase):
         # --- create a user ---
         user, access_token = FakeUser.populate_user()
         new_email = FakeUser.random_email()
+        user_role = UserService.get_user_roles(user.id)
 
         # --- set a change email request ---
         AccountService.change_email(user, new_email)
@@ -253,9 +256,10 @@ class TestChanges(UserTestBase):
 
         # --- expected user data, ensure other info wasn't changed ---
         expected_user = UserService.get_user(user.id)
+        expected_user_role = UserService.get_user_roles(expected_user.id)
+        assert sorted(expected_user_role) == sorted(user_role)
         assert expected_user.email == new_email
         assert expected_user.is_verified_email is True
-        assert expected_user.role == user.role
         assert expected_user.first_name == user.first_name
         assert expected_user.last_name == user.last_name
         assert expected_user.password == user.password

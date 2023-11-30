@@ -1,7 +1,8 @@
 from fastapi import HTTPException, Request
+from sqlalchemy.exc import IntegrityError
 from starlette import status
 
-from apps.accounts.models import User, UserVerification
+from apps.accounts.models import User, UserVerification, UserRole
 from apps.accounts.services.password import PasswordService
 from apps.accounts.services.token import TokenService
 from apps.core.date_time import DateTime
@@ -14,9 +15,15 @@ class UserService:
     # ------------
 
     @classmethod
+    def create_superuser(cls, email: str, password: str):
+        # cls.set_user_role(user_id=user.id, role_name='superuser')
+        ...
+
+    @classmethod
     def create_user(cls, email: str, password: str, first_name: str | None = None, last_name: str | None = None,
-                    is_verified_email: bool = False, is_active: bool = False, is_superuser: bool = False,
-                    role: str = 'user', updated_at: DateTime = None, last_login: DateTime = None):
+                    is_verified_email: bool = False, is_active: bool = False, updated_at: DateTime = None,
+                    last_login: DateTime = None):
+
         user_data = {
             "email": email,
             "password": PasswordService.hash_password(password),
@@ -24,12 +31,11 @@ class UserService:
             "last_name": last_name,
             "is_verified_email": is_verified_email,
             "is_active": is_active,
-            "is_superuser": is_superuser,
-            "role": role,
             "updated_at": updated_at,
             "last_login": last_login
         }
         user = User.create(**user_data)
+        cls.set_user_role(user_id=user.id, role_name='member')
         return user
 
     @staticmethod
@@ -72,8 +78,7 @@ class UserService:
     @classmethod
     def update_user(cls, user_id: int, email: str | None = None, password: str | None = None,
                     first_name: str | None = None, last_name: str | None = None, is_verified_email: bool | None = None,
-                    is_active: bool | None = None, is_superuser: bool | None = None, role: str | None = None,
-                    last_login: DateTime | None = None):
+                    is_active: bool | None = None, last_login: DateTime | None = None):
         """
         Update a user by their ID.
         """
@@ -97,12 +102,6 @@ class UserService:
 
         if is_active is not None:
             user_data["is_active"] = is_active
-
-        if is_superuser is not None:
-            user_data["is_superuser"] = is_superuser
-
-        if role is not None:
-            user_data["role"] = role
 
         if last_login is not None:
             user_data["last_login"] = last_login
@@ -139,6 +138,39 @@ class UserService:
     # -----------------------------
     # --- Roles and Permissions ---
     # -----------------------------
+
+    @staticmethod
+    def set_user_role(user_id: int, role_name: str):
+        from apps.accounts.services.rbac import RoleService
+
+        role_id = RoleService.get_role_by_name(role_name)
+        try:
+            UserRole.create(user_id=user_id, role_id=role_id)
+        except IntegrityError:
+            # Handle the case where the UserRole row already exists
+            pass
+
+    @staticmethod
+    def is_superuser(user_id: int):
+        from apps.accounts.services.rbac import RoleService
+
+        role_id = RoleService.get_role_by_name('superuser')
+        superuser = UserRole.filter_by(user_id=user_id, role_id=role_id).first()
+        if superuser:
+            return True
+        return False
+
+    @staticmethod
+    def get_user_roles(user_id: int):
+        roles = UserRole.filter_by(user_id=user_id).all()
+        role_ids = [role.id for role in roles]
+        return role_ids
+
+    def is_admin(self):
+        ...
+
+    def is_member(self):
+        ...
 
     def has_perm(self):
         ...

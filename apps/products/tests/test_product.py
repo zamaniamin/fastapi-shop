@@ -30,7 +30,7 @@ class ProductTestBase(BaseTestCase):
         DatabaseManager.create_test_database()
 
         # --- create an admin ---
-        cls.admin, access_token = FakeUser.populate_admin()
+        cls.admin, access_token = FakeUser.populate_superuser()
         cls.admin_authorization = {"Authorization": f"Bearer {access_token}"}
 
         # --- create a user ---

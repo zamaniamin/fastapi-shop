@@ -57,17 +57,13 @@ class TestRegisterAccount(AccountTestBase):
         expected_user = UserService.get_user(email=payload['email'])
         assert expected_user is not None
         assert expected_user.id > 0
-
         assert expected_user.email == payload["email"]
         assert PasswordService.verify_password(payload['password'], expected_user.password) is True
-
         assert expected_user.first_name is None
         assert expected_user.last_name is None
-
         assert expected_user.is_verified_email is False
         assert expected_user.is_active is False
-        assert expected_user.is_superuser is False
-
+        assert UserService.is_superuser(expected_user.id) is False
         assert expected_user.updated_at is None
         assert expected_user.last_login is None
         self.assert_datetime_format(expected_user.date_joined)
@@ -95,26 +91,20 @@ class TestRegisterAccount(AccountTestBase):
         expected = response.json()
         assert expected['access_token'] is not None
         assert expected['message'] == 'Your email address has been confirmed. Account activated successfully.'
-
         expected_user = UserService.get_user(email=email)
-
         assert expected_user is not None
         assert expected_user.id > 0
-
         assert expected_user.email == email
         assert PasswordService.verify_password(FakeAccount.password, expected_user.password) is True
-
         assert expected_user.first_name is None
         assert expected_user.last_name is None
-
         assert expected_user.is_verified_email is True
         assert expected_user.is_active is True
-        assert expected_user.is_superuser is False
+        assert UserService.is_superuser(expected_user.id) is False
 
         # --- expected in UserVerification ---
         change_request: UserVerification = UserVerification.filter(UserVerification.user_id == expected_user.id).first()
         assert change_request.request_type is None
-
         self.assert_datetime_format(expected_user.last_login)
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(expected_user.date_joined)

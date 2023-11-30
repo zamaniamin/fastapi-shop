@@ -88,20 +88,15 @@ class FakeUser(BaseFakeAccount):
         UserService.update_user(user.id, **user_data)
 
     @classmethod
-    def populate_admin(cls):
+    def populate_superuser(cls):
         """
         Create an admin and generate an access token too.
         """
 
         user, access_token = FakeAccount.verified_registration()
-        user_data = {
-            'first_name': cls.fake.first_name(),
-            'last_name': cls.fake.last_name(),
-            'is_superuser': True,
-            'role': 'admin'
-        }
+        user = UserService.update_user(user.id)
+        UserService.set_user_role(user.id, 'superuser')
 
-        user = UserService.update_user(user.id, **user_data)
         return user, access_token
 
     @classmethod

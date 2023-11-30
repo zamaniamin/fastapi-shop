@@ -4,7 +4,6 @@ from fastapi import HTTPException, status, Depends
 from sqlalchemy import or_
 
 from apps.accounts.models import User, Role
-from apps.accounts.services.authenticate import AccountService
 
 
 # TODO update Faker and tests to the new RBAC
@@ -118,8 +117,17 @@ class RoleService:
             role = Role.create(name=name)
         return role
 
-    def get_role(self, role_id: int):
+    def get_role_id(self, user_id: int):
         ...
+
+    @classmethod
+    def get_role_by_name(cls, name: str):
+        role: Role | None = Role.filter(Role.name == name).first()
+        if role is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Role does not exist.")
+        return role.id
 
     def update_role(self, role_id: int, new_name: str):
         ...
@@ -129,6 +137,7 @@ class RoleService:
 
 
 class PermissionService:
+    from apps.accounts.services.authenticate import AccountService
 
     # def __init__(self, user: User | None = None):
     #     self.user = user
@@ -152,7 +161,8 @@ class PermissionService:
     @classmethod
     async def is_admin(cls, current_user: User = Depends(AccountService.require_login)):
         # TODO like Django, create a user as (superuser) and assign the default data to it, like permissions
-        if current_user.role != 'admin':
+        from apps.accounts.services.user import UserService
+        if not UserService.is_superuser(current_user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You don't have permission to access this resource.")
