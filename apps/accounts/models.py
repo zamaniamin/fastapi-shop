@@ -16,8 +16,6 @@ class User(FastModel):
         last_name (str, optional): User's last name. Default is None.
         is_verified_email (bool): Flag indicating whether the user's email address has been verified.
         is_active (bool): Flag indicating whether the user's account is active.
-        is_superuser (bool): Flag indicating whether the user has superuser privileges.
-        role (str): User's role in the system, represented as a short string.
         date_joined (datetime): Timestamp indicating when the user account was created.
         updated_at (datetime, optional): Timestamp indicating when the user account was last updated. Default is None.
         last_login (datetime, optional): Timestamp indicating the user's last login time. Default is None.
@@ -30,17 +28,10 @@ class User(FastModel):
     id = Column(Integer, primary_key=True)
     email = Column(String(256), nullable=False, unique=True)
     password = Column(String, nullable=False)
-
     first_name = Column(String(256), nullable=True)
     last_name = Column(String(256), nullable=True)
-
     is_verified_email = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
-    is_superuser = Column(Boolean, default=False)
-
-    # TODO add unittest and check the default role is 'member'
-    role = Column(String(5), default="user")  # change default role to 'member'
-
     date_joined = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, nullable=True, onupdate=func.now())
     last_login = Column(DateTime, nullable=True)
