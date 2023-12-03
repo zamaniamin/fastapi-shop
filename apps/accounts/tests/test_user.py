@@ -169,7 +169,7 @@ class TestChanges(UserTestBase):
         assert expected['message'] == 'Your password has been changed.'
 
         # --- expected user data, ensure other info wasn't changed ---
-        expected_user = UserService.get_user(user.id)
+        expected_user = UserService.read_user(user.id)
         expected_user_role = UserService.get_roles(expected_user.id)
         assert sorted(expected_user_role) == sorted(user_role)
         assert PasswordService.verify_password(payload['password'], expected_user.password) is True
@@ -255,7 +255,7 @@ class TestChanges(UserTestBase):
         assert expected['message'] == 'Your email is changed.'
 
         # --- expected user data, ensure other info wasn't changed ---
-        expected_user = UserService.get_user(user.id)
+        expected_user = UserService.read_user(user.id)
         expected_user_role = UserService.get_roles(expected_user.id)
         assert sorted(expected_user_role) == sorted(user_role)
         assert expected_user.email == new_email

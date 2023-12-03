@@ -43,7 +43,7 @@ class AccountService:
         """
 
         # check if user with the given email is exist or not.
-        if UserService.get_user(email=email):
+        if UserService.read_user(email=email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This email has already been taken."
@@ -80,7 +80,7 @@ class AccountService:
         """
 
         # --- get user by email ---
-        user = UserService.get_user(email=email)
+        user = UserService.read_user(email=email)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -150,7 +150,7 @@ class AccountService:
 
     @classmethod
     def authenticate_user(cls, email: str, password: str):
-        user = UserService.get_user(email=email)
+        user = UserService.read_user(email=email)
         if not user:
             return False
         if not PasswordService.verify_password(password, user.password):
@@ -223,7 +223,7 @@ class AccountService:
         """
 
         # Check if the new email address is not already associated with another user
-        if UserService.get_user(email=new_email) is None:
+        if UserService.read_user(email=new_email) is None:
 
             TokenService(user.id).request_is_change_email(new_email)
             EmailService.change_email_send_verification_email(new_email)

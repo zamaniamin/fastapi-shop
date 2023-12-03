@@ -219,7 +219,7 @@ async def verify_change_email(otp: schemas.EmailChangeVerifyIn,
     dependencies=[Depends(PermissionService.is_admin)]
 )
 async def retrieve_user(user_id: int):
-    return {'user': UserService.to_dict(UserService.get_user(user_id))}
+    return {'user': UserService.to_dict(UserService.read_user(user_id))}
 
 # TODO DELETE /accounts/me
 # TODO add docs and examples to endpoints

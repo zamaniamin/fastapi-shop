@@ -54,7 +54,7 @@ class TestRegisterAccount(AccountTestBase):
         assert expected['email'] == payload['email']
         assert expected['message'] == 'Please check your email for an OTP code to confirm your email address.'
 
-        expected_user = UserService.get_user(email=payload['email'])
+        expected_user = UserService.read_user(email=payload['email'])
         assert expected_user is not None
         assert expected_user.id > 0
         assert expected_user.email == payload["email"]
@@ -91,7 +91,7 @@ class TestRegisterAccount(AccountTestBase):
         expected = response.json()
         assert expected['access_token'] is not None
         assert expected['message'] == 'Your email address has been confirmed. Account activated successfully.'
-        expected_user = UserService.get_user(email=email)
+        expected_user = UserService.read_user(email=email)
         assert expected_user is not None
         assert expected_user.id > 0
         assert expected_user.email == email
@@ -279,7 +279,7 @@ class TestLoginAccount(AccountTestBase):
         assert expected_login['access_token'] is not None
         assert expected_login['token_type'] == 'bearer'
 
-        expected_user = UserService.get_user(email=user.email)
+        expected_user = UserService.read_user(email=user.email)
         self.assert_datetime_format(expected_user.last_login)
 
     def test_login_with_incorrect_password(self):
@@ -460,7 +460,7 @@ class TestResetPassword(AccountTestBase):
 
         # --- set a reset request ---
         AccountService.reset_password(fake_user.email)
-        user = UserService.get_user(fake_user.id)
+        user = UserService.read_user(fake_user.id)
         old_password = user.password
 
         # --- request ---
@@ -477,7 +477,7 @@ class TestResetPassword(AccountTestBase):
         expected = response.json()
         assert expected['message'] == 'Your password has been changed.'
 
-        expected_user = UserService.get_user(user.id)
+        expected_user = UserService.read_user(user.id)
         assert PasswordService.verify_password(payload['password'], expected_user.password) is True
         self.assert_datetime_format(expected_user.updated_at)
         self.assert_datetime_format(user.updated_at)

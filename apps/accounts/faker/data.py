@@ -33,7 +33,7 @@ class FakeAccount(BaseFakeAccount):
         AccountService.register(**register_payload)
 
         # --- read otp code ---
-        user = UserService.get_user(email=register_payload['email'])
+        user = UserService.read_user(email=register_payload['email'])
 
         return user.email, TokenService.create_otp_token()
 
@@ -51,7 +51,7 @@ class FakeAccount(BaseFakeAccount):
         AccountService.register(**register_payload)
 
         # --- read otp code ---
-        user = UserService.get_user(email=register_payload['email'])
+        user = UserService.read_user(email=register_payload['email'])
         verified = AccountService.verify_registration(**{'email': user.email,
                                                          'otp': TokenService.create_otp_token()})
         return user, verified['access_token']

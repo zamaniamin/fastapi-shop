@@ -39,7 +39,7 @@ class UserService:
         return user
 
     @staticmethod
-    def get_user(user_id: int | None = None, email: str = None) -> User | None:
+    def read_user(user_id: int | None = None, email: str = None) -> User | None:
         """
         Retrieve a user based on their ID or email address.
 
@@ -51,6 +51,7 @@ class UserService:
             User | None: A User object if a user is found based on the provided ID or email,
                          or None if no user is found.
         """
+
         if user_id:
             user = User.get(user_id)
         elif email:
