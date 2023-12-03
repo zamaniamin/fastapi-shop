@@ -64,7 +64,7 @@ class RBAC:
 
         from apps.accounts.models import Permission, RolePermissions
 
-        role = RoleService.add_role('superuser')
+        role = RoleService.create_role('superuser')
 
         permissions = Permission.all()
         a_permission: Permission
@@ -82,7 +82,7 @@ class RBAC:
 
         from apps.accounts.models import Permission, RolePermissions
 
-        role = RoleService.add_role('member')
+        role = RoleService.create_role('member')
         member_permission = ['view_product', 'view_productmedia', 'view_productoption', 'view_productoptionitem',
                              'view_productvariant']
         filter_condition = or_(*[Permission.codename == codename for codename in member_permission])
@@ -110,18 +110,29 @@ class RoleService:
     #  - the permissions are in `accounts_permissions` will be should add to it when we create a new model with CRUD
     #  - users with admin permission can edit the permission name but not the permission codename
 
+    # -----------------
+    # --- Role CRUD ---
+    # -----------------
+
     @staticmethod
-    def add_role(name: str):
+    def create_role(name: str):
         role = Role.filter(Role.name == name).first()
         if role is None:
             role = Role.create(name=name)
         return role
 
-    def get_role_id(self, user_id: int):
+    def read_role_by_id(self, role_id: int):
+        """
+        Get a role by role id.
+        """
         ...
 
     @classmethod
-    def get_role_by_name(cls, name: str):
+    def read_role_by_name(cls, name: str):
+        """
+        Get a role by role name.
+        """
+
         role: Role | None = Role.filter(Role.name == name).first()
         if role is None:
             raise HTTPException(
@@ -130,9 +141,16 @@ class RoleService:
         return role.id
 
     def update_role(self, role_id: int, new_name: str):
+        """
+        Update role name by role id.
+        """
         ...
 
     def delete_role(self, role_id: int):
+        """
+        Delete a role by role id.
+        """
+
         ...
 
 
@@ -142,10 +160,14 @@ class PermissionService:
     # def __init__(self, user: User | None = None):
     #     self.user = user
 
-    def add_permission(self, role_id: int, permission_name: str, codename: str):
+    # -----------------------
+    # --- Permission CRUD ---
+    # -----------------------
+
+    def create_permission(self, role_id: int, permission_name: str, codename: str):
         ...
 
-    def get_permission(self, permission_id: int):
+    def read_permission(self, permission_id: int):
         ...
 
     def update_permission(self, permission_id: int, permission_name: str, codename: str):

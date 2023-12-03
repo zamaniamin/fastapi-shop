@@ -35,7 +35,7 @@ class UserService:
             "last_login": last_login
         }
         user = User.create(**user_data)
-        cls.set_user_role(user_id=user.id, role_name='member')
+        cls.set_role(user_id=user.id, role_name='member')
         return user
 
     @staticmethod
@@ -140,10 +140,10 @@ class UserService:
     # -----------------------------
 
     @staticmethod
-    def set_user_role(user_id: int, role_name: str):
+    def set_role(user_id: int, role_name: str):
         from apps.accounts.services.rbac import RoleService
 
-        role_id = RoleService.get_role_by_name(role_name)
+        role_id = RoleService.read_role_by_name(role_name)
         try:
             UserRole.create(user_id=user_id, role_id=role_id)
         except IntegrityError:
@@ -154,14 +154,14 @@ class UserService:
     def is_superuser(user_id: int):
         from apps.accounts.services.rbac import RoleService
 
-        role_id = RoleService.get_role_by_name('superuser')
+        role_id = RoleService.read_role_by_name('superuser')
         superuser = UserRole.filter_by(user_id=user_id, role_id=role_id).first()
         if superuser:
             return True
         return False
 
     @staticmethod
-    def get_user_roles(user_id: int):
+    def get_roles(user_id: int):
         roles = UserRole.filter_by(user_id=user_id).all()
         role_ids = [role.id for role in roles]
         return role_ids

@@ -95,7 +95,7 @@ class FakeUser(BaseFakeAccount):
 
         user, access_token = FakeAccount.verified_registration()
         user = UserService.update_user(user.id)
-        UserService.set_user_role(user.id, 'superuser')
+        UserService.set_role(user.id, 'superuser')
 
         return user, access_token
 
